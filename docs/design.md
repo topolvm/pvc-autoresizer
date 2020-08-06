@@ -21,15 +21,16 @@ So, PV should be automatically expanded based on the PV usage.
 
 ## Architecture
 
-![component diagram](http://www.plantuml.com/plantuml/svg/LL0zRy8m4DtzAvxIcJ_0K86OM2ea99Qgmv4SmQfZH-Spb5RzxtL88EuIw_8-thjRHINHr3dZGyDuovyV0xn_fYCxrW-yEDkUzUWI6w0XfID5nbw3KCiJUcFdmjNy6lCaK6yZouK5556jTrkCOrKOOaWIhfLywnZzfRwJTopHHcMlE0INEiR6aUsoyfapYoXf48xscsKK7pPOF_xDSQqm-qAsaz2ndZd5Si4PhwDjn3xgR_PRZEDSmXGMMAH-yOhfPi0IRNuoAhQEPjXhqOIhpvIYxaXIak79jQCfmCbna2x1Nptv1d6wUKqzrLPl__cEJveLPQibgg87mkbkeQL7DRGRm-QTvyZB_VvcnRv9dVi3)
+![component diagram](http://www.plantuml.com/plantuml/svg/TP9DQyCm38Rl_XKYEwUmZrCOewMdNaQWqClOGKtKrCpvm9BRTQF_VNRgBDvXbnXBxoizYhnaGIkkDQhhQu9N__bM06yVRa-6v1tkZ6wEiZUEVBX6mJqomLPwYmt5x8MCwS_ggjIl00VDP4za0HcoLRc1spLB2aBePAaIx1f3C9ogKLoIPSr2dUnwurfQ6zIjzyKkgOLlZaZZXSopyAfc8Jel8TPV4QZShM4rnMQgnX9rYQsqVKjo9CS9TfAlMDTMJrEkjnkuNMS8bPI0t0tv2yHV2r10um-VjRfY5SP_pkl-tEKfRW7tYr4dQCFXoLab-LWqk0juMW1z3jZLm7515GvOQRdyjHWwY3UbR0LaZuiK2Fh3M4NICbd4z3sJuGiuerJ7mARcg6ymFPDYmZgD6rNypwWF8y4C7nOQn7cOJosfgrrhVW00)
 
 ### How pvc-autoresizer works
 
 To expand pvc, pvc-autoresizer works as follows:
 
 1. Get target PVC information from API server
-1. Get metrics from Prometheus about storage
-1. Expand PVC storage request size if PVC has less than the specified amount of free filesystem capacity. 
+2. Get StorageClass related to the PVC from API server
+3. Get metrics from Prometheus about storage
+4. Expand PVC storage request size if PVC has less than the specified amount of free filesystem capacity. 
 
 
 ### Details
@@ -53,10 +54,9 @@ spec:
   storageClassName: topolvm-provisioner
 ```
 
-- Annotations
-To allow automatic resizing, PVC must have spec.resources.limits.storage.
-TopoLVM increases PVC's spec.resources.requests.storage up to the given limits.
-The threshold of free space is given by resize.topolvm.io/threshold annotation.
-The amount of increased size can be specified by resize.topolvm.io/amount annotation.
-The value of the annotations can be a ratio like 20% or a value like 10Gi.
-The default values are 10%.
+- To allow automatic resizing, PVC must have `spec.resources.limits.storage`.
+- pvc-autoresizer increases PVC's `spec.resources.requests.storage` up to the given limits.
+- The threshold of free space is given by `resize.topolvm.io/threshold` annotation.
+- The amount of increased size can be specified by `resize.topolvm.io/amount` annotation.
+- The value of the annotations can be a ratio like 20% or a value like 10Gi.
+- The default value for both threshold and amount is 10%.
