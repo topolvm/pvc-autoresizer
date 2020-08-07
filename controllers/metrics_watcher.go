@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"context"
+	"github.com/prometheus/common/model"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -39,7 +41,8 @@ type metricsWatcher struct {
 
 func (r metricsWatcher) Start(ch <-chan struct{}) error {
 	ticker := time.NewTicker(10 * time.Second)
-	// ctx := contextFromStopChannel(ch)
+	ctx := context.Background()
+	q := "kubelet_volume_stats_used_bytes"
 
 	defer ticker.Stop()
 	for {
@@ -47,7 +50,13 @@ func (r metricsWatcher) Start(ch <-chan struct{}) error {
 		case <-ch:
 			return nil
 		case <-ticker.C:
-			// r.prometheusAPI.Query(ctx, query string, )
+			res, _, err := r.prometheusAPI.Query(ctx, q, time.Now())
+			if err != nil {
+				return err
+			}
+			if res.Type() == model.ValVector {
+				v := res.(model.Vector)
+			}
 		}
 	}
 }
