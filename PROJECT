@@ -1,0 +1,3 @@
+domain: topolvm.io
+repo: github.com/topolvm/pvc-autoresizer
+version: "2"
