@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"github.com/prometheus/common/model"
+	corev1 "k8s.io/api/core/v1"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -59,4 +60,14 @@ func (r metricsWatcher) Start(ch <-chan struct{}) error {
 			}
 		}
 	}
+}
+
+func filterPVC(pvc *corev1.PersistentVolumeClaim) bool {
+	if pvc.Spec.Resources.Limits.Storage() == nil {
+		return false
+	}
+	if pvc.Spec.VolumeMode != nil && *pvc.Spec.VolumeMode != corev1.PersistentVolumeFilesystem {
+		return false
+	}
+	return true
 }

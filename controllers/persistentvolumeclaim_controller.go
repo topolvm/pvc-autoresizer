@@ -52,15 +52,9 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 
 func (r *PersistentVolumeClaimReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	pred := predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool {
-			pvc := e.Object.(*corev1.PersistentVolumeClaim)
-			return filterPVC(pvc)
-		},
-		DeleteFunc: func(event.DeleteEvent) bool { return false },
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			pvc := e.ObjectNew.(*corev1.PersistentVolumeClaim)
-			return filterPVC(pvc)
-		},
+		CreateFunc:  func(e event.CreateEvent) bool { return true },
+		DeleteFunc:  func(event.DeleteEvent) bool { return false },
+		UpdateFunc:  func(e event.UpdateEvent) bool { return true },
 		GenericFunc: func(event.GenericEvent) bool { return true },
 	}
 
@@ -70,12 +64,4 @@ func (r *PersistentVolumeClaimReconciler) SetupWithManager(mgr ctrl.Manager) err
 		Complete(r)
 }
 
-func filterPVC(pvc *corev1.PersistentVolumeClaim) bool {
-	if pvc.Spec.Resources.Limits.Storage() == nil {
-		return false
-	}
-	if pvc.Spec.VolumeMode != nil && *pvc.Spec.VolumeMode != corev1.PersistentVolumeFilesystem {
-		return false
-	}
-	return true
-}
+
