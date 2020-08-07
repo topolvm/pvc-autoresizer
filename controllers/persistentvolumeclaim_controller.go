@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"errors"
+
 	storagev1 "k8s.io/api/storage/v1"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -42,6 +43,9 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 	err = r.Get(ctx, client.ObjectKey{Name: *pvc.Spec.StorageClassName}, &sc)
 	if err != nil {
 		return ctrl.Result{}, err
+	}
+	if val, ok := sc.Annotations[AutoResizeEnabledKey]; !ok || val != "true" {
+		return ctrl.Result{}, nil
 	}
 
 	return ctrl.Result{}, nil
