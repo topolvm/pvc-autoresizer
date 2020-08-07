@@ -28,7 +28,7 @@ So, PV should be automatically expanded based on PV usage.
 
 To expand PVC, pvc-autoresizer works as follows:
 
-1. Get target PVC information from the kube-api server.
+1. Get target PVC information from `kube-apiserver`.
 2. Get SC related to the PVC from the API server.
 3. Get metrics from Prometheus about storage.
 4. Expand PVC storage request size if PVC has less than the specified amount of free filesystem capacity. 
