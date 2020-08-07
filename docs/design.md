@@ -81,6 +81,6 @@ spec:
 - pvc-autoresizer increases PVC's `spec.resources.requests.storage` up to the given limits.
 - The threshold of free space is given by `resize.topolvm.io/threshold` annotation.
 - The amount of increased size can be specified by `resize.topolvm.io/increase` annotation.
-- The value of the annotations can be a ratio like 20% or a value like 10Gi.
-- The default value for both threshold and amount is 10%.
+- The value of the annotations can be a ratio like `20%` or a value like `10Gi`.
+- The default value for both threshold and amount is `10%`.
 - `spec.volumeMode` must be Filesystem (default is Filesystem).
