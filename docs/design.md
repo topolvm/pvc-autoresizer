@@ -6,6 +6,7 @@
 PersistentVolume(PV) is used to persist the data (ex. MySQL, Elasticsearch).
 These data size will increase in the future.
 It is difficult to estimate these in advance.
+Some CSI drivers support `VolumeExpansion`. However, it's labor-intensive to manage volume size manually.
 So, PV should be automatically expanded based on PV usage.
 
 ## Goal
