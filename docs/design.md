@@ -30,7 +30,7 @@ To expand PVC, pvc-autoresizer works as follows:
 
 1. Get target PVC information from `kube-apiserver`.
 2. Get SC related to the PVC from `kube-apiserver`.
-3. Get metrics from Prometheus about storage.
+3. Get filesystem usage metrics from Prometheus that scrapes the information from `kubelet`.
 4. Expand PVC storage request size if PVC has less than the specified amount of free filesystem capacity. 
 
 ### Details
