@@ -11,9 +11,9 @@ So, PV should be automatically expanded based on PV usage.
 
 ## Goal
 
-- Automatic resizing PersistentVolumeClaim(PVC).
-- Allow users to set parameters for automatically resizing using PVC annotations.
-- The target StorageClass(SC) can be specified using its annotations.
+- PersistentVolumeClaims(PVCs) are automatically got resized when they are running out of free space.
+- Users can configure resizing parameters for each PVC.
+- Users can enable this feature only for specific StorageClasses.
 
 ## Target
 
@@ -29,7 +29,7 @@ So, PV should be automatically expanded based on PV usage.
 To expand PVC, pvc-autoresizer works as follows:
 
 1. Get target PVC information from `kube-apiserver`.
-2. Get SC related to the PVC from `kube-apiserver`.
+2. Get StorageClass related to the PVC from `kube-apiserver`.
 3. Get filesystem usage metrics from Prometheus that scrapes the information from `kubelet`.
 4. Expand PVC storage request size if PVC has less than the specified amount of free filesystem capacity. 
 
@@ -51,10 +51,10 @@ volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 ```
 
-- To allow automatic resizing, SC must have `resize.topolvm.io/enabled` annotation. 
+- To allow automatic resizing, StorageClass must have `resize.topolvm.io/enabled` annotation. 
 - `allowVolumeExpansion` should be `true`.
 
-In addition to the SC, prepare PVC as follows:
+In addition to the StorageClass, prepare PVC as follows:
 
 ```yaml
 kind: PersistentVolumeClaim
@@ -76,7 +76,7 @@ spec:
   storageClassName: topolvm-provisioner
 ```
 
-- `spec.storageClassName` should be put above SC (in this case "topolvm-provisioner").
+- `spec.storageClassName` should be put above StorageClass (in this case "topolvm-provisioner").
 - To allow automatic resizing, PVC must have `spec.resources.limits.storage`.
 - pvc-autoresizer increases PVC's `spec.resources.requests.storage` up to the given limits.
 - The threshold of free space is given by `resize.topolvm.io/threshold` annotation.
