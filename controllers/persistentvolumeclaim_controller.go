@@ -25,6 +25,7 @@ type PersistentVolumeClaimReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
+	MetricsClient
 }
 
 // +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;update;patch
@@ -40,6 +41,15 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+
+	namespace, name := req.NamespacedName.Namespace, req.NamespacedName.Name
+	_, err = r.MetricsClient.GetMetrics(ctx, namespace, name)
+	if err == errNotFound {
+		return ctrl.Result{}, nil
+	}
+	// if err != nil {
+	// 	return ctrl.Result{}, err
+	// }
 
 	return ctrl.Result{}, nil
 }

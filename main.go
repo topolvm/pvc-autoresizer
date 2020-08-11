@@ -32,11 +32,13 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var watchInterval time.Duration
+	var prometheusUrl string
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.DurationVar(&watchInterval, "interval", 10*time.Second, "Interval to monitor pvc capacity.")
+	flag.StringVar(&prometheusUrl, "prometheus-url", "http://prometheus.prometheus.svc.cluster.local:9090", "Prometheus URL to query volume stats.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
@@ -53,10 +55,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	promClient, err := controllers.NewPrometheusClient(prometheusUrl)
+	if err != nil {
+		setupLog.Error(err, "unable to initialize prometheus client")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.PersistentVolumeClaimReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("PersistentVolumeClaim"),
-		Scheme: mgr.GetScheme(),
+		Client:        mgr.GetClient(),
+		Log:           ctrl.Log.WithName("controllers").WithName("PersistentVolumeClaim"),
+		Scheme:        mgr.GetScheme(),
+		MetricsClient: promClient,
 	}).SetupWithManager(mgr, watchInterval); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PersistentVolumeClaim")
 		os.Exit(1)
