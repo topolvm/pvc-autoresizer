@@ -43,15 +43,28 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 	}
 
 	namespace, name := req.NamespacedName.Namespace, req.NamespacedName.Name
-	_, err = r.MetricsClient.GetMetrics(ctx, namespace, name)
+	vs, err := r.MetricsClient.GetMetrics(ctx, namespace, name)
 	if err == errNotFound {
-		return ctrl.Result{}, nil
+		return ctrl.Result{
+			Requeue:      true,
+			RequeueAfter: 30 * time.Second,
+		}, nil
+	} else if err != nil {
+		return ctrl.Result{}, err
 	}
-	// if err != nil {
-	// 	return ctrl.Result{}, err
-	// }
+
+	threshold := convertSizeInBytes(pvc.Annotations[ResizeThreshold], vs.CapacityBytes)
+
+	if threshold < vs.AvailableBytes {
+	}
 
 	return ctrl.Result{}, nil
+}
+
+func convertSizeInBytes(varStr string, capacity int64) int64 {
+	if len(varStr)==0{
+		varStr=DefaultThreshold
+	}
 }
 
 func indexByResizeEnableAnnotation(obj runtime.Object) []string {
