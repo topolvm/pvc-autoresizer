@@ -14,6 +14,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
+const resizeEnableIndexKey = ".metadata.annotations.[resize.topolvm.io/enabled]"
+
 // PersistentVolumeClaimReconciler reconciles a PersistentVolumeClaim object
 type PersistentVolumeClaimReconciler struct {
 	client.Client
@@ -50,6 +52,15 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 	return ctrl.Result{}, nil
 }
 
+func indexByResizeEnableAnnotation(obj runtime.Object) []string {
+	sc := obj.(*storagev1.StorageClass)
+	if val, ok := sc.Annotations[AutoResizeEnabledKey]; ok {
+		return []string{val}
+	}
+
+	return []string{}
+}
+
 func (r *PersistentVolumeClaimReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	pred := predicate.Funcs{
 		CreateFunc:  func(e event.CreateEvent) bool { return true },
@@ -58,10 +69,13 @@ func (r *PersistentVolumeClaimReconciler) SetupWithManager(mgr ctrl.Manager) err
 		GenericFunc: func(event.GenericEvent) bool { return true },
 	}
 
+	err := mgr.GetFieldIndexer().IndexField(context.Background(), &storagev1.StorageClass{}, Auto, indexByOwnerTenant)
+	if err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.PersistentVolumeClaim{}).
 		WithEventFilter(pred).
 		Complete(r)
 }
-
-
