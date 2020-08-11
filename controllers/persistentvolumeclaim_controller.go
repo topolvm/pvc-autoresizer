@@ -2,19 +2,22 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
-
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
@@ -53,7 +56,14 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 
-	threshold := convertSizeInBytes(pvc.Annotations[ResizeThreshold], vs.CapacityBytes)
+	threshold, err := convertSizeInBytes(pvc.Annotations[ResizeThresholdAnnotation], vs.CapacityBytes, DefaultThreshold)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	_, err = convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], pvc.Spec.Resources.Limits.Storage().Value(), DefaultIncrease)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	if threshold < vs.AvailableBytes {
 	}
@@ -61,10 +71,32 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 	return ctrl.Result{}, nil
 }
 
-func convertSizeInBytes(varStr string, capacity int64) int64 {
-	if len(varStr)==0{
-		varStr=DefaultThreshold
+func convertSizeInBytes(valStr string, capacity int64, defaultVal string) (int64, error) {
+	if len(valStr) == 0 {
+		valStr = defaultVal
 	}
+
+	if strings.HasSuffix(valStr, "%") {
+		rate, err := strconv.ParseFloat(strings.TrimRight(valStr, "%"), 64)
+		if err != nil {
+			return 0, err
+		}
+		if rate < 0.0 || 100.0 < rate {
+			return 0, fmt.Errorf("annotation value should be between 0%% to 100%%: %s", valStr)
+		}
+
+		return int64(float64(capacity) * rate / 100.0), nil
+	}
+
+	quantity, err := resource.ParseQuantity(valStr)
+	if err != nil {
+		return 0, err
+	}
+	val := quantity.Value()
+	if val < 0 || capacity < val {
+		return 0, fmt.Errorf("annotation value should be between 0 to capacity value(%d): %s", capacity, valStr)
+	}
+	return val, nil
 }
 
 func indexByResizeEnableAnnotation(obj runtime.Object) []string {
