@@ -6,16 +6,18 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 )
 
-func newPVCWatcher(url string) (*pvcWatcher, error) {
+func newPVCWatcher(interval time.Duration) *pvcWatcher {
 	ch := make(chan event.GenericEvent)
 
 	return &pvcWatcher{
-		channel: ch,
-	}, nil
+		channel:  ch,
+		interval: interval,
+	}
 }
 
 func (w *pvcWatcher) InjectClient(c client.Client) error {
@@ -24,13 +26,14 @@ func (w *pvcWatcher) InjectClient(c client.Client) error {
 }
 
 type pvcWatcher struct {
-	channel chan event.GenericEvent
-	client  client.Client
+	channel  chan event.GenericEvent
+	client   client.Client
+	interval time.Duration
 }
 
 func (w *pvcWatcher) Start(ch <-chan struct{}) error {
-	ticker := time.NewTicker(10 * time.Second)
-	_ = context.Background()
+	ticker := time.NewTicker(w.interval)
+	ctx := context.Background()
 
 	defer ticker.Stop()
 	for {
@@ -38,12 +41,15 @@ func (w *pvcWatcher) Start(ch <-chan struct{}) error {
 		case <-ch:
 			return nil
 		case <-ticker.C:
-
+			err := w.notifyPVCEvent(ctx)
+			if err != nil {
+				return err
+			}
 		}
 	}
 }
 
-func filterPVC(pvc *corev1.PersistentVolumeClaim) bool {
+func isTargetPVC(pvc *corev1.PersistentVolumeClaim) bool {
 	if pvc.Spec.Resources.Limits.Storage() == nil {
 		return false
 	}
@@ -63,19 +69,28 @@ func (w *pvcWatcher) getStorageClassList(ctx context.Context) (*storagev1.Storag
 }
 
 func (w *pvcWatcher) notifyPVCEvent(ctx context.Context) error {
-	_, err := w.getStorageClassList(ctx)
+	scs, err := w.getStorageClassList(ctx)
 	if err != nil {
 		return err
 	}
 
+	for _, sc := range scs.Items {
+		var pvcs corev1.PersistentVolumeClaimList
+		err = w.client.List(ctx, &pvcs, client.MatchingFields(map[string]string{storageClassNameIndexKey: sc.Name}))
+		if err != nil {
+			return err
+		}
+		for _, pvc := range pvcs.Items {
+			if !isTargetPVC(&pvc) {
+				continue
+			}
+			w.channel <- event.GenericEvent{
+				Meta: &metav1.ObjectMeta{
+					Name:      pvc.Name,
+					Namespace: pvc.Namespace,
+				},
+			}
+		}
+	}
 	return nil
-
-	// var pvcs corev1.PersistentVolumeClaimList
-	// err := w.client.List(ctx, &pvcs)
-	// if err != nil {
-	// 	return ctrl.Result{}, err
-	// }
-	// if pvc.Spec.StorageClassName == nil {
-	// 	return ctrl.Result{}, errors.New("`pvc.spec.StorageClassName` should not be empty")
-	// }
 }

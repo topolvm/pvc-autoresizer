@@ -3,6 +3,9 @@ package controllers
 import (
 	"context"
 	"errors"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
+	"time"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +18,7 @@ import (
 )
 
 const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
+const storageClassNameIndexKey = ".spec.storageClassName"
 
 // PersistentVolumeClaimReconciler reconciles a PersistentVolumeClaim object
 type PersistentVolumeClaimReconciler struct {
@@ -61,7 +65,16 @@ func indexByResizeEnableAnnotation(obj runtime.Object) []string {
 	return []string{}
 }
 
-func (r *PersistentVolumeClaimReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func indexByStorageClassName(obj runtime.Object) []string {
+	pvc := obj.(*corev1.PersistentVolumeClaim)
+	scName := pvc.Spec.StorageClassName
+	if scName == nil {
+		return []string{}
+	}
+	return []string{*scName}
+}
+
+func (r *PersistentVolumeClaimReconciler) SetupWithManager(mgr ctrl.Manager, interval time.Duration) error {
 	pred := predicate.Funcs{
 		CreateFunc:  func(e event.CreateEvent) bool { return true },
 		DeleteFunc:  func(event.DeleteEvent) bool { return false },
@@ -74,8 +87,23 @@ func (r *PersistentVolumeClaimReconciler) SetupWithManager(mgr ctrl.Manager) err
 		return err
 	}
 
+	err = mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.PersistentVolumeClaim{}, storageClassNameIndexKey, indexByStorageClassName)
+	if err != nil {
+		return err
+	}
+
+	external := newPVCWatcher(interval)
+	err = mgr.Add(external)
+	if err != nil {
+		return err
+	}
+	src := source.Channel{
+		Source: external.channel,
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.PersistentVolumeClaim{}).
+		Watches(&src, &handler.EnqueueRequestForObject{}).
 		WithEventFilter(pred).
 		Complete(r)
 }
