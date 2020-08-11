@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"context"
-	"errors"
+	"time"
+
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -39,18 +39,6 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 	err := r.Get(ctx, req.NamespacedName, &pvc)
 	if err != nil {
 		return ctrl.Result{}, err
-	}
-	if pvc.Spec.StorageClassName == nil {
-		return ctrl.Result{}, errors.New("`pvc.spec.StorageClassName` should not be empty")
-	}
-
-	var sc storagev1.StorageClass
-	err = r.Get(ctx, client.ObjectKey{Name: *pvc.Spec.StorageClassName}, &sc)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-	if val, ok := sc.Annotations[AutoResizeEnabledKey]; !ok || val != "true" {
-		return ctrl.Result{}, nil
 	}
 
 	return ctrl.Result{}, nil
