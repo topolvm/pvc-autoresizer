@@ -60,12 +60,28 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	_, err = convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], pvc.Spec.Resources.Limits.Storage().Value(), DefaultIncrease)
+	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], pvc.Spec.Resources.Limits.Storage().Value(), DefaultIncrease)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if threshold < vs.AvailableBytes {
+	preCap, exist := pvc.Annotations[PreviousCapacityBytesAnnotation]
+	if exist {
+
+	} else {
+		if threshold > vs.AvailableBytes {
+			if pvc.Annotations == nil {
+				pvc.Annotations = make(map[string]string)
+			}
+			pvc.Annotations[PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
+			curReq := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
+			newReq := resource.NewQuantity(curReq.Value()+increase, resource.BinarySI)
+			limitRes := pvc.Spec.Resources.Limits[corev1.ResourceStorage]
+			if newReq.Cmp(pvc.Spec.Resources.Limits[corev1.ResourceStorage]) > 0 {
+				newReq = pvc.Spec.Resources.Limits[corev1.ResourceStorage]
+			}
+		}
+
 	}
 
 	return ctrl.Result{}, nil
