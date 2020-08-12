@@ -18,7 +18,7 @@ const (
 	volumeCapacityQuery  = "kubelet_volume_stats_capacity_bytes"
 )
 
-func newPrometheusClient(url string) (MetricsClient, error) {
+func NewPrometheusClient(url string) (MetricsClient, error) {
 
 	client, err := api.NewClient(api.Config{
 		Address: url,

@@ -36,7 +36,7 @@ type PersistentVolumeClaimReconciler struct {
 
 func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	_ = r.Log.WithValues("persistentvolumeclaim", req.NamespacedName)
+	log := r.Log.WithValues("persistentvolumeclaim", req.NamespacedName)
 
 	// your logic here
 	var pvc corev1.PersistentVolumeClaim
@@ -67,21 +67,48 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 
 	preCap, exist := pvc.Annotations[PreviousCapacityBytesAnnotation]
 	if exist {
-
-	} else {
-		if threshold > vs.AvailableBytes {
-			if pvc.Annotations == nil {
-				pvc.Annotations = make(map[string]string)
+		preCapInt64, err := strconv.ParseInt(preCap, 10, 64)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		if preCapInt64 != vs.CapacityBytes {
+			delete(pvc.Annotations, PreviousCapacityBytesAnnotation)
+			err = r.Client.Update(ctx, &pvc)
+			if err != nil {
+				return ctrl.Result{}, err
 			}
-			pvc.Annotations[PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
-			curReq := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
-			newReq := resource.NewQuantity(curReq.Value()+increase, resource.BinarySI)
-			limitRes := pvc.Spec.Resources.Limits[corev1.ResourceStorage]
-			if newReq.Cmp(pvc.Spec.Resources.Limits[corev1.ResourceStorage]) > 0 {
-				newReq = pvc.Spec.Resources.Limits[corev1.ResourceStorage]
-			}
+			log.Info("resize success!", "namespace", req.Namespace, "name", req.Name, "capacity", vs.CapacityBytes)
+			return ctrl.Result{}, nil
 		}
 
+		log.Info("wating for resizing...", "namespace", req.Namespace, "name", req.Name, "capacity", vs.CapacityBytes)
+		return ctrl.Result{
+			Requeue:      true,
+			RequeueAfter: 30 * time.Second,
+		}, nil
+	}
+
+	if threshold > vs.AvailableBytes {
+		if pvc.Annotations == nil {
+			pvc.Annotations = make(map[string]string)
+		}
+		curReq := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
+		newReq := resource.NewQuantity(curReq.Value()+increase, resource.BinarySI)
+		limitRes := pvc.Spec.Resources.Limits[corev1.ResourceStorage]
+		if curReq.Cmp(limitRes) == 0 {
+			return ctrl.Result{}, nil
+		}
+		if newReq.Cmp(limitRes) > 0 {
+			newReq = &limitRes
+		}
+
+		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = *newReq
+		pvc.Annotations[PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
+		err = r.Client.Update(ctx, &pvc)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		log.Info("resize started", "namespace", req.Namespace, "name", req.Name, "new capacity", newReq.Value())
 	}
 
 	return ctrl.Result{}, nil
