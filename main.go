@@ -13,7 +13,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/topolvm/pvc-autoresizer/controllers"
+	"github.com/topolvm/pvc-autoresizer/runners"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -61,22 +61,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	promClient, err := controllers.NewPrometheusClient(prometheusUrl)
+	promClient, err := runners.NewPrometheusClient(prometheusUrl)
 	if err != nil {
 		setupLog.Error(err, "unable to initialize prometheus client")
 		os.Exit(1)
 	}
 
-	if err = (&controllers.PersistentVolumeClaimReconciler{
-		Client:        mgr.GetClient(),
-		Log:           ctrl.Log.WithName("controllers").WithName("PersistentVolumeClaim"),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("pvc-autoresizer"),
-		MetricsClient: promClient,
-	}).SetupWithManager(mgr, watchInterval); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "PersistentVolumeClaim")
+	pvcAutoresizer := runners.NewPVCAutoresizer(promClient, watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
+	err = pvcAutoresizer.SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to initialize pvc autoresizer")
 		os.Exit(1)
 	}
+	mgr.Add(pvcAutoresizer)
+
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")

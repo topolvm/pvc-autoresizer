@@ -2,25 +2,35 @@ package runners
 
 import (
 	"context"
-	"github.com/go-logr/logr"
+	"fmt"
+	"math"
 	"strconv"
+	"strings"
 	"time"
 
-	"github.com/cybozu-go/log"
+	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 )
 
-func newPVCAutoresizer(interval time.Duration) *pvcAutoresizer {
-	ch := make(chan event.GenericEvent)
+// +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch
+
+const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
+const storageClassNameIndexKey = ".spec.storageClassName"
+
+func NewPVCAutoresizer(mc MetricsClient, interval time.Duration, recorder record.EventRecorder) *pvcAutoresizer {
 
 	return &pvcAutoresizer{
-		channel:  ch,
-		interval: interval,
+		metricsClient: mc,
+		interval:      interval,
+		recorder:      recorder,
 	}
 }
 
@@ -29,11 +39,17 @@ func (w *pvcAutoresizer) InjectClient(c client.Client) error {
 	return nil
 }
 
+func (w *pvcAutoresizer) InjectLogger(log logr.Logger) error {
+	w.log = log
+	return nil
+}
+
 type pvcAutoresizer struct {
-	channel       chan event.GenericEvent
 	client        client.Client
 	metricsClient MetricsClient
 	interval      time.Duration
+	log           logr.Logger
+	recorder      record.EventRecorder
 }
 
 func (w *pvcAutoresizer) Start(ch <-chan struct{}) error {
@@ -95,14 +111,26 @@ func (w *pvcAutoresizer) notifyPVCEvent(ctx context.Context) error {
 				continue
 			}
 			// TODO reconcile
-			resize(ctx,TODO)
+			namespacedName := types.NamespacedName{
+				Namespace: pvc.Namespace,
+				Name:      pvc.Name,
+			}
+			if _, ok := vsMap[namespacedName]; !ok {
+				continue
+			}
+			err = w.resize(ctx, &pvc, vsMap[namespacedName])
+			if err != nil {
+				// w.log.Error()
+				// TODO
+			}
 		}
 	}
 
-	return ctrl.Result{}, nil
+	return nil
 }
 
-func resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeStats) error {
+func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeStats) error {
+	log := w.log.WithName("resize").WithValues("namespace", pvc.Namespace, "name", pvc.Name)
 
 	threshold, err := convertSizeInBytes(pvc.Annotations[ResizeThresholdAnnotation], vs.CapacityBytes, DefaultThreshold)
 	if err != nil {
@@ -116,14 +144,11 @@ func resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeSt
 	if exist {
 		preCapInt64, err := strconv.ParseInt(preCap, 10, 64)
 		if err != nil {
-			return ctrl.Result{}, err
+			return err
 		}
 		if preCapInt64 == vs.CapacityBytes {
 			log.Info("waiting for resizing...", "capacity", vs.CapacityBytes)
-			return ctrl.Result{
-				Requeue:      true,
-				RequeueAfter: 30 * time.Second,
-			}, nil
+			return nil
 		}
 	}
 
@@ -135,7 +160,7 @@ func resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeSt
 		newReq := resource.NewQuantity(curReq.Value()+increase, resource.BinarySI)
 		limitRes := pvc.Spec.Resources.Limits[corev1.ResourceStorage]
 		if curReq.Cmp(limitRes) == 0 {
-			return ctrl.Result{}, nil
+			return nil
 		}
 		if newReq.Cmp(limitRes) > 0 {
 			newReq = &limitRes
@@ -143,11 +168,75 @@ func resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeSt
 
 		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = *newReq
 		pvc.Annotations[PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
-		err = r.Client.Update(ctx, &pvc)
+		err = w.client.Update(ctx, pvc)
 		if err != nil {
-			return ctrl.Result{}, err
+			return err
 		}
 		log.Info("resize started", "new capacity", newReq.Value())
-		r.Recorder.Eventf(&pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
+		w.recorder.Eventf(pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
 	}
+
+	return nil
+}
+
+func indexByResizeEnableAnnotation(obj runtime.Object) []string {
+	sc := obj.(*storagev1.StorageClass)
+	if val, ok := sc.Annotations[AutoResizeEnabledKey]; ok {
+		return []string{val}
+	}
+
+	return []string{}
+}
+
+func indexByStorageClassName(obj runtime.Object) []string {
+	pvc := obj.(*corev1.PersistentVolumeClaim)
+	scName := pvc.Spec.StorageClassName
+	if scName == nil {
+		return []string{}
+	}
+	return []string{*scName}
+}
+
+func (w *pvcAutoresizer) SetupWithManager(mgr ctrl.Manager) error {
+	err := mgr.GetFieldIndexer().IndexField(context.Background(), &storagev1.StorageClass{}, resizeEnableIndexKey, indexByResizeEnableAnnotation)
+	if err != nil {
+		return err
+	}
+
+	err = mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.PersistentVolumeClaim{}, storageClassNameIndexKey, indexByStorageClassName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func convertSizeInBytes(valStr string, capacity int64, defaultVal string) (int64, error) {
+	if len(valStr) == 0 {
+		valStr = defaultVal
+	}
+
+	if strings.HasSuffix(valStr, "%") {
+		rate, err := strconv.ParseFloat(strings.TrimRight(valStr, "%"), 64)
+		if err != nil {
+			return 0, err
+		}
+		if rate < 0.0 || 100.0 < rate {
+			return 0, fmt.Errorf("annotation value should be between 0%% to 100%%: %s", valStr)
+		}
+
+		// rounding up the result to Gi
+		res := int64(math.Ceil(float64(capacity)*rate/100.0/(1<<30))) << 30
+		return res, nil
+	}
+
+	quantity, err := resource.ParseQuantity(valStr)
+	if err != nil {
+		return 0, err
+	}
+	val := quantity.Value()
+	if val < 0 || capacity < val {
+		return 0, fmt.Errorf("annotation value should be between 0 to capacity value(%d): %s", capacity, valStr)
+	}
+	return val, nil
 }
