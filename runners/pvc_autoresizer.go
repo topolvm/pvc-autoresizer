@@ -25,26 +25,30 @@ import (
 const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
 const storageClassNameIndexKey = ".spec.storageClassName"
 
-func NewPVCAutoresizer(mc MetricsClient, interval time.Duration, recorder record.EventRecorder) *pvcAutoresizer {
+// NewPVCAutoresizer returns a new pvcAutoresizer struct
+func NewPVCAutoresizer(mc MetricsClient, interval time.Duration, recorder record.EventRecorder) *PVCAutoresizer {
 
-	return &pvcAutoresizer{
+	return &PVCAutoresizer{
 		metricsClient: mc,
 		interval:      interval,
 		recorder:      recorder,
 	}
 }
 
-func (w *pvcAutoresizer) InjectClient(c client.Client) error {
+// InjectClient implements inject.Client
+func (w *PVCAutoresizer) InjectClient(c client.Client) error {
 	w.client = c
 	return nil
 }
 
-func (w *pvcAutoresizer) InjectLogger(log logr.Logger) error {
+// InjectLogger implements inject.Logger
+func (w *PVCAutoresizer) InjectLogger(log logr.Logger) error {
 	w.log = log
 	return nil
 }
 
-type pvcAutoresizer struct {
+// PVCAutoresizer is a runner which resize PVC capacity automatically
+type PVCAutoresizer struct {
 	client        client.Client
 	metricsClient MetricsClient
 	interval      time.Duration
@@ -52,7 +56,8 @@ type pvcAutoresizer struct {
 	recorder      record.EventRecorder
 }
 
-func (w *pvcAutoresizer) Start(ch <-chan struct{}) error {
+// Start implements manager.Runnable
+func (w *PVCAutoresizer) Start(ch <-chan struct{}) error {
 	ticker := time.NewTicker(w.interval)
 	ctx := context.Background()
 
@@ -80,7 +85,7 @@ func isTargetPVC(pvc *corev1.PersistentVolumeClaim) bool {
 	return true
 }
 
-func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.StorageClassList, error) {
+func (w *PVCAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.StorageClassList, error) {
 	var scs storagev1.StorageClassList
 	err := w.client.List(ctx, &scs, client.MatchingFields(map[string]string{resizeEnableIndexKey: "true"}))
 	if err != nil {
@@ -89,7 +94,7 @@ func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.St
 	return &scs, nil
 }
 
-func (w *pvcAutoresizer) notifyPVCEvent(ctx context.Context) error {
+func (w *PVCAutoresizer) notifyPVCEvent(ctx context.Context) error {
 	scs, err := w.getStorageClassList(ctx)
 	if err != nil {
 		return err
@@ -128,20 +133,18 @@ func (w *pvcAutoresizer) notifyPVCEvent(ctx context.Context) error {
 	return nil
 }
 
-func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeStats) error {
+func (w *PVCAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeStats) error {
 	log := w.log.WithName("resize").WithValues("namespace", pvc.Namespace, "name", pvc.Name)
 
 	threshold, err := convertSizeInBytes(pvc.Annotations[ResizeThresholdAnnotation], vs.CapacityBytes, DefaultThreshold)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("[DEBUG] threshold is %d\n", threshold)
 
 	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], pvc.Spec.Resources.Limits.Storage().Value(), DefaultIncrease)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("[DEBUG] increase is %d\n", increase)
 
 	preCap, exist := pvc.Annotations[PreviousCapacityBytesAnnotation]
 	if exist {
@@ -201,7 +204,8 @@ func indexByStorageClassName(obj runtime.Object) []string {
 	return []string{*scName}
 }
 
-func (w *pvcAutoresizer) SetupWithManager(mgr ctrl.Manager) error {
+// SetupWithManager setup indices
+func (w *PVCAutoresizer) SetupWithManager(mgr ctrl.Manager) error {
 	err := mgr.GetFieldIndexer().IndexField(context.Background(), &storagev1.StorageClass{}, resizeEnableIndexKey, indexByResizeEnableAnnotation)
 	if err != nil {
 		return err

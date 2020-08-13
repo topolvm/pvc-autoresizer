@@ -33,18 +33,18 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var watchInterval time.Duration
-	var prometheusUrl string
+	var prometheusURL string
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.DurationVar(&watchInterval, "interval", 10*time.Second, "Interval to monitor pvc capacity.")
-	flag.StringVar(&prometheusUrl, "prometheus-url", "", "Prometheus URL to query volume stats.")
+	flag.StringVar(&prometheusURL, "prometheus-url", "", "Prometheus URL to query volume stats.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
-	if prometheusUrl == "" {
+	if prometheusURL == "" {
 		setupLog.Error(errors.New("prometheus-url is empty"), "prometheus-url is required")
 		os.Exit(1)
 	}
@@ -61,7 +61,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	promClient, err := runners.NewPrometheusClient(prometheusUrl)
+	promClient, err := runners.NewPrometheusClient(prometheusURL)
 	if err != nil {
 		setupLog.Error(err, "unable to initialize prometheus client")
 		os.Exit(1)

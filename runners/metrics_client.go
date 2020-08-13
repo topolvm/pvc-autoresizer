@@ -20,6 +20,7 @@ const (
 	volumeCapacityQuery  = "kubelet_volume_stats_capacity_bytes"
 )
 
+// NewPrometheusClient returns a new prometheusClient
 func NewPrometheusClient(url string) (MetricsClient, error) {
 
 	client, err := api.NewClient(api.Config{
@@ -35,10 +36,12 @@ func NewPrometheusClient(url string) (MetricsClient, error) {
 	}, nil
 }
 
+// MetricsClient is an interface for getting metrics
 type MetricsClient interface {
 	GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error)
 }
 
+// VolumeStats is a struct containing metrics used by pvc-autoresizer
 type VolumeStats struct {
 	AvailableBytes int64
 	UsedBytes      int64
