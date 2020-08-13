@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -47,7 +49,7 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 
 	namespace, name := req.NamespacedName.Namespace, req.NamespacedName.Name
 	vs, err := r.MetricsClient.GetMetrics(ctx, namespace, name)
-	if err == errNotFound {
+	if errors.Is(err, errNotFound) {
 		return ctrl.Result{
 			Requeue:      true,
 			RequeueAfter: 30 * time.Second,
@@ -71,21 +73,13 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		if preCapInt64 != vs.CapacityBytes {
-			delete(pvc.Annotations, PreviousCapacityBytesAnnotation)
-			err = r.Client.Update(ctx, &pvc)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-			log.Info("resize success!", "namespace", req.Namespace, "name", req.Name, "capacity", vs.CapacityBytes)
-			return ctrl.Result{}, nil
+		if preCapInt64 == vs.CapacityBytes {
+			log.Info("waiting for resizing...", "namespace", req.Namespace, "name", req.Name, "capacity", vs.CapacityBytes)
+			return ctrl.Result{
+				Requeue:      true,
+				RequeueAfter: 30 * time.Second,
+			}, nil
 		}
-
-		log.Info("wating for resizing...", "namespace", req.Namespace, "name", req.Name, "capacity", vs.CapacityBytes)
-		return ctrl.Result{
-			Requeue:      true,
-			RequeueAfter: 30 * time.Second,
-		}, nil
 	}
 
 	if threshold > vs.AvailableBytes {
@@ -128,7 +122,9 @@ func convertSizeInBytes(valStr string, capacity int64, defaultVal string) (int64
 			return 0, fmt.Errorf("annotation value should be between 0%% to 100%%: %s", valStr)
 		}
 
-		return int64(float64(capacity) * rate / 100.0), nil
+		// rounding up the result to Gi
+		res := int64(math.Ceil(float64(capacity)*rate/100.0/(1<<30))) << 30
+		return res, nil
 	}
 
 	quantity, err := resource.ParseQuantity(valStr)

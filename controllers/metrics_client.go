@@ -18,20 +18,6 @@ const (
 	volumeCapacityQuery  = "kubelet_volume_stats_capacity_bytes"
 )
 
-type MetricsClient interface {
-	GetMetrics(context.Context, string, string) (*VolumeStats, error)
-}
-
-type VolumeStats struct {
-	AvailableBytes int64
-	UsedBytes      int64
-	CapacityBytes  int64
-}
-
-type prometheusClient struct {
-	prometheusAPI prometheusv1.API
-}
-
 func NewPrometheusClient(url string) (MetricsClient, error) {
 
 	client, err := api.NewClient(api.Config{
@@ -45,6 +31,20 @@ func NewPrometheusClient(url string) (MetricsClient, error) {
 	return &prometheusClient{
 		prometheusAPI: v1api,
 	}, nil
+}
+
+type MetricsClient interface {
+	GetMetrics(ctx context.Context, namespace string, name string) (*VolumeStats, error)
+}
+
+type VolumeStats struct {
+	AvailableBytes int64
+	UsedBytes      int64
+	CapacityBytes  int64
+}
+
+type prometheusClient struct {
+	prometheusAPI prometheusv1.API
 }
 
 func (c *prometheusClient) GetMetrics(ctx context.Context, namespace, name string) (*VolumeStats, error) {
