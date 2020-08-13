@@ -3,6 +3,8 @@ package runners
 import (
 	"context"
 	"errors"
+	"fmt"
+	"k8s.io/apimachinery/pkg/types"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -34,7 +36,7 @@ func NewPrometheusClient(url string) (MetricsClient, error) {
 }
 
 type MetricsClient interface {
-	GetMetrics(ctx context.Context, namespace string, name string) (*VolumeStats, error)
+	GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error)
 }
 
 type VolumeStats struct {
@@ -47,41 +49,59 @@ type prometheusClient struct {
 	prometheusAPI prometheusv1.API
 }
 
-func (c *prometheusClient) GetMetrics(ctx context.Context, namespace, name string) (*VolumeStats, error) {
-	volumeStats := VolumeStats{}
+func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
+	volumeStatsMap := make(map[types.NamespacedName]*VolumeStats)
 	var err error
 
-	volumeStats.UsedBytes, err = c.getMetricValue(ctx, volumeUsedQuery, namespace, name)
+	usedBytes, err := c.getMetricValues(ctx, volumeUsedQuery)
 	if err != nil {
 		return nil, err
 	}
-	volumeStats.AvailableBytes, err = c.getMetricValue(ctx, volumeAvailableQuery, namespace, name)
+	availableBytes, err := c.getMetricValues(ctx, volumeAvailableQuery)
 	if err != nil {
 		return nil, err
 	}
-	volumeStats.CapacityBytes, err = c.getMetricValue(ctx, volumeCapacityQuery, namespace, name)
+	capacityBytes, err := c.getMetricValues(ctx, volumeCapacityQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	return &volumeStats, nil
+	for key, val := range usedBytes {
+		if _, ok := availableBytes[key]; !ok {
+			continue
+		}
+		if _, ok := capacityBytes[key]; !ok {
+			continue
+		}
+
+		vs := VolumeStats{
+			AvailableBytes: availableBytes[key],
+			UsedBytes:      val,
+			CapacityBytes:  capacityBytes[key],
+		}
+		volumeStatsMap[key] = &vs
+	}
+
+	return volumeStatsMap, nil
 }
 
-func (c *prometheusClient) getMetricValue(ctx context.Context, query, namespace, name string) (int64, error) {
+func (c *prometheusClient) getMetricValues(ctx context.Context, query string) (map[types.NamespacedName]int64, error) {
 	res, _, err := c.prometheusAPI.Query(ctx, query, time.Now())
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	if res.Type() == model.ValVector {
-		v := res.(model.Vector)
-		for _, val := range v {
-			if string(val.Metric["namespace"]) != namespace || string(val.Metric["persistentvolumeclaim"]) != name {
-				continue
-			}
-			return int64(val.Value), nil
-		}
+		return nil, fmt.Errorf("unknown response type: %s", res.Type().String())
 	}
-
-	return 0, errNotFound
+	resultMap := make(map[types.NamespacedName]int64)
+	vec := res.(model.Vector)
+	for _, val := range vec {
+		nn := types.NamespacedName{
+			Namespace: string(val.Metric["namespace"]),
+			Name:      string(val.Metric["persistentvolumeclaim"]),
+		}
+		resultMap[nn] = int64(val.Value)
+	}
+	return resultMap, nil
 }
