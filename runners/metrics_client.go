@@ -57,14 +57,19 @@ func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.Namespaced
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("[DEBUG] usedBytes is %v\n", usedBytes)
+
 	availableBytes, err := c.getMetricValues(ctx, volumeAvailableQuery)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("[DEBUG] availableBytes is %v=\n", availableBytes)
+
 	capacityBytes, err := c.getMetricValues(ctx, volumeCapacityQuery)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("[DEBUG] capacityBytes is %v\n", capacityBytes)
 
 	for key, val := range usedBytes {
 		if _, ok := availableBytes[key]; !ok {
@@ -91,7 +96,7 @@ func (c *prometheusClient) getMetricValues(ctx context.Context, query string) (m
 		return nil, err
 	}
 
-	if res.Type() == model.ValVector {
+	if res.Type() != model.ValVector {
 		return nil, fmt.Errorf("unknown response type: %s", res.Type().String())
 	}
 	resultMap := make(map[types.NamespacedName]int64)

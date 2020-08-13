@@ -71,7 +71,7 @@ func (w *pvcAutoresizer) Start(ch <-chan struct{}) error {
 }
 
 func isTargetPVC(pvc *corev1.PersistentVolumeClaim) bool {
-	if pvc.Spec.Resources.Limits.Storage() == nil {
+	if pvc.Spec.Resources.Limits.Storage().IsZero() {
 		return false
 	}
 	if pvc.Spec.VolumeMode != nil && *pvc.Spec.VolumeMode != corev1.PersistentVolumeFilesystem {
@@ -110,7 +110,6 @@ func (w *pvcAutoresizer) notifyPVCEvent(ctx context.Context) error {
 			if !isTargetPVC(&pvc) {
 				continue
 			}
-			// TODO reconcile
 			namespacedName := types.NamespacedName{
 				Namespace: pvc.Namespace,
 				Name:      pvc.Name,
@@ -120,8 +119,8 @@ func (w *pvcAutoresizer) notifyPVCEvent(ctx context.Context) error {
 			}
 			err = w.resize(ctx, &pvc, vsMap[namespacedName])
 			if err != nil {
-				// w.log.Error()
 				// TODO
+				return err
 			}
 		}
 	}
@@ -136,10 +135,14 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 	if err != nil {
 		return err
 	}
+	fmt.Printf("[DEBUG] threshold is %d\n", threshold)
+
 	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], pvc.Spec.Resources.Limits.Storage().Value(), DefaultIncrease)
 	if err != nil {
 		return err
 	}
+	fmt.Printf("[DEBUG] increase is %d\n", increase)
+
 	preCap, exist := pvc.Annotations[PreviousCapacityBytesAnnotation]
 	if exist {
 		preCapInt64, err := strconv.ParseInt(preCap, 10, 64)
@@ -172,7 +175,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		if err != nil {
 			return err
 		}
-		log.Info("resize started", "new capacity", newReq.Value())
+		log.Info("resize started", "current caapcity", curReq.Value(), "new capacity", newReq.Value())
 		w.recorder.Eventf(pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
 	}
 
