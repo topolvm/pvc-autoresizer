@@ -2,6 +2,7 @@ package runners
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	"strconv"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -79,7 +79,7 @@ func (w *pvcAutoresizer) notifyPVCEvent(ctx context.Context) error {
 		return err
 	}
 
-	vs, err := w.metricsClient.GetMetrics(ctx, namespace, name)
+	vsMap, err := w.metricsClient.GetMetrics(ctx)
 	if err != nil {
 		return err
 	}
@@ -94,14 +94,15 @@ func (w *pvcAutoresizer) notifyPVCEvent(ctx context.Context) error {
 			if !isTargetPVC(&pvc) {
 				continue
 			}
-			w.channel <- event.GenericEvent{
-				Meta: &metav1.ObjectMeta{
-					Name:      pvc.Name,
-					Namespace: pvc.Namespace,
-				},
-			}
+			// TODO reconcile
+			resize(ctx,TODO)
 		}
 	}
+
+	return ctrl.Result{}, nil
+}
+
+func resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeStats) error {
 
 	threshold, err := convertSizeInBytes(pvc.Annotations[ResizeThresholdAnnotation], vs.CapacityBytes, DefaultThreshold)
 	if err != nil {
@@ -149,6 +150,4 @@ func (w *pvcAutoresizer) notifyPVCEvent(ctx context.Context) error {
 		log.Info("resize started", "new capacity", newReq.Value())
 		r.Recorder.Eventf(&pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
 	}
-
-	return ctrl.Result{}, nil
 }
