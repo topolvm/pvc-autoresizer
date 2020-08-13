@@ -160,7 +160,8 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 			pvc.Annotations = make(map[string]string)
 		}
 		curReq := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
-		newReq := resource.NewQuantity(curReq.Value()+increase, resource.BinarySI)
+		newReqBytes := int64(math.Ceil(float64(curReq.Value()+increase)/(1<<30))) << 30
+		newReq := resource.NewQuantity(newReqBytes, resource.BinarySI)
 		limitRes := pvc.Spec.Resources.Limits[corev1.ResourceStorage]
 		if curReq.Cmp(limitRes) == 0 {
 			return nil
@@ -229,7 +230,7 @@ func convertSizeInBytes(valStr string, capacity int64, defaultVal string) (int64
 		}
 
 		// rounding up the result to Gi
-		res := int64(math.Ceil(float64(capacity)*rate/100.0/(1<<30))) << 30
+		res := int64(float64(capacity) * rate / 100.0)
 		return res, nil
 	}
 

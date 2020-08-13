@@ -57,19 +57,16 @@ func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.Namespaced
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("[DEBUG] usedBytes is %v\n", usedBytes)
 
 	availableBytes, err := c.getMetricValues(ctx, volumeAvailableQuery)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("[DEBUG] availableBytes is %v=\n", availableBytes)
 
 	capacityBytes, err := c.getMetricValues(ctx, volumeCapacityQuery)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("[DEBUG] capacityBytes is %v\n", capacityBytes)
 
 	for key, val := range usedBytes {
 		if _, ok := availableBytes[key]; !ok {
