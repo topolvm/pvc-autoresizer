@@ -73,7 +73,11 @@ func main() {
 		setupLog.Error(err, "unable to initialize pvc autoresizer")
 		os.Exit(1)
 	}
-	mgr.Add(pvcAutoresizer)
+	err = mgr.Add(pvcAutoresizer)
+	if err != nil {
+		setupLog.Error(err, "unable to add autoresier to manager")
+		os.Exit(1)
+	}
 
 	// +kubebuilder:scaffold:builder
 

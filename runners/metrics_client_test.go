@@ -1,9 +1,22 @@
 package runners
 
-import "context"
+import (
+	"context"
 
-type prometheusClientMock struct{}
+	"k8s.io/apimachinery/pkg/types"
+)
 
-func (c *prometheusClientMock) GetMetrics(ctx context.Context, namespace, name string) (*VolumeStats, error) {
-	return nil, nil
+type prometheusClientMock struct {
+	stats map[types.NamespacedName]*VolumeStats
+}
+
+func (c *prometheusClientMock) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
+	return c.stats, nil
+}
+
+func (c *prometheusClientMock) addResponse(key types.NamespacedName, stats *VolumeStats) {
+	if c.stats == nil {
+		c.stats = make(map[types.NamespacedName]*VolumeStats)
+	}
+	c.stats[key] = stats
 }

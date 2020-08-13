@@ -2,7 +2,6 @@ package runners
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -11,8 +10,6 @@ import (
 	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/types"
 )
-
-var errNotFound = errors.New("metrics not found")
 
 const (
 	volumeUsedQuery      = "kubelet_volume_stats_used_bytes"

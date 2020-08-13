@@ -69,6 +69,7 @@ func (w *PVCAutoresizer) Start(ch <-chan struct{}) error {
 		case <-ticker.C:
 			err := w.notifyPVCEvent(ctx)
 			if err != nil {
+				w.log.Error(err, "failed to notifyPVCEvent")
 				return err
 			}
 		}
