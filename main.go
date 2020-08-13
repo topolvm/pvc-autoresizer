@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"os"
 	"time"
@@ -38,10 +39,15 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.DurationVar(&watchInterval, "interval", 10*time.Second, "Interval to monitor pvc capacity.")
-	flag.StringVar(&prometheusUrl, "prometheus-url", "http://prometheus.prometheus.svc.cluster.local:9090", "Prometheus URL to query volume stats.")
+	flag.StringVar(&prometheusUrl, "prometheus-url", "", "Prometheus URL to query volume stats.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+
+	if prometheusUrl == "" {
+		setupLog.Error(errors.New("prometheus-url is empty"), "prometheus-url is required")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -65,6 +71,7 @@ func main() {
 		Client:        mgr.GetClient(),
 		Log:           ctrl.Log.WithName("controllers").WithName("PersistentVolumeClaim"),
 		Scheme:        mgr.GetScheme(),
+		Recorder:      mgr.GetEventRecorderFor("pvc-autoresizer"),
 		MetricsClient: promClient,
 	}).SetupWithManager(mgr, watchInterval); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PersistentVolumeClaim")

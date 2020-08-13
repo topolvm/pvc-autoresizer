@@ -14,8 +14,17 @@ endif
 all: manager
 
 # Run tests
-test: generate fmt vet manifests
-	go test ./... -coverprofile cover.out
+
+test: generate manifests
+	test -z "$$(gofmt -s -l . | grep -v '^vendor' | tee /dev/stderr)"
+	test -z "$$(golint $$(go list ./... | grep -v /vendor/) | tee /dev/stderr)"
+	test -z "$$(nilerr ./... 2>&1 | tee /dev/stderr)"
+	test -z "$$(custom-checker -restrictpkg.packages=html/template,log $$(go list -tags='$(GOTAGS)' ./... | grep -v /vendor/ ) 2>&1 | tee /dev/stderr)"
+	ineffassign .
+	go install ./...
+	go test -race -v ./...
+	go vet ./...
+	test -z "$$(go vet ./... | grep -v '^vendor' | tee /dev/stderr)"
 
 # Build manager binary
 manager: generate fmt vet

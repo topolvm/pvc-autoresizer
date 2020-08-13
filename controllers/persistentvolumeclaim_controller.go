@@ -14,6 +14,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -28,9 +29,10 @@ const storageClassNameIndexKey = ".spec.storageClassName"
 // PersistentVolumeClaimReconciler reconciles a PersistentVolumeClaim object
 type PersistentVolumeClaimReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
-	MetricsClient
+	Log           logr.Logger
+	Scheme        *runtime.Scheme
+	Recorder      record.EventRecorder
+	MetricsClient MetricsClient
 }
 
 // +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;update;patch
@@ -74,7 +76,7 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 			return ctrl.Result{}, err
 		}
 		if preCapInt64 == vs.CapacityBytes {
-			log.Info("waiting for resizing...", "namespace", req.Namespace, "name", req.Name, "capacity", vs.CapacityBytes)
+			log.Info("waiting for resizing...", "capacity", vs.CapacityBytes)
 			return ctrl.Result{
 				Requeue:      true,
 				RequeueAfter: 30 * time.Second,
@@ -102,7 +104,8 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(req ctrl.Request) (ctrl.Resu
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		log.Info("resize started", "namespace", req.Namespace, "name", req.Name, "new capacity", newReq.Value())
+		log.Info("resize started", "new capacity", newReq.Value())
+		r.Recorder.Eventf(&pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
 	}
 
 	return ctrl.Result{}, nil
@@ -158,9 +161,9 @@ func indexByStorageClassName(obj runtime.Object) []string {
 
 func (r *PersistentVolumeClaimReconciler) SetupWithManager(mgr ctrl.Manager, interval time.Duration) error {
 	pred := predicate.Funcs{
-		CreateFunc:  func(e event.CreateEvent) bool { return true },
+		CreateFunc:  func(e event.CreateEvent) bool { return false },
 		DeleteFunc:  func(event.DeleteEvent) bool { return false },
-		UpdateFunc:  func(e event.UpdateEvent) bool { return true },
+		UpdateFunc:  func(e event.UpdateEvent) bool { return false },
 		GenericFunc: func(event.GenericEvent) bool { return true },
 	}
 
