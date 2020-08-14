@@ -24,10 +24,12 @@ spec:
     spec:
       containers:
       - command:
-        - /manager
+        - /pvc-autoresizer
         args:
         - --enable-leader-election
-        image: controller:latest
+        - --prometheus-url=http://prometheus.prometheus.svc:9090
+        - --interval=10m
+        image: pvc-autoresizer:devel
         name: manager
         resources:
           limits:
