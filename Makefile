@@ -1,6 +1,3 @@
-
-# Image URL to use all building/pushing image targets
-IMG ?= quay.io/topolvm/pvc-autoresizer:0.1.0
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -15,6 +12,8 @@ CTRLTOOLS_VERSION = 0.3.0
 
 SUDO=sudo
 
+IMAGE_TAG ?= latest
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -25,7 +24,6 @@ endif
 all: manager
 
 # Run tests
-
 test: generate manifests
 	test -z "$$(gofmt -s -l . | grep -v '^vendor' | tee /dev/stderr)"
 	test -z "$$(golint $$(go list ./... | grep -v /vendor/) | tee /dev/stderr)"
@@ -55,7 +53,7 @@ uninstall: manifests
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests
-	cd config/manager && kustomize edit set image controller=${IMG}
+	cd config/manager && kustomize edit set image controller=$(IMAGE_PREFIX)pvc-autoresizer:devel
 	kustomize build config/default | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
@@ -75,12 +73,15 @@ generate:
 	controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 # Build the docker image
-docker-build: test
-	docker build . -t ${IMG}
+image:
+	docker build . -t $(IMAGE_PREFIX)pvc-autoresizer:devel
+
+tag:
+	docker tag $(IMAGE_PREFIX)pvc-autoresizer:devel $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
 
 # Push the docker image
-docker-push:
-	docker push ${IMG}
+push:
+	docker push $(IMAGE_PREFIX)pvc-auto-resizer:$(IMAGE_TAG)
 
 tools:
 	cd /tmp; env GOFLAGS= GO111MODULE=on go get golang.org/x/tools/cmd/goimports
@@ -99,4 +100,4 @@ setup: tools
 	$(SUDO) chmod a+x /usr/local/kubebuilder/bin/kustomize
 	cd /tmp; env GOFLAGS= GO111MODULE=on go get sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CTRLTOOLS_VERSION)
 
-.PHONY: all test run install uninstall deploy manifests generate docker-build docker-push tools setup
+.PHONY: all test run install uninstall deploy manifests generate image tag push tools setup
