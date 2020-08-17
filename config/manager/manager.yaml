@@ -27,8 +27,8 @@ spec:
         - /pvc-autoresizer
         args:
         - --enable-leader-election
-        - --prometheus-url=http://prometheus.prometheus.svc:9090
-        - --interval=10m
+        - --prometheus-url=http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090
+        - --interval=10s
         image: pvc-autoresizer:devel
         name: manager
         resources:

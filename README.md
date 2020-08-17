@@ -81,3 +81,10 @@ spec:
 When the amount of free space of the volume is smaller than `resize.topolvm.io/threshold`,
 the `.spec.resources.requests.storage` size will be increased by `resize.topolvm.io/increase`.
 The maximum size is specified by `.spec.resources.limits.storage`.
+
+Container images
+----------------
+
+Container images are available on [Quay.io](https://quay.io/repository/topolvm/pvc-autoresizer)
+
+[releases]: https://github.com/topolvm/pvc-autoresizer/releases
