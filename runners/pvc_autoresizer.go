@@ -100,22 +100,14 @@ func (w *PVCAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.St
 }
 
 func (w *PVCAutoresizer) notifyPVCEvent(ctx context.Context) error {
-	log := w.log.WithName("notifyPVCEvent")
-	log.Info("notifyPVCEvent")
 	scs, err := w.getStorageClassList(ctx)
 	if err != nil {
 		return err
-	}
-	if len(scs.Items) == 0 {
-		log.Info("scs is empty")
 	}
 
 	vsMap, err := w.metricsClient.GetMetrics(ctx)
 	if err != nil {
 		return err
-	}
-	if len(vsMap) == 0 {
-		log.Info("stats is empty")
 	}
 
 	for _, sc := range scs.Items {
@@ -126,7 +118,6 @@ func (w *PVCAutoresizer) notifyPVCEvent(ctx context.Context) error {
 		}
 		for _, pvc := range pvcs.Items {
 			if !isTargetPVC(&pvc) {
-				log.Info("not target pvc", "pvc", pvc)
 				continue
 			}
 			namespacedName := types.NamespacedName{
@@ -134,7 +125,6 @@ func (w *PVCAutoresizer) notifyPVCEvent(ctx context.Context) error {
 				Name:      pvc.Name,
 			}
 			if _, ok := vsMap[namespacedName]; !ok {
-				log.Info("does not have stats", "pvc", pvc)
 				continue
 			}
 			err = w.resize(ctx, &pvc, vsMap[namespacedName])

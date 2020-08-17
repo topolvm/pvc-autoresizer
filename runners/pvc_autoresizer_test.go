@@ -103,28 +103,154 @@ var _ = Describe("test resizer", func() {
 
 	Context("resize", func() {
 		ctx := context.Background()
-		scName := "test-storageclass"
 		provName := "test-provisioner"
 		pvcNS := "default"
-		pvcName := "tset-pvc1"
 
 		It("should resize PVC", func() {
+			scName := "test-storageclass1"
+			pvcName := "tset-pvc1"
 			createStorageClass(ctx, scName, provName, true)
-			createPVC(ctx, pvcNS, pvcName, scName, "50%", "20Gi", 10<<30, 100<<30)
-			setMetrics(pvcNS, pvcName, 2<<30, 8<<30, 10<<30)
+			createPVC(ctx, pvcNS, pvcName, scName, "50%", "20Gi", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
 
-			Eventually(func() error {
-				var pvc corev1.PersistentVolumeClaim
-				err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
-				if err != nil {
-					return err
-				}
-				req := pvc.Spec.Resources.Requests.Storage().Value()
-				if req != 30<<30 {
-					return fmt.Errorf("request size should be %d, but %d", 30<<30, req)
-				}
-				return nil
-			}, 10*time.Second).ShouldNot(HaveOccurred())
+			By("60% available", func() {
+				setMetrics(pvcNS, pvcName, 6<<30, 4<<30, 10<<30)
+				Consistently(func() error {
+					var pvc corev1.PersistentVolumeClaim
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+					if err != nil {
+						return err
+					}
+					req := pvc.Spec.Resources.Requests.Storage().Value()
+					if req != 10<<30 {
+						return fmt.Errorf("request size should be %d, but %d", 10<<30, req)
+					}
+					return nil
+				}, 3*time.Second).ShouldNot(HaveOccurred())
+			})
+
+			By("30% available", func() {
+				setMetrics(pvcNS, pvcName, 3<<30, 7<<30, 10<<30)
+				Eventually(func() error {
+					var pvc corev1.PersistentVolumeClaim
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+					if err != nil {
+						return err
+					}
+					req := pvc.Spec.Resources.Requests.Storage().Value()
+					if req != 30<<30 {
+						return fmt.Errorf("request size should be %d, but %d", 30<<30, req)
+					}
+					return nil
+				}, 3*time.Second).ShouldNot(HaveOccurred())
+			})
+		})
+
+		It("should resize PVC by default settings", func() {
+			scName := "test-storageclass2"
+			pvcName := "tset-pvc2"
+			createStorageClass(ctx, scName, provName, true)
+			createPVC(ctx, pvcNS, pvcName, scName, "", "", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
+
+			By("20% available", func() {
+				setMetrics(pvcNS, pvcName, 2<<30, 8<<30, 10<<30)
+				Consistently(func() error {
+					var pvc corev1.PersistentVolumeClaim
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+					if err != nil {
+						return err
+					}
+					req := pvc.Spec.Resources.Requests.Storage().Value()
+					if req != 10<<30 {
+						return fmt.Errorf("request size should be %d, but %d", 10<<30, req)
+					}
+					return nil
+				}, 3*time.Second).ShouldNot(HaveOccurred())
+			})
+
+			By("10% available", func() {
+				setMetrics(pvcNS, pvcName, (1<<30)-1, (9<<30)+1, 10<<30)
+				Eventually(func() error {
+					var pvc corev1.PersistentVolumeClaim
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+					if err != nil {
+						return err
+					}
+					req := pvc.Spec.Resources.Requests.Storage().Value()
+					if req != 20<<30 {
+						return fmt.Errorf("request size should be %d, but %d", 20<<30, req)
+					}
+					return nil
+				}, 3*time.Second).ShouldNot(HaveOccurred())
+			})
+		})
+
+		It("should not resize PVC without limit", func() {
+			scName := "test-storageclass3"
+			pvcName := "tset-pvc3"
+			createStorageClass(ctx, scName, provName, true)
+			createPVC(ctx, pvcNS, pvcName, scName, "20%", "10Gi", 10<<30, 0, corev1.PersistentVolumeFilesystem)
+
+			By("10% available", func() {
+				setMetrics(pvcNS, pvcName, 1<<30, 9<<30, 10<<30)
+				Consistently(func() error {
+					var pvc corev1.PersistentVolumeClaim
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+					if err != nil {
+						return err
+					}
+					req := pvc.Spec.Resources.Requests.Storage().Value()
+					if req != 10<<30 {
+						return fmt.Errorf("request size should be %d, but %d", 10<<30, req)
+					}
+					return nil
+				}, 3*time.Second).ShouldNot(HaveOccurred())
+			})
+		})
+
+		It("should not resize PVC without available StorageClass", func() {
+			scName := "test-storageclass4"
+			pvcName := "tset-pvc4"
+			createStorageClass(ctx, scName, provName, false)
+			createPVC(ctx, pvcNS, pvcName, scName, "20%", "10Gi", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
+
+			By("10% available", func() {
+				setMetrics(pvcNS, pvcName, 1<<30, 9<<30, 10<<30)
+				Consistently(func() error {
+					var pvc corev1.PersistentVolumeClaim
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+					if err != nil {
+						return err
+					}
+					req := pvc.Spec.Resources.Requests.Storage().Value()
+					if req != 10<<30 {
+						return fmt.Errorf("request size should be %d, but %d", 10<<30, req)
+					}
+					return nil
+				}, 3*time.Second).ShouldNot(HaveOccurred())
+			})
+		})
+
+		It("should not resize PVC with Block mode", func() {
+			scName := "test-storageclass5"
+			pvcName := "tset-pvc5"
+			createStorageClass(ctx, scName, provName, true)
+			createPVC(ctx, pvcNS, pvcName, scName, "20%", "10Gi", 10<<30, 100<<30, corev1.PersistentVolumeBlock)
+
+			By("10% available", func() {
+				setMetrics(pvcNS, pvcName, 1<<30, 9<<30, 10<<30)
+				Consistently(func() error {
+					var pvc corev1.PersistentVolumeClaim
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+					if err != nil {
+						return err
+					}
+					req := pvc.Spec.Resources.Requests.Storage().Value()
+					if req != 10<<30 {
+						return fmt.Errorf("request size should be %d, but %d", 10<<30, req)
+					}
+					return nil
+				}, 3*time.Second).ShouldNot(HaveOccurred())
+			})
 		})
 	})
 })
@@ -147,29 +273,38 @@ func createStorageClass(ctx context.Context, name, provisioner string, enabled b
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func createPVC(ctx context.Context, ns, name, scName, threshold, increase string, request, limit int64) {
+func createPVC(ctx context.Context, ns, name, scName, threshold, increase string, request, limit int64, mode corev1.PersistentVolumeMode) {
 	pvc := corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns,
-			Annotations: map[string]string{
-				ResizeThresholdAnnotation: threshold,
-				ResizeIncreaseAnnotation:  increase,
-			},
+			Name:        name,
+			Namespace:   ns,
+			Annotations: map[string]string{},
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			Resources: corev1.ResourceRequirements{
-				Limits: map[corev1.ResourceName]resource.Quantity{
-					corev1.ResourceStorage: *resource.NewQuantity(limit, resource.BinarySI),
-				},
 				Requests: map[corev1.ResourceName]resource.Quantity{
 					corev1.ResourceStorage: *resource.NewQuantity(request, resource.BinarySI),
 				},
 			},
 			AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 			StorageClassName: &scName,
+			VolumeMode:       &mode,
 		},
 	}
+
+	if len(threshold) != 0 {
+		pvc.Annotations[ResizeThresholdAnnotation] = threshold
+	}
+	if len(increase) != 0 {
+		pvc.Annotations[ResizeIncreaseAnnotation] = increase
+	}
+
+	if limit != 0 {
+		pvc.Spec.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
+			corev1.ResourceStorage: *resource.NewQuantity(limit, resource.BinarySI),
+		}
+	}
+
 	err := k8sClient.Create(ctx, &pvc)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -179,7 +314,7 @@ func createPVC(ctx context.Context, ns, name, scName, threshold, increase string
 }
 
 func setMetrics(ns, name string, available, used, capacity int64) {
-	promClient.addResponse(types.NamespacedName{
+	promClient.setResponce(types.NamespacedName{
 		Namespace: ns,
 		Name:      name,
 	}, &VolumeStats{
