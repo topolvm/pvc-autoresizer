@@ -141,12 +141,14 @@ func (w *PVCAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 	threshold, err := convertSizeInBytes(pvc.Annotations[ResizeThresholdAnnotation], vs.CapacityBytes, DefaultThreshold)
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert threshold annotation", "error", err.Error())
+		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
 		return nil
 	}
 
 	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], pvc.Spec.Resources.Limits.Storage().Value(), DefaultIncrease)
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert increase annotation", "error", err.Error())
+		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
 		return nil
 	}
 
@@ -155,6 +157,7 @@ func (w *PVCAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		preCapInt64, err := strconv.ParseInt(preCap, 10, 64)
 		if err != nil {
 			log.V(logLevelWarn).Info("failed to parse pre_cap_bytes annotation", "error", err.Error())
+			// lint:ignore nilerr ignores this because invalid annotations should be allowed.
 			return nil
 		}
 		if preCapInt64 == vs.CapacityBytes {
