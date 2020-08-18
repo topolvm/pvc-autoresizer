@@ -9,6 +9,7 @@ COPY vendor/ vendor/
 # Copy the go source
 COPY main.go main.go
 COPY runners/ runners/
+COPY cmd/ cmd/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o pvc-autoresizer main.go
@@ -17,6 +18,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a
 FROM scratch
 WORKDIR /
 COPY --from=builder /workspace/pvc-autoresizer .
+EXPOSE 8080
 USER 10000:10000
 
 ENTRYPOINT ["/pvc-autoresizer"]
