@@ -1,0 +1,35 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: resizable-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+    limits:
+      storage: 10Gi
+  storageClassName: topolvm-provisioner
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: example-pod
+  labels:
+    app.kubernetes.io/name: example-pod
+  annotations:
+    resize.topolvm.io/threshold: 20%
+    resize.topolvm.io/increase: 2Gi
+spec:
+  containers:
+  - name: ubuntu
+    image: quay.io/cybozu/ubuntu:18.04
+    command: ["/usr/local/bin/pause"]
+    volumeMounts:
+    - mountPath: /test1
+      name: my-volume
+  volumes:
+    - name: my-volume
+      persistentVolumeClaim:
+        claimName: resizable-pvc

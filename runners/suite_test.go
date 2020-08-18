@@ -1,14 +1,17 @@
-package controllers
+package runners
 
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes/scheme"
+	storagev1 "k8s.io/api/storage/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
@@ -23,8 +26,9 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var promClient = prometheusClientMock{}
 
-func TestAPIs(t *testing.T) {
+func TestRunners(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecsWithDefaultAndCustomReporters(t,
@@ -33,7 +37,7 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func(done Done) {
-	logf.SetLogger(zap.LoggerTo(GinkgoWriter, true))
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter)))
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -45,15 +49,34 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cfg).ToNot(BeNil())
 
-	err = corev1.AddToScheme(scheme.Scheme)
+	scheme := runtime.NewScheme()
+	err = corev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = corev1.AddToScheme(scheme.Scheme)
+	err = storagev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:scheme
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: scheme,
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	pvcAutoresizer := NewPVCAutoresizer(&promClient, 1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer"))
+	err = pvcAutoresizer.SetupWithManager(mgr)
+	Expect(err).ToNot(HaveOccurred())
+	err = mgr.Add(pvcAutoresizer)
+	Expect(err).ToNot(HaveOccurred())
+
+	go func() {
+		err = mgr.Start(ctrl.SetupSignalHandler())
+		if err != nil {
+			mgr.GetLogger().Error(err, "failed to start manager")
+		}
+	}()
+
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
 

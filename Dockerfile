@@ -1,27 +1,24 @@
-# Build the manager binary
+# Stage1: Build the pvc-autoresizer binary
 FROM golang:1.13 as builder
 
 WORKDIR /workspace
-# Copy the Go Modules manifests
+
 COPY go.mod go.mod
 COPY go.sum go.sum
-# cache deps before building and copying source so that we don't need to re-download as much
-# and so that source changes don't invalidate our downloaded layer
-RUN go mod download
-
+COPY vendor/ vendor/
 # Copy the go source
 COPY main.go main.go
-COPY api/ api/
-COPY controllers/ controllers/
+COPY runners/ runners/
+COPY cmd/ cmd/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o pvc-autoresizer main.go
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+# Stage2: setup runtime container
+FROM scratch
 WORKDIR /
-COPY --from=builder /workspace/manager .
-USER nonroot:nonroot
+COPY --from=builder /workspace/pvc-autoresizer .
+EXPOSE 8080
+USER 10000:10000
 
-ENTRYPOINT ["/manager"]
+ENTRYPOINT ["/pvc-autoresizer"]
