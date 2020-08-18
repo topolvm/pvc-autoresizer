@@ -128,7 +128,10 @@ func (w *PVCAutoresizer) reconcile(ctx context.Context) error {
 			if _, ok := vsMap[namespacedName]; !ok {
 				continue
 			}
-			return w.resize(ctx, &pvc, vsMap[namespacedName])
+			err = w.resize(ctx, &pvc, vsMap[namespacedName])
+			if err != nil {
+				return err
+			}
 		}
 	}
 
