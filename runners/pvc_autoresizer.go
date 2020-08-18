@@ -25,6 +25,7 @@ import (
 
 const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
 const storageClassNameIndexKey = ".spec.storageClassName"
+const logLevelWarn = 3
 
 // NewPVCAutoresizer returns a new pvcAutoresizer struct
 func NewPVCAutoresizer(mc MetricsClient, interval time.Duration, recorder record.EventRecorder) *PVCAutoresizer {
@@ -68,9 +69,9 @@ func (w *PVCAutoresizer) Start(ch <-chan struct{}) error {
 		case <-ch:
 			return nil
 		case <-ticker.C:
-			err := w.notifyPVCEvent(ctx)
+			err := w.reconcile(ctx)
 			if err != nil {
-				w.log.Error(err, "failed to notifyPVCEvent")
+				w.log.Error(err, "failed to reconcile")
 				return err
 			}
 		}
@@ -99,7 +100,7 @@ func (w *PVCAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.St
 	return &scs, nil
 }
 
-func (w *PVCAutoresizer) notifyPVCEvent(ctx context.Context) error {
+func (w *PVCAutoresizer) reconcile(ctx context.Context) error {
 	scs, err := w.getStorageClassList(ctx)
 	if err != nil {
 		return err
@@ -127,11 +128,7 @@ func (w *PVCAutoresizer) notifyPVCEvent(ctx context.Context) error {
 			if _, ok := vsMap[namespacedName]; !ok {
 				continue
 			}
-			err = w.resize(ctx, &pvc, vsMap[namespacedName])
-			if err != nil {
-				// TODO
-				return err
-			}
+			return w.resize(ctx, &pvc, vsMap[namespacedName])
 		}
 	}
 
@@ -143,19 +140,22 @@ func (w *PVCAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 
 	threshold, err := convertSizeInBytes(pvc.Annotations[ResizeThresholdAnnotation], vs.CapacityBytes, DefaultThreshold)
 	if err != nil {
-		return err
+		log.V(logLevelWarn).Info("failed to convert threshold annotation", "error", err.Error())
+		return nil
 	}
 
 	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], pvc.Spec.Resources.Limits.Storage().Value(), DefaultIncrease)
 	if err != nil {
-		return err
+		log.V(logLevelWarn).Info("failed to convert increase annotation", "error", err.Error())
+		return nil
 	}
 
 	preCap, exist := pvc.Annotations[PreviousCapacityBytesAnnotation]
 	if exist {
 		preCapInt64, err := strconv.ParseInt(preCap, 10, 64)
 		if err != nil {
-			return err
+			log.V(logLevelWarn).Info("failed to parse pre_cap_bytes annotation", "error", err.Error())
+			return nil
 		}
 		if preCapInt64 == vs.CapacityBytes {
 			log.Info("waiting for resizing...", "capacity", vs.CapacityBytes)
@@ -184,7 +184,7 @@ func (w *PVCAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		if err != nil {
 			return err
 		}
-		log.Info("resize started", "current caapcity", curReq.Value(), "new capacity", newReq.Value())
+		log.Info("resize started", "old capacity", curReq.Value(), "new capacity", newReq.Value())
 		w.recorder.Eventf(pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
 	}
 

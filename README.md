@@ -55,7 +55,7 @@ allowVolumeExpansion: true
 ```
 
 The PVC to be resized must have `.spec.resources.limits.storage` and must be `volumeMode: Filesystem`.
-The PVC can have `resize.topolvm.io/threshold` and `resize.topolvm.io/increase` annotation.
+The PVC can optionally have `resize.topolvm.io/threshold` and `resize.topolvm.io/increase` annotations.
 (If they are not given, the default value is `10%`.)
 
 ```yaml

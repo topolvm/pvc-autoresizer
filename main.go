@@ -31,14 +31,10 @@ func init() {
 
 func main() {
 	var metricsAddr string
-	var enableLeaderElection bool
 	var watchInterval time.Duration
 	var prometheusURL string
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	flag.DurationVar(&watchInterval, "interval", 10*time.Second, "Interval to monitor pvc capacity.")
+	flag.DurationVar(&watchInterval, "interval", 1*time.Minute, "Interval to monitor pvc capacity.")
 	flag.StringVar(&prometheusURL, "prometheus-url", "", "Prometheus URL to query volume stats.")
 	flag.Parse()
 
@@ -53,7 +49,7 @@ func main() {
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
-		LeaderElection:     enableLeaderElection,
+		LeaderElection:     true,
 		LeaderElectionID:   "49e22f61.topolvm.io",
 	})
 	if err != nil {
