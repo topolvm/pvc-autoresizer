@@ -13,6 +13,7 @@ CTRLTOOLS_VERSION = 0.3.0
 SUDO=sudo
 
 IMAGE_TAG ?= latest
+IMAGE_PREFIX ?= quay.io/topolvm/
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -45,7 +46,7 @@ run: generate fmt vet manifests
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests
-	cd config/manager && kustomize edit set image controller=$(IMAGE_PREFIX)pvc-autoresizer:devel
+	cd config/manager && kustomize edit set image pvc-autoresizer=$(IMAGE_PREFIX)pvc-autoresizer:devel
 	kustomize build config/default | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
