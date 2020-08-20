@@ -7,7 +7,7 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
-## [0.1.0] - 2020/08/19
+## [0.1.0] - 2020-08-20
 
 This is the first release.
 
