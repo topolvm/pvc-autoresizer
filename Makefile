@@ -74,7 +74,7 @@ tag:
 
 # Push the docker image
 push:
-	docker push $(IMAGE_PREFIX)pvc-auto-resizer:$(IMAGE_TAG)
+	docker push $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
 
 tools:
 	cd /tmp; env GOFLAGS= GO111MODULE=on go get golang.org/x/tools/cmd/goimports
