@@ -4,7 +4,6 @@ FROM golang:1.13 as builder
 WORKDIR /workspace
 
 COPY go.mod go.mod
-COPY go.sum go.sum
 COPY vendor/ vendor/
 # Copy the go source
 COPY main.go main.go

@@ -16,3 +16,4 @@ jobs:
       - run: make setup
       - run: make
       - run: make test
+      - run: make image
