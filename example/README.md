@@ -45,7 +45,7 @@ kubectl annotate storageclass topolvm-provisioner resize.topolvm.io/enabled=true
 Deploy a Pod and PVC to be resized:
 
 ```
-kubectl exec -it example-pod bash
+kubectl apply -f podpvc.yaml
 ```
 
 ## Resizing PVC
