@@ -17,20 +17,21 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-// +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch
-// +kubebuilder:rbac:groups=core,resources=events,verbs=get;list;watch;create
+// +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create
 
 const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
 const storageClassNameIndexKey = ".spec.storageClassName"
 const logLevelWarn = 3
 
 // NewPVCAutoresizer returns a new pvcAutoresizer struct
-func NewPVCAutoresizer(mc MetricsClient, interval time.Duration, recorder record.EventRecorder) *PVCAutoresizer {
+func NewPVCAutoresizer(mc MetricsClient, interval time.Duration, recorder record.EventRecorder) manager.Runnable {
 
-	return &PVCAutoresizer{
+	return &pvcAutoresizer{
 		metricsClient: mc,
 		interval:      interval,
 		recorder:      recorder,
@@ -38,19 +39,18 @@ func NewPVCAutoresizer(mc MetricsClient, interval time.Duration, recorder record
 }
 
 // InjectClient implements inject.Client
-func (w *PVCAutoresizer) InjectClient(c client.Client) error {
+func (w *pvcAutoresizer) InjectClient(c client.Client) error {
 	w.client = c
 	return nil
 }
 
 // InjectLogger implements inject.Logger
-func (w *PVCAutoresizer) InjectLogger(log logr.Logger) error {
+func (w *pvcAutoresizer) InjectLogger(log logr.Logger) error {
 	w.log = log
 	return nil
 }
 
-// PVCAutoresizer is a runner which resize PVC capacity automatically
-type PVCAutoresizer struct {
+type pvcAutoresizer struct {
 	client        client.Client
 	metricsClient MetricsClient
 	interval      time.Duration
@@ -59,7 +59,7 @@ type PVCAutoresizer struct {
 }
 
 // Start implements manager.Runnable
-func (w *PVCAutoresizer) Start(ch <-chan struct{}) error {
+func (w *pvcAutoresizer) Start(ch <-chan struct{}) error {
 	ticker := time.NewTicker(w.interval)
 	ctx := context.Background()
 
@@ -91,7 +91,7 @@ func isTargetPVC(pvc *corev1.PersistentVolumeClaim) bool {
 	return true
 }
 
-func (w *PVCAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.StorageClassList, error) {
+func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.StorageClassList, error) {
 	var scs storagev1.StorageClassList
 	err := w.client.List(ctx, &scs, client.MatchingFields(map[string]string{resizeEnableIndexKey: "true"}))
 	if err != nil {
@@ -100,7 +100,7 @@ func (w *PVCAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.St
 	return &scs, nil
 }
 
-func (w *PVCAutoresizer) reconcile(ctx context.Context) error {
+func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 	scs, err := w.getStorageClassList(ctx)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func (w *PVCAutoresizer) reconcile(ctx context.Context) error {
 	return nil
 }
 
-func (w *PVCAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeStats) error {
+func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeStats) error {
 	log := w.log.WithName("resize").WithValues("namespace", pvc.Namespace, "name", pvc.Name)
 
 	threshold, err := convertSizeInBytes(pvc.Annotations[ResizeThresholdAnnotation], vs.CapacityBytes, DefaultThreshold)
@@ -215,8 +215,8 @@ func indexByStorageClassName(obj runtime.Object) []string {
 	return []string{*scName}
 }
 
-// SetupWithManager setup indices
-func (w *PVCAutoresizer) SetupWithManager(mgr ctrl.Manager) error {
+// SetupIndexer setup indices for PVC auto resizer
+func SetupIndexer(mgr ctrl.Manager) error {
 	err := mgr.GetFieldIndexer().IndexField(context.Background(), &storagev1.StorageClass{}, resizeEnableIndexKey, indexByResizeEnableAnnotation)
 	if err != nil {
 		return err
