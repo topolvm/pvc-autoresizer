@@ -4,14 +4,13 @@ FROM golang:1.13 as builder
 WORKDIR /workspace
 
 COPY go.mod go.mod
-COPY vendor/ vendor/
 # Copy the go source
 COPY main.go main.go
 COPY runners/ runners/
 COPY cmd/ cmd/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o pvc-autoresizer main.go
+RUN CGO_ENABLED=0 GO111MODULE=on go build -a -o pvc-autoresizer main.go
 
 # Stage2: setup runtime container
 FROM scratch
