@@ -13,6 +13,7 @@ spec:
       labels:
         app.kubernetes.io/component: controller
     spec:
+      serviceAccountName: controller
       containers:
       - command:
         - /pvc-autoresizer
