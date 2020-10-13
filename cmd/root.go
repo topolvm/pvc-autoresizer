@@ -10,6 +10,7 @@ import (
 
 var config struct {
 	metricsAddr   string
+	healthAddr    string
 	watchInterval time.Duration
 	prometheusURL string
 	development   bool
@@ -37,6 +38,7 @@ func Execute() {
 func init() {
 	fs := rootCmd.Flags()
 	fs.StringVar(&config.metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	fs.StringVar(&config.healthAddr, "health-addr", ":8081", "The address of health/readiness probes.")
 	fs.DurationVar(&config.watchInterval, "interval", 1*time.Minute, "Interval to monitor pvc capacity.")
 	fs.StringVar(&config.prometheusURL, "prometheus-url", "", "Prometheus URL to query volume stats.")
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")
