@@ -87,13 +87,6 @@ setup:
 	mv /tmp/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH)/bin/* bin/
 	rm -rf /tmp/kubebuilder_*
 	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen
-	# Replace bundled kube-apiserver with that of the minimal supported version
-	rm -rf tmp && mkdir -p tmp
-	curl -sfL https://github.com/kubernetes/kubernetes/archive/v$(K8S_VERSION).tar.gz | tar zxf - -C tmp
-	mv tmp/kubernetes-$(K8S_VERSION) tmp/kubernetes
-	cd tmp/kubernetes; make all WHAT="cmd/kube-apiserver"
-	mv tmp/kubernetes/_output/bin/kube-apiserver bin/
-	rm -rf tmp
 	curl -o $(BINDIR)/kubectl -sfL https://storage.googleapis.com/kubernetes-release/release/v$(K8S_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(BINDIR)/kubectl
 	curl -sfL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv$(KUSTOMIZE_VERSION)/kustomize_v$(KUSTOMIZE_VERSION)_linux_amd64.tar.gz | tar -xz -C $(BINDIR)
