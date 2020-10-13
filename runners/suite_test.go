@@ -26,6 +26,7 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var stopCh chan struct{}
 var promClient = prometheusClientMock{}
 
 func TestRunners(t *testing.T) {
@@ -69,8 +70,9 @@ var _ = BeforeSuite(func(done Done) {
 	err = mgr.Add(pvcAutoresizer)
 	Expect(err).ToNot(HaveOccurred())
 
+	stopCh = make(chan struct{})
 	go func() {
-		err = mgr.Start(ctrl.SetupSignalHandler())
+		err = mgr.Start(stopCh)
 		if err != nil {
 			mgr.GetLogger().Error(err, "failed to start manager")
 		}
@@ -85,6 +87,8 @@ var _ = BeforeSuite(func(done Done) {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
+	close(stopCh)
+	time.Sleep(10 * time.Millisecond)
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
 })

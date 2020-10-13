@@ -1,96 +1,95 @@
-# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true"
+# Makefile for pvc-autoresizer
 
+K8S_VERSION = 1.18.9
+KUBEBUILDER_VERSION = 2.3.1
+KUSTOMIZE_VERSION = 3.7.0
+
+## DON'T EDIT BELOW THIS LINE
 GOOS := $(shell go env GOOS)
 GOARCH := $(shell go env GOARCH)
-GOFLAGS = -mod=vendor
-export GOFLAGS
+GO111MODULE=on
+export GO111MODULE
 
-PACKAGES := unzip
-KUBEBUILDER_VERSION = 2.3.1
-CTRLTOOLS_VERSION = 0.3.0
+CRD_OPTIONS = "crd:crdVersions=v1"
 
-SUDO=sudo
+BINDIR := $(PWD)/bin
+CONTROLLER_GEN := $(BINDIR)/controller-gen
+KUBEBUILDER_ASSETS := $(BINDIR)
+export KUBEBUILDER_ASSETS
 
 IMAGE_TAG ?= latest
 IMAGE_PREFIX ?= quay.io/topolvm/
 
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
-
+.PHONY: all
 all: manager
 
-# Run tests
-test: generate manifests
-	test -z "$$(gofmt -s -l . | grep -v '^vendor' | tee /dev/stderr)"
-	test -z "$$(golint $$(go list ./... | grep -v /vendor/) | tee /dev/stderr)"
+.PHONY: test
+test: tools
+	test -z "$$(gofmt -s -l . | tee /dev/stderr)"
+	staticcheck ./...
 	test -z "$$(nilerr ./... 2>&1 | tee /dev/stderr)"
-	test -z "$$(custom-checker -restrictpkg.packages=html/template,log $$(go list -tags='$(GOTAGS)' ./... | grep -v /vendor/ ) 2>&1 | tee /dev/stderr)"
-	ineffassign .
 	go install ./...
-	go test -race -v ./...
+	go test -race -v -count 1 ./...
 	go vet ./...
-	test -z "$$(go vet ./... | grep -v '^vendor' | tee /dev/stderr)"
 
-# Build manager binary
-manager: generate fmt vet
+.PHONY: manager
+manager: generate
 	go build -o bin/manager main.go
 
-# Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate fmt vet manifests
+.PHONY: run
+run: generate manifests
 	go run ./main.go
 
-# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
+.PHONY: deploy
 deploy: manifests
 	cd config/manager && kustomize edit set image pvc-autoresizer=$(IMAGE_PREFIX)pvc-autoresizer:devel
 	kustomize build config/default | kubectl apply -f -
 
-# Generate manifests e.g. CRD, RBAC etc.
+.PHONY: manifests
 manifests:
-	controller-gen $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=controller webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
-# Run go fmt against code
-fmt:
-	go fmt ./...
-
-# Run go vet against code
-vet:
-	go vet ./...
-
-# Generate code
+.PHONY: generate
 generate:
-	controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-# Build the docker image
+.PHONY: image
 image:
 	docker build . -t $(IMAGE_PREFIX)pvc-autoresizer:devel
 
+.PHONY: tag
 tag:
 	docker tag $(IMAGE_PREFIX)pvc-autoresizer:devel $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
 
-# Push the docker image
-push:
-	docker push $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
+.PHONY: tools
+tools: staticcheck nilerr
 
-tools:
-	cd /tmp; env GOFLAGS= GO111MODULE=on go get golang.org/x/tools/cmd/goimports
-	cd /tmp; env GOFLAGS= GO111MODULE=on go get golang.org/x/lint/golint
-	cd /tmp; env GOFLAGS= GO111MODULE=on go get github.com/gordonklaus/ineffassign
-	cd /tmp; env GOFLAGS= GO111MODULE=on go get github.com/gostaticanalysis/nilerr/cmd/nilerr
-	cd /tmp; env GOFLAGS= GO111MODULE=on go get github.com/cybozu/neco-containers/golang/analyzer/cmd/...
+.PHONY: staticcheck
+staticcheck:
+	if ! which staticcheck >/dev/null; then \
+		cd /tmp; env GOFLAGS= GO111MODULE=on go get honnef.co/go/tools/cmd/staticcheck; \
+	fi
 
-setup: tools
-	$(SUDO) apt-get update
-	$(SUDO) apt-get -y install --no-install-recommends $(PACKAGES)
-	curl -sL https://go.kubebuilder.io/dl/$(KUBEBUILDER_VERSION)/$(GOOS)/$(GOARCH) | tar -xz -C /tmp/
-	$(SUDO) rm -rf /usr/local/kubebuilder
-	$(SUDO) mv /tmp/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH) /usr/local/kubebuilder
-	$(SUDO) curl -o /usr/local/kubebuilder/bin/kustomize -sL https://go.kubebuilder.io/kustomize/$(GOOS)/$(GOARCH)
-	$(SUDO) chmod a+x /usr/local/kubebuilder/bin/kustomize
-	cd /tmp; env GOFLAGS= GO111MODULE=on go get sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CTRLTOOLS_VERSION)
+.PHONY: nilerr
+nilerr:
+	if ! which nilerr >/dev/null; then \
+		cd /tmp; env GOFLAGS= GO111MODULE=on go get github.com/gostaticanalysis/nilerr/cmd/nilerr; \
+	fi
 
-.PHONY: all test run deploy manifests generate image tag push tools setup
+.PHONY: setup
+setup:
+	mkdir -p bin
+	curl -sfL https://go.kubebuilder.io/dl/$(KUBEBUILDER_VERSION)/$(GOOS)/$(GOARCH) | tar -xz -C /tmp/
+	mv /tmp/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH)/bin/* bin/
+	rm -rf /tmp/kubebuilder_*
+	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen
+	# Replace bundled kube-apiserver with that of the minimal supported version
+	rm -rf tmp && mkdir -p tmp
+	curl -sfL https://github.com/kubernetes/kubernetes/archive/v$(K8S_VERSION).tar.gz | tar zxf - -C tmp
+	mv tmp/kubernetes-$(K8S_VERSION) tmp/kubernetes
+	cd tmp/kubernetes; make all WHAT="cmd/kube-apiserver"
+	mv tmp/kubernetes/_output/bin/kube-apiserver bin/
+	rm -rf tmp
+	curl -o $(BINDIR)/kubectl -sfL https://storage.googleapis.com/kubernetes-release/release/v$(K8S_VERSION)/bin/linux/amd64/kubectl
+	chmod a+x $(BINDIR)/kubectl
+	curl -sfL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv$(KUSTOMIZE_VERSION)/kustomize_v$(KUSTOMIZE_VERSION)_linux_amd64.tar.gz | tar -xz -C $(BINDIR)
