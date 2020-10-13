@@ -190,7 +190,12 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		if err != nil {
 			return err
 		}
-		log.Info("resize started", "old capacity", curReq.Value(), "new capacity", newReq.Value())
+		log.Info("resize started",
+			"from", curReq.Value(),
+			"to", newReq.Value(),
+			"threshold", threshold,
+			"available", vs.AvailableBytes,
+		)
 		w.recorder.Eventf(pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
 	}
 
