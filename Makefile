@@ -61,6 +61,10 @@ image:
 tag:
 	docker tag $(IMAGE_PREFIX)pvc-autoresizer:devel $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
 
+.PHONY: push
+push:
+	docker push $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
+
 .PHONY: tools
 tools: staticcheck nilerr
 
