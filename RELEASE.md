@@ -52,7 +52,7 @@ Bump version
 
     ```console
     $ git commit -a -m "Bump version to $VERSION"
-    $ git push
+    $ git push -u origin bump-$VERSION
     ```
 
 7. Merge the new pull request.
