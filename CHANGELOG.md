@@ -7,6 +7,13 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.1.2] - 2020-10-14
+
+### Changed
+
+- Increase size calculation is now based on the current storage size (#15).
+- Fix Deployment manifest (#14).
+
 ## [0.1.1] - 2020-10-13
 
 ### Added
@@ -26,6 +33,7 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/topolvm/pvc-autoresizer/compare/ee8a31ac32b1ad40f0bace32317aa1eee4a8225c...v0.1.0
