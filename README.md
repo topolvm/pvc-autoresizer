@@ -64,6 +64,9 @@ The PVC can optionally have `resize.topolvm.io/threshold` and `resize.topolvm.io
 When the amount of free space of the volume is below `resize.topolvm.io/threshold`,
 `.spec.resources.requests.storage` is increased by `resize.topolvm.io/increase`.
 
+If `resize.topolvm.io/increase` is given as a percentage, the value is calculated as
+the current `spec.resources.requests.storage` value multiplied by the annotation value.
+
 ```yaml
 kind: PersistentVolumeClaim
 apiVersion: v1

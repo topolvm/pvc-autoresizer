@@ -249,7 +249,6 @@ func convertSizeInBytes(valStr string, capacity int64, defaultVal string) (int64
 			return 0, fmt.Errorf("annotation value should be positive: %s", valStr)
 		}
 
-		// rounding up the result to Gi
 		res := int64(float64(capacity) * rate / 100.0)
 		return res, nil
 	}
