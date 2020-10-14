@@ -71,16 +71,6 @@ var _ = Describe("test resizer", func() {
 				defaultVal: "10%",
 			},
 			{
-				valStr:     "101%",
-				capacity:   100,
-				defaultVal: "10%",
-			},
-			{
-				valStr:     "11Gi",
-				capacity:   10 << 30,
-				defaultVal: "10%",
-			},
-			{
 				valStr:     "hoge",
 				capacity:   100,
 				defaultVal: "10%",
@@ -96,7 +86,7 @@ var _ = Describe("test resizer", func() {
 		It("should be error", func() {
 			for _, val := range errorCases {
 				_, err := convertSizeInBytes(val.valStr, val.capacity, val.defaultVal)
-				Expect(err).To(HaveOccurred())
+				Expect(err).To(HaveOccurred(), "%+v", val)
 			}
 		})
 	})
@@ -176,8 +166,8 @@ var _ = Describe("test resizer", func() {
 						return err
 					}
 					req := pvc.Spec.Resources.Requests.Storage().Value()
-					if req != 20<<30 {
-						return fmt.Errorf("request size should be %d, but %d", 20<<30, req)
+					if req != 11811160064 {
+						return fmt.Errorf("request size should be %d, but %d", 11811160064, req)
 					}
 					return nil
 				}, 3*time.Second).ShouldNot(HaveOccurred())

@@ -5,7 +5,10 @@
 
 # pvc-autoresizer
 
-`pvc-autoresizer` is an automatic volume resizer that edits PVCs if they have less than the specified amount of free filesystem capacity.
+`pvc-autoresizer` resizes PersistentVolumeClaims (PVCs) when the free amount of storage is below the threshold.
+It queries the volume usage metrics from Prometheus that collects metrics from `kubelet`.
+
+**Status**: beta
 
 ## Target CSI Drivers
 
@@ -38,7 +41,8 @@ kustomize build ./config/default | kubectl apply -f -
 
 ## How to use
 
-The StorageClass of the PVC to be resized must have `resize.topolvm.io/enabled: "true"` annotation.
+To allow auto volume expansion, the StorageClass of PVC need to allow volume expansion and
+have `resize.topolvm.io/enabled: "true"` annotation.
 
 ```yaml
 kind: StorageClass
@@ -48,21 +52,27 @@ metadata:
   annotations:
     resize.topolvm.io/enabled: "true" 
 provisioner: topolvm.cybozu.com
-parameters:
-  "csi.storage.k8s.io/fstype": "xfs"
-volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 ```
 
-The PVC to be resized must have `.spec.resources.limits.storage` and must be `volumeMode: Filesystem`.
+To allow auto volume expansion, the PVC to be resized need to specify the upper limit of
+volume size with `.spec.resources.limits.storage`.  The PVC must have `volumeMode: Filesystem` too.
+
 The PVC can optionally have `resize.topolvm.io/threshold` and `resize.topolvm.io/increase` annotations.
 (If they are not given, the default value is `10%`.)
+
+When the amount of free space of the volume is below `resize.topolvm.io/threshold`,
+`.spec.resources.requests.storage` is increased by `resize.topolvm.io/increase`.
+
+If `resize.topolvm.io/increase` is given as a percentage, the value is calculated as
+the current `spec.resources.requests.storage` value multiplied by the annotation value.
 
 ```yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: topolvm-pvc
+  namespace: default
   annotations:
     resize.topolvm.io/threshold: 20%
     resize.topolvm.io/increase: 20Gi
@@ -78,12 +88,7 @@ spec:
   storageClassName: topolvm-provisioner
 ```
 
-When the amount of free space of the volume is smaller than `resize.topolvm.io/threshold`,
-the `.spec.resources.requests.storage` size will be increased by `resize.topolvm.io/increase`.
-The maximum size is specified by `.spec.resources.limits.storage`.
-
-Container images
-----------------
+## Container images
 
 Container images are available on [Quay.io](https://quay.io/repository/topolvm/pvc-autoresizer)
 

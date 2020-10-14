@@ -1,17 +1,16 @@
-# Design Notes
-
+# Design notes
 
 ## Motivation
 
-PersistentVolume(PV) is used to persist the data (ex. MySQL, Elasticsearch).
-These data size will increase in the future.
-It is difficult to estimate these in advance.
-Some CSI drivers support `VolumeExpansion`. However, it's labor-intensive to manage volume size manually.
-So, PV should be automatically expanded based on PV usage.
+Resizable persistent volumes (PVs) make operations of applications easier when
+it is difficult to predict the storage size required for the applications.
+
+That said, it can be a hassle to resize them one by one manually if there are
+a lot of such persistent volumes.
 
 ## Goal
 
-- PersistentVolumeClaims(PVCs) are automatically got resized when they are running out of free space.
+- Automate resizing of persistent volumes using filesystem usage metrics.
 - Users can configure resizing parameters for each PVC.
 - Users can enable this feature only for specific StorageClasses.
 

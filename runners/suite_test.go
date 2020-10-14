@@ -64,9 +64,10 @@ var _ = BeforeSuite(func(done Done) {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	pvcAutoresizer := NewPVCAutoresizer(&promClient, 1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer"))
-	err = pvcAutoresizer.SetupWithManager(mgr)
+	err = SetupIndexer(mgr)
 	Expect(err).ToNot(HaveOccurred())
+
+	pvcAutoresizer := NewPVCAutoresizer(&promClient, 1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer"))
 	err = mgr.Add(pvcAutoresizer)
 	Expect(err).ToNot(HaveOccurred())
 

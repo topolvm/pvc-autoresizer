@@ -51,14 +51,13 @@ func subMain() error {
 		return err
 	}
 
-	pvcAutoresizer := runners.NewPVCAutoresizer(promClient, config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
-	err = pvcAutoresizer.SetupWithManager(mgr)
-	if err != nil {
+	if err := runners.SetupIndexer(mgr); err != nil {
 		setupLog.Error(err, "unable to initialize pvc autoresizer")
 		return err
 	}
-	err = mgr.Add(pvcAutoresizer)
-	if err != nil {
+
+	pvcAutoresizer := runners.NewPVCAutoresizer(promClient, config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
+	if err := mgr.Add(pvcAutoresizer); err != nil {
 		setupLog.Error(err, "unable to add autoresier to manager")
 		return err
 	}

@@ -51,7 +51,6 @@ type prometheusClient struct {
 
 func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
 	volumeStatsMap := make(map[types.NamespacedName]*VolumeStats)
-	var err error
 
 	usedBytes, err := c.getMetricValues(ctx, volumeUsedQuery)
 	if err != nil {
@@ -69,19 +68,18 @@ func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.Namespaced
 	}
 
 	for key, val := range usedBytes {
-		if _, ok := availableBytes[key]; !ok {
+		vs := &VolumeStats{UsedBytes: val}
+		if ab, ok := availableBytes[key]; !ok {
 			continue
+		} else {
+			vs.AvailableBytes = ab
 		}
-		if _, ok := capacityBytes[key]; !ok {
+		if cb, ok := capacityBytes[key]; !ok {
 			continue
+		} else {
+			vs.CapacityBytes = cb
 		}
-
-		vs := VolumeStats{
-			AvailableBytes: availableBytes[key],
-			UsedBytes:      val,
-			CapacityBytes:  capacityBytes[key],
-		}
-		volumeStatsMap[key] = &vs
+		volumeStatsMap[key] = vs
 	}
 
 	return volumeStatsMap, nil
