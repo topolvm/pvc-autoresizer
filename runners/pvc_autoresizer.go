@@ -148,7 +148,8 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		return nil
 	}
 
-	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], pvc.Spec.Resources.Limits.Storage().Value(), DefaultIncrease)
+	curReq := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
+	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], curReq.Value(), DefaultIncrease)
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert increase annotation", "error", err.Error())
 		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
@@ -173,7 +174,6 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		if pvc.Annotations == nil {
 			pvc.Annotations = make(map[string]string)
 		}
-		curReq := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
 		newReqBytes := int64(math.Ceil(float64(curReq.Value()+increase)/(1<<30))) << 30
 		newReq := resource.NewQuantity(newReqBytes, resource.BinarySI)
 		limitRes := pvc.Spec.Resources.Limits[corev1.ResourceStorage]
@@ -245,8 +245,8 @@ func convertSizeInBytes(valStr string, capacity int64, defaultVal string) (int64
 		if err != nil {
 			return 0, err
 		}
-		if rate < 0.0 || 100.0 < rate {
-			return 0, fmt.Errorf("annotation value should be between 0%% to 100%%: %s", valStr)
+		if rate < 0 {
+			return 0, fmt.Errorf("annotation value should be positive: %s", valStr)
 		}
 
 		// rounding up the result to Gi
@@ -259,8 +259,8 @@ func convertSizeInBytes(valStr string, capacity int64, defaultVal string) (int64
 		return 0, err
 	}
 	val := quantity.Value()
-	if val < 0 || capacity < val {
-		return 0, fmt.Errorf("annotation value should be between 0 to capacity value(%d): %s", capacity, valStr)
+	if val <= 0 {
+		return 0, fmt.Errorf("annotation value should be positive: %s", valStr)
 	}
 	return val, nil
 }
