@@ -2,6 +2,9 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: resizable-pvc
+  annotations:
+    resize.topolvm.io/threshold: 20%
+    resize.topolvm.io/increase: 2Gi
 spec:
   accessModes:
   - ReadWriteOnce
@@ -18,9 +21,6 @@ metadata:
   name: example-pod
   labels:
     app.kubernetes.io/name: example-pod
-  annotations:
-    resize.topolvm.io/threshold: 20%
-    resize.topolvm.io/increase: 2Gi
 spec:
   containers:
   - name: ubuntu
