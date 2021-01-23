@@ -7,12 +7,12 @@ on:
 jobs:
   build:
     name: build
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: 1.13
+          go-version: 1.15
       - run: make setup
       - run: make
       - run: make test
