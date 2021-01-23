@@ -44,22 +44,28 @@ Bump version
     $ export VERSION
     ```
 
-2. Checkout `master` branch.
-3. Make a branch to release, for example by `git checkout -b bump-$VERSION`
-4. Edit `CHANGELOG.md` for the new version ([example][]).
-5. Edit `config/default/kustomization.yaml` and update `newTag` value for the new version.
-6. Commit the change and create a pull request:
+2. Make a branch for the release as follows:
+
+    ```console
+    $ git checkout main
+    $ git pull
+    $ git checkout -b bump-$VERSION
+    ```
+
+3. Edit `CHANGELOG.md` for the new version ([example][]).
+4. Edit `config/default/kustomization.yaml` and update `newTag` value for the new version.
+5. Commit the change and create a pull request:
 
     ```console
     $ git commit -a -m "Bump version to $VERSION"
     $ git push -u origin bump-$VERSION
     ```
 
-7. Merge the new pull request.
-8. Add a new tag and push it as follows:
+6. Merge the new pull request.
+7. Add a new tag and push it as follows:
 
     ```console
-    $ git checkout master
+    $ git checkout main
     $ git pull
     $ git tag v$VERSION
     $ git push origin v$VERSION
