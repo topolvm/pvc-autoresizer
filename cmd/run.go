@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/topolvm/pvc-autoresizer/runners"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,12 +28,14 @@ func init() {
 func subMain() error {
 	ctrl.SetLogger(zap.New(zap.UseDevMode(config.development)))
 
+	graceTimeout := 10 * time.Second
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     config.metricsAddr,
-		HealthProbeBindAddress: config.healthAddr,
-		LeaderElection:         true,
-		LeaderElectionID:       "49e22f61.topolvm.io",
+		Scheme:                  scheme,
+		MetricsBindAddress:      config.metricsAddr,
+		HealthProbeBindAddress:  config.healthAddr,
+		LeaderElection:          true,
+		LeaderElectionID:        "49e22f61.topolvm.io",
+		GracefulShutdownTimeout: &graceTimeout,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -56,7 +60,9 @@ func subMain() error {
 		return err
 	}
 
-	pvcAutoresizer := runners.NewPVCAutoresizer(promClient, config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
+	pvcAutoresizer := runners.NewPVCAutoresizer(promClient, mgr.GetClient(),
+		ctrl.Log.WithName("pvc-autoresizer"),
+		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
 	if err := mgr.Add(pvcAutoresizer); err != nil {
 		setupLog.Error(err, "unable to add autoresier to manager")
 		return err
