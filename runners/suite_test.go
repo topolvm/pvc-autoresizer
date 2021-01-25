@@ -1,6 +1,7 @@
 package runners
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 	"time"
@@ -26,7 +27,7 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
-var stopCh chan struct{}
+var cancelMgr func()
 var promClient = prometheusClientMock{}
 
 func TestRunners(t *testing.T) {
@@ -67,13 +68,16 @@ var _ = BeforeSuite(func(done Done) {
 	err = SetupIndexer(mgr)
 	Expect(err).ToNot(HaveOccurred())
 
-	pvcAutoresizer := NewPVCAutoresizer(&promClient, 1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer"))
+	pvcAutoresizer := NewPVCAutoresizer(&promClient, mgr.GetClient(),
+		logf.Log.WithName("pvc-autoresizer"),
+		1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer"))
 	err = mgr.Add(pvcAutoresizer)
 	Expect(err).ToNot(HaveOccurred())
 
-	stopCh = make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	cancelMgr = cancel
 	go func() {
-		err = mgr.Start(stopCh)
+		err = mgr.Start(ctx)
 		if err != nil {
 			mgr.GetLogger().Error(err, "failed to start manager")
 		}
@@ -88,7 +92,7 @@ var _ = BeforeSuite(func(done Done) {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
-	close(stopCh)
+	cancelMgr()
 	time.Sleep(10 * time.Millisecond)
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())

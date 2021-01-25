@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -29,25 +28,15 @@ const storageClassNameIndexKey = ".spec.storageClassName"
 const logLevelWarn = 3
 
 // NewPVCAutoresizer returns a new pvcAutoresizer struct
-func NewPVCAutoresizer(mc MetricsClient, interval time.Duration, recorder record.EventRecorder) manager.Runnable {
+func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, interval time.Duration, recorder record.EventRecorder) manager.Runnable {
 
 	return &pvcAutoresizer{
 		metricsClient: mc,
+		client:        c,
+		log:           log,
 		interval:      interval,
 		recorder:      recorder,
 	}
-}
-
-// InjectClient implements inject.Client
-func (w *pvcAutoresizer) InjectClient(c client.Client) error {
-	w.client = c
-	return nil
-}
-
-// InjectLogger implements inject.Logger
-func (w *pvcAutoresizer) InjectLogger(log logr.Logger) error {
-	w.log = log
-	return nil
 }
 
 type pvcAutoresizer struct {
@@ -59,14 +48,13 @@ type pvcAutoresizer struct {
 }
 
 // Start implements manager.Runnable
-func (w *pvcAutoresizer) Start(ch <-chan struct{}) error {
+func (w *pvcAutoresizer) Start(ctx context.Context) error {
 	ticker := time.NewTicker(w.interval)
-	ctx := context.Background()
 
 	defer ticker.Stop()
 	for {
 		select {
-		case <-ch:
+		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
 			err := w.reconcile(ctx)
@@ -202,7 +190,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 	return nil
 }
 
-func indexByResizeEnableAnnotation(obj runtime.Object) []string {
+func indexByResizeEnableAnnotation(obj client.Object) []string {
 	sc := obj.(*storagev1.StorageClass)
 	if val, ok := sc.Annotations[AutoResizeEnabledKey]; ok {
 		return []string{val}
@@ -211,7 +199,7 @@ func indexByResizeEnableAnnotation(obj runtime.Object) []string {
 	return []string{}
 }
 
-func indexByStorageClassName(obj runtime.Object) []string {
+func indexByStorageClassName(obj client.Object) []string {
 	pvc := obj.(*corev1.PersistentVolumeClaim)
 	scName := pvc.Spec.StorageClassName
 	if scName == nil {
