@@ -96,7 +96,8 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 
 	vsMap, err := w.metricsClient.GetMetrics(ctx)
 	if err != nil {
-		return err
+		w.log.Error(err, "failed to get metrics")
+		return nil
 	}
 
 	for _, sc := range scs.Items {
