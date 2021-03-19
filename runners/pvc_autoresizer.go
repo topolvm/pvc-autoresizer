@@ -209,8 +209,12 @@ func indexByStorageClassName(obj client.Object) []string {
 }
 
 // SetupIndexer setup indices for PVC auto resizer
-func SetupIndexer(mgr ctrl.Manager) error {
-	err := mgr.GetFieldIndexer().IndexField(context.Background(), &storagev1.StorageClass{}, resizeEnableIndexKey, indexByResizeEnableAnnotation)
+func SetupIndexer(mgr ctrl.Manager, skipAnnotationCheck bool) error {
+	idxFunc := indexByResizeEnableAnnotation
+	if skipAnnotationCheck {
+		idxFunc = func(_ client.Object) []string { return []string{"true"} }
+	}
+	err := mgr.GetFieldIndexer().IndexField(context.Background(), &storagev1.StorageClass{}, resizeEnableIndexKey, idxFunc)
 	if err != nil {
 		return err
 	}

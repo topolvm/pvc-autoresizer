@@ -9,11 +9,12 @@ import (
 )
 
 var config struct {
-	metricsAddr   string
-	healthAddr    string
-	watchInterval time.Duration
-	prometheusURL string
-	development   bool
+	metricsAddr    string
+	healthAddr     string
+	watchInterval  time.Duration
+	prometheusURL  string
+	skipAnnotation bool
+	development    bool
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -41,6 +42,7 @@ func init() {
 	fs.StringVar(&config.healthAddr, "health-addr", ":8081", "The address of health/readiness probes.")
 	fs.DurationVar(&config.watchInterval, "interval", 1*time.Minute, "Interval to monitor pvc capacity.")
 	fs.StringVar(&config.prometheusURL, "prometheus-url", "", "Prometheus URL to query volume stats.")
+	fs.BoolVar(&config.skipAnnotation, "no-annotation-check", false, "Skip annotation check for StorageClass")
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")
 	_ = rootCmd.MarkFlagRequired("prometheus-url")
 }

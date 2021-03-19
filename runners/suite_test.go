@@ -2,6 +2,7 @@ package runners
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -65,7 +66,8 @@ var _ = BeforeSuite(func(done Done) {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	err = SetupIndexer(mgr)
+	noCheck := os.Getenv("NO_ANNOTATION_CHECK") == "true"
+	err = SetupIndexer(mgr, noCheck)
 	Expect(err).ToNot(HaveOccurred())
 
 	pvcAutoresizer := NewPVCAutoresizer(&promClient, mgr.GetClient(),

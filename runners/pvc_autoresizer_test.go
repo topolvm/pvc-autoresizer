@@ -3,6 +3,7 @@ package runners
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -205,18 +206,31 @@ var _ = Describe("test resizer", func() {
 
 			By("10% available", func() {
 				setMetrics(pvcNS, pvcName, 1<<30, 9<<30, 10<<30)
-				Consistently(func() error {
-					var pvc corev1.PersistentVolumeClaim
-					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
-					if err != nil {
-						return err
-					}
-					req := pvc.Spec.Resources.Requests.Storage().Value()
-					if req != 10<<30 {
-						return fmt.Errorf("request size should be %d, but %d", 10<<30, req)
-					}
-					return nil
-				}, 3*time.Second).ShouldNot(HaveOccurred())
+				noCheck := os.Getenv("NO_ANNOTATION_CHECK") == "true"
+				if noCheck {
+					Eventually(func() bool {
+						var pvc corev1.PersistentVolumeClaim
+						err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+						if err != nil {
+							return false
+						}
+						req := pvc.Spec.Resources.Requests.Storage().Value()
+						return req > 10<<30
+					}, 3*time.Second).Should(BeTrue())
+				} else {
+					Consistently(func() error {
+						var pvc corev1.PersistentVolumeClaim
+						err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+						if err != nil {
+							return err
+						}
+						req := pvc.Spec.Resources.Requests.Storage().Value()
+						if req != 10<<30 {
+							return fmt.Errorf("request size should be %d, but %d", 10<<30, req)
+						}
+						return nil
+					}, 3*time.Second).ShouldNot(HaveOccurred())
+				}
 			})
 		})
 
