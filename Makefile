@@ -2,13 +2,12 @@
 
 K8S_VERSION = 1.18.9
 KUBEBUILDER_VERSION = 2.3.1
+CTRLTOOLS_VERSION = 0.5.0
 KUSTOMIZE_VERSION = 3.7.0
 
 ## DON'T EDIT BELOW THIS LINE
 GOOS := $(shell go env GOOS)
 GOARCH := $(shell go env GOARCH)
-GO111MODULE=on
-export GO111MODULE
 
 CRD_OPTIONS = "crd:crdVersions=v1"
 
@@ -71,13 +70,13 @@ tools: staticcheck nilerr
 .PHONY: staticcheck
 staticcheck:
 	if ! which staticcheck >/dev/null; then \
-		cd /tmp; env GOFLAGS= GO111MODULE=on go get honnef.co/go/tools/cmd/staticcheck; \
+		env GOFLAGS= go install honnef.co/go/tools/cmd/staticcheck@latest; \
 	fi
 
 .PHONY: nilerr
 nilerr:
 	if ! which nilerr >/dev/null; then \
-		cd /tmp; env GOFLAGS= GO111MODULE=on go get github.com/gostaticanalysis/nilerr/cmd/nilerr; \
+		env GOFLAGS= go install github.com/gostaticanalysis/nilerr/cmd/nilerr@latest; \
 	fi
 
 .PHONY: setup
@@ -86,7 +85,7 @@ setup:
 	curl -sfL https://go.kubebuilder.io/dl/$(KUBEBUILDER_VERSION)/$(GOOS)/$(GOARCH) | tar -xz -C /tmp/
 	mv /tmp/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH)/bin/* bin/
 	rm -rf /tmp/kubebuilder_*
-	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen
+	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CTRLTOOLS_VERSION)
 	curl -o $(BINDIR)/kubectl -sfL https://storage.googleapis.com/kubernetes-release/release/v$(K8S_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(BINDIR)/kubectl
 	curl -sfL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv$(KUSTOMIZE_VERSION)/kustomize_v$(KUSTOMIZE_VERSION)_linux_amd64.tar.gz | tar -xz -C $(BINDIR)

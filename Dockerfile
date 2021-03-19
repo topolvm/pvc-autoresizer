@@ -1,16 +1,17 @@
 # Stage1: Build the pvc-autoresizer binary
-FROM golang:1.15 as builder
+FROM golang:1.16 as builder
 
 WORKDIR /workspace
 
 COPY go.mod go.mod
+COPY go.sum go.sum
 # Copy the go source
 COPY main.go main.go
 COPY runners/ runners/
 COPY cmd/ cmd/
 
 # Build
-RUN CGO_ENABLED=0 GO111MODULE=on go build -a -o pvc-autoresizer main.go
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" -a -o pvc-autoresizer main.go
 
 # Stage2: setup runtime container
 FROM scratch
