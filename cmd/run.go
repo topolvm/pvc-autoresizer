@@ -55,7 +55,7 @@ func subMain() error {
 		return err
 	}
 
-	if err := runners.SetupIndexer(mgr); err != nil {
+	if err := runners.SetupIndexer(mgr, config.skipAnnotation); err != nil {
 		setupLog.Error(err, "unable to initialize pvc autoresizer")
 		return err
 	}

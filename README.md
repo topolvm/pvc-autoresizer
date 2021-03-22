@@ -42,7 +42,8 @@ kustomize build ./config/default | kubectl apply -f -
 ## How to use
 
 To allow auto volume expansion, the StorageClass of PVC need to allow volume expansion and
-have `resize.topolvm.io/enabled: "true"` annotation.
+have `resize.topolvm.io/enabled: "true"` annotation.  The annotation may be omitted if
+you give `--no-annotation-check` command-line flag to `pvc-autoresizer` executable.
 
 ```yaml
 kind: StorageClass
@@ -50,7 +51,7 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: topolvm-provisioner
   annotations:
-    resize.topolvm.io/enabled: "true" 
+    resize.topolvm.io/enabled: "true"
 provisioner: topolvm.cybozu.com
 allowVolumeExpansion: true
 ```
