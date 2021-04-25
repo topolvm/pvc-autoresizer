@@ -99,7 +99,7 @@ var _ = Describe("test resizer", func() {
 
 		It("should resize PVC", func() {
 			scName := "test-storageclass1"
-			pvcName := "tset-pvc1"
+			pvcName := "test-pvc1"
 			createStorageClass(ctx, scName, provName, true)
 			createPVC(ctx, pvcNS, pvcName, scName, "50%", "20Gi", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
 
@@ -138,7 +138,7 @@ var _ = Describe("test resizer", func() {
 
 		It("should resize PVC by default settings", func() {
 			scName := "test-storageclass2"
-			pvcName := "tset-pvc2"
+			pvcName := "test-pvc2"
 			createStorageClass(ctx, scName, provName, true)
 			createPVC(ctx, pvcNS, pvcName, scName, "", "", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
 
@@ -177,7 +177,7 @@ var _ = Describe("test resizer", func() {
 
 		It("should not resize PVC without limit", func() {
 			scName := "test-storageclass3"
-			pvcName := "tset-pvc3"
+			pvcName := "test-pvc3"
 			createStorageClass(ctx, scName, provName, true)
 			createPVC(ctx, pvcNS, pvcName, scName, "20%", "10Gi", 10<<30, 0, corev1.PersistentVolumeFilesystem)
 
@@ -200,7 +200,7 @@ var _ = Describe("test resizer", func() {
 
 		It("should not resize PVC without available StorageClass", func() {
 			scName := "test-storageclass4"
-			pvcName := "tset-pvc4"
+			pvcName := "test-pvc4"
 			createStorageClass(ctx, scName, provName, false)
 			createPVC(ctx, pvcNS, pvcName, scName, "20%", "10Gi", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
 
@@ -236,7 +236,7 @@ var _ = Describe("test resizer", func() {
 
 		It("should not resize PVC with Block mode", func() {
 			scName := "test-storageclass5"
-			pvcName := "tset-pvc5"
+			pvcName := "test-pvc5"
 			createStorageClass(ctx, scName, provName, true)
 			createPVC(ctx, pvcNS, pvcName, scName, "20%", "10Gi", 10<<30, 100<<30, corev1.PersistentVolumeBlock)
 
