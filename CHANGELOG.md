@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.3.0/).
 
 ## [Unreleased]
+- Add support to providing PVC storage limit via annotation (#32)
 
 ## [0.1.4] - 2021-03-22
 ### Changed

@@ -2,6 +2,7 @@ package runners
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -67,7 +68,7 @@ func (w *pvcAutoresizer) Start(ctx context.Context) error {
 }
 
 func isTargetPVC(pvc *corev1.PersistentVolumeClaim) bool {
-	if pvc.Spec.Resources.Limits.Storage().IsZero() {
+	if _, err := pvcStorageLimit(pvc); err != nil {
 		return false
 	}
 	if pvc.Spec.VolumeMode != nil && *pvc.Spec.VolumeMode != corev1.PersistentVolumeFilesystem {
@@ -164,7 +165,12 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		}
 		newReqBytes := int64(math.Ceil(float64(curReq.Value()+increase)/(1<<30))) << 30
 		newReq := resource.NewQuantity(newReqBytes, resource.BinarySI)
-		limitRes := pvc.Spec.Resources.Limits[corev1.ResourceStorage]
+		limitRes, err := pvcStorageLimit(pvc)
+		if err != nil {
+			log.Error(err, "fetching storage limit failed")
+			return err
+		}
+
 		if curReq.Cmp(limitRes) == 0 {
 			return nil
 		}
@@ -254,4 +260,17 @@ func convertSizeInBytes(valStr string, capacity int64, defaultVal string) (int64
 		return 0, fmt.Errorf("annotation value should be positive: %s", valStr)
 	}
 	return val, nil
+}
+
+func pvcStorageLimit(pvc *corev1.PersistentVolumeClaim) (resource.Quantity, error) {
+	// storage limit on the annotation has precedence
+	if storageLimit, err := resource.ParseQuantity(pvc.Annotations[StorageLimitAnnotation]); err == nil {
+		return storageLimit, nil
+	}
+
+	if !pvc.Spec.Resources.Limits.Storage().IsZero() {
+		return *pvc.Spec.Resources.Limits.Storage(), nil
+	}
+
+	return resource.Quantity{}, errors.New("storage limit is not set or malformatted")
 }

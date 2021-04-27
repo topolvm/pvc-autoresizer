@@ -99,7 +99,7 @@ var _ = Describe("test resizer", func() {
 
 		It("should resize PVC", func() {
 			scName := "test-storageclass1"
-			pvcName := "tset-pvc1"
+			pvcName := "test-pvc1"
 			createStorageClass(ctx, scName, provName, true)
 			createPVC(ctx, pvcNS, pvcName, scName, "50%", "20Gi", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
 
@@ -138,7 +138,7 @@ var _ = Describe("test resizer", func() {
 
 		It("should resize PVC by default settings", func() {
 			scName := "test-storageclass2"
-			pvcName := "tset-pvc2"
+			pvcName := "test-pvc2"
 			createStorageClass(ctx, scName, provName, true)
 			createPVC(ctx, pvcNS, pvcName, scName, "", "", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
 
@@ -177,7 +177,7 @@ var _ = Describe("test resizer", func() {
 
 		It("should not resize PVC without limit", func() {
 			scName := "test-storageclass3"
-			pvcName := "tset-pvc3"
+			pvcName := "test-pvc3"
 			createStorageClass(ctx, scName, provName, true)
 			createPVC(ctx, pvcNS, pvcName, scName, "20%", "10Gi", 10<<30, 0, corev1.PersistentVolumeFilesystem)
 
@@ -200,7 +200,7 @@ var _ = Describe("test resizer", func() {
 
 		It("should not resize PVC without available StorageClass", func() {
 			scName := "test-storageclass4"
-			pvcName := "tset-pvc4"
+			pvcName := "test-pvc4"
 			createStorageClass(ctx, scName, provName, false)
 			createPVC(ctx, pvcNS, pvcName, scName, "20%", "10Gi", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
 
@@ -236,7 +236,7 @@ var _ = Describe("test resizer", func() {
 
 		It("should not resize PVC with Block mode", func() {
 			scName := "test-storageclass5"
-			pvcName := "tset-pvc5"
+			pvcName := "test-pvc5"
 			createStorageClass(ctx, scName, provName, true)
 			createPVC(ctx, pvcNS, pvcName, scName, "20%", "10Gi", 10<<30, 100<<30, corev1.PersistentVolumeBlock)
 
@@ -251,6 +251,46 @@ var _ = Describe("test resizer", func() {
 					req := pvc.Spec.Resources.Requests.Storage().Value()
 					if req != 10<<30 {
 						return fmt.Errorf("request size should be %d, but %d", 10<<30, req)
+					}
+					return nil
+				}, 3*time.Second).ShouldNot(HaveOccurred())
+			})
+		})
+
+		It("should resize PVC with storage limit annotation", func() {
+			scName := "test-storageclass6"
+			pvcName := "test-pvc6"
+			createStorageClass(ctx, scName, provName, true)
+			createPVC(ctx, pvcNS, pvcName, scName, "50%", "20Gi", 10<<30, 0, corev1.PersistentVolumeFilesystem)
+			addStorageLimitAnnotation(ctx, pvcNS, pvcName, "100Gi")
+
+			By("60% available", func() {
+				setMetrics(pvcNS, pvcName, 6<<30, 4<<30, 10<<30)
+				Consistently(func() error {
+					var pvc corev1.PersistentVolumeClaim
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+					if err != nil {
+						return err
+					}
+					req := pvc.Spec.Resources.Requests.Storage().Value()
+					if req != 10<<30 {
+						return fmt.Errorf("request size should be %d, but %d", 10<<30, req)
+					}
+					return nil
+				}, 3*time.Second).ShouldNot(HaveOccurred())
+			})
+
+			By("30% available", func() {
+				setMetrics(pvcNS, pvcName, 3<<30, 7<<30, 10<<30)
+				Eventually(func() error {
+					var pvc corev1.PersistentVolumeClaim
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+					if err != nil {
+						return err
+					}
+					req := pvc.Spec.Resources.Requests.Storage().Value()
+					if req != 30<<30 {
+						return fmt.Errorf("request size should be %d, but %d", 30<<30, req)
 					}
 					return nil
 				}, 3*time.Second).ShouldNot(HaveOccurred())
@@ -326,4 +366,20 @@ func setMetrics(ns, name string, available, used, capacity int64) {
 		UsedBytes:      used,
 		CapacityBytes:  capacity,
 	})
+}
+
+func addStorageLimitAnnotation(ctx context.Context, ns, name, storageLimit string) {
+	var pvc corev1.PersistentVolumeClaim
+	err := k8sClient.Get(ctx, types.NamespacedName{Namespace: ns, Name: name}, &pvc)
+	Expect(err).NotTo(HaveOccurred())
+
+	// fetch currently set annotations
+	pvcAnnotations := pvc.GetAnnotations()
+
+	// add the storage limit annotation with the desired value
+	pvcAnnotations[StorageLimitAnnotation] = storageLimit
+	pvc.SetAnnotations(pvcAnnotations)
+
+	err = k8sClient.Status().Update(ctx, &pvc)
+	Expect(err).NotTo(HaveOccurred())
 }

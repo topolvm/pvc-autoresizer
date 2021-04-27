@@ -57,7 +57,7 @@ allowVolumeExpansion: true
 ```
 
 To allow auto volume expansion, the PVC to be resized need to specify the upper limit of
-volume size with `.spec.resources.limits.storage`.  The PVC must have `volumeMode: Filesystem` too.
+volume size with the annotation `resize.topolvm.io/storage_limit` or the PVC spec `.spec.resources.limits.storage` (if both are present, the annotation takes precedence). The PVC must have `volumeMode: Filesystem` too.
 
 The PVC can optionally have `resize.topolvm.io/threshold` and `resize.topolvm.io/increase` annotations.
 (If they are not given, the default value is `10%`.)

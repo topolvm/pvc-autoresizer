@@ -9,6 +9,9 @@ const ResizeThresholdAnnotation = "resize.topolvm.io/threshold"
 // ResizeIncreaseAnnotation is the key of amount increased.
 const ResizeIncreaseAnnotation = "resize.topolvm.io/increase"
 
+// StorageLimitAnnotation is the key of storage limit value
+const StorageLimitAnnotation = "resize.topolvm.io/storage_limit"
+
 // PreviousCapacityBytesAnnotation is the key of previous volume capacity.
 const PreviousCapacityBytesAnnotation = "resize.topolvm.io/pre_capacity_bytes"
 
