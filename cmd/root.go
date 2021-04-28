@@ -23,6 +23,7 @@ var rootCmd = &cobra.Command{
 	Short: "PVC Autoresizer",
 	Long:  `pvc-autoresizer is an automatic volume resizer that edits PVCs if they have less than the specified amount of free filesystem capacity.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
 		return subMain()
 	},
 }
