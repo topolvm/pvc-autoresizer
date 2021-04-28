@@ -118,7 +118,7 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			}
 			err = w.resize(ctx, &pvc, vsMap[namespacedName])
 			if err != nil {
-				return err
+				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to resize PVC")
 			}
 		}
 	}
