@@ -6,7 +6,22 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.3.0/).
 
 ## [Unreleased]
+
+## [0.1.5] - 2021-05-06
+
+### Notice
+
+Deprecate specifying an upper limit of volume size with `.spec.resources.limits.storage`.
+You can specify the limit by the annotation `resize.topolvm.io/storage_limit`.
+
+### Added
 - Add support to providing PVC storage limit via annotation (#32)
+
+### Changed
+- don't crash on a single PVC resizing failure (#33)
+
+### Contributors
+@anas-aso
 
 ## [0.1.4] - 2021-03-22
 ### Changed
@@ -44,7 +59,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.1...v0.1.2

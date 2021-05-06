@@ -1,6 +1,6 @@
 images:
 - name: pvc-autoresizer
-  newTag: 0.1.4
+  newTag: 0.1.5
   newName: quay.io/topolvm/pvc-autoresizer
 
 # Adds namespace to all resources.
