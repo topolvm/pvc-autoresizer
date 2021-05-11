@@ -57,7 +57,26 @@ allowVolumeExpansion: true
 ```
 
 To allow auto volume expansion, the PVC to be resized need to specify the upper limit of
-volume size with the annotation `resize.topolvm.io/storage_limit` or the PVC spec `.spec.resources.limits.storage` (if both are present, the annotation takes precedence). The PVC must have `volumeMode: Filesystem` too.
+volume size with the annotation `resize.topolvm.io/storage_limit`. The PVC must have `volumeMode: Filesystem` too.
+You can also set the upper limit of volume size with `.spec.resources.limits.storage`, but it is deprecated. If both are present, the annotation takes precedence.
+
+```yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: topolvm-pvc
+  namespace: default
+  annotations:
+    resize.topolvm.io/storage_limit: 100Gi
+spec:
+  accessModes:
+  - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 30Gi
+  storageClassName: topolvm-provisioner
+```
 
 The PVC can optionally have `resize.topolvm.io/threshold` and `resize.topolvm.io/increase` annotations.
 (If they are not given, the default value is `10%`.)
@@ -75,18 +94,11 @@ metadata:
   name: topolvm-pvc
   namespace: default
   annotations:
+    resize.topolvm.io/storage_limit: 100Gi
     resize.topolvm.io/threshold: 20%
     resize.topolvm.io/increase: 20Gi
 spec:
-  accessModes:
-  - ReadWriteOnce
-  volumeMode: Filesystem
-  resources:
-    requests:
-      storage: 30Gi
-    limits:
-      storage: 100Gi
-  storageClassName: topolvm-provisioner
+  <snip>
 ```
 
 ## Container images
