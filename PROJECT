@@ -1,3 +1,6 @@
 domain: topolvm.io
+layout:
+- go.kubebuilder.io/v3
+projectName: pvc-autoresizer
 repo: github.com/topolvm/pvc-autoresizer
-version: "2"
+version: "3"

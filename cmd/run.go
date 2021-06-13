@@ -31,6 +31,7 @@ func subMain() error {
 	graceTimeout := 10 * time.Second
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                  scheme,
+		Port:                    9443,
 		MetricsBindAddress:      config.metricsAddr,
 		HealthProbeBindAddress:  config.healthAddr,
 		LeaderElection:          true,
