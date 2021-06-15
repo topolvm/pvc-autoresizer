@@ -59,7 +59,7 @@ generate: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: fmt
-fmt: ## Run g\o fmt against code.
+fmt: ## Run go fmt against code.
 	test -z "$$(gofmt -s -l . | tee /dev/stderr)"
 
 .PHONY: vet
