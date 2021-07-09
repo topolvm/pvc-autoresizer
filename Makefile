@@ -14,7 +14,7 @@ GOARCH := $(shell go env GOARCH)
 
 CRD_OPTIONS = "crd:crdVersions=v1"
 
-BINDIR := $(PWD)/bin
+BINDIR := $(shell pwd)/bin
 CONTROLLER_GEN := $(BINDIR)/controller-gen
 KUBEBUILDER_ASSETS := $(BINDIR)
 export KUBEBUILDER_ASSETS
@@ -89,8 +89,8 @@ run: manifests generate ## Run a controller from your host.
 
 .PHONY: deploy
 deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(BINDIR)/kustomize edit set image pvc-autoresizer=$(IMAGE_PREFIX)pvc-autoresizer:devel
-	$(BINDIR)/kustomize build config/default | kubectl apply -f -
+	cd $(shell pwd)/config/default && $(BINDIR)/kustomize edit set image pvc-autoresizer=$(IMAGE_PREFIX)pvc-autoresizer:devel
+	$(BINDIR)/kustomize build $(shell pwd)/config/default | kubectl apply -f -
 
 .PHONY: image
 image: ## Build docker image.

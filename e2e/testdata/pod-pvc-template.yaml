@@ -1,0 +1,45 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .pvcName }}
+  namespace: {{ .namespace }}
+  annotations:
+    resize.topolvm.io/threshold: "{{ .thresholdAnnotation }}"
+    resize.topolvm.io/increase: "{{ .increaseAnnotation }}"
+    resize.topolvm.io/storage_limit: "{{ .storageLimitAnnotation }}"
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .resourceRequest }}
+    limits:
+      storage: {{ .resourceLimit }}
+  storageClassName: {{ .storageClassName }}
+  volumeMode: {{ .volumeMode }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .pvcName }}
+  namespace: {{ .namespace }}
+  labels:
+    app.kubernetes.io/name: ubuntu
+spec:
+  containers:
+    - name: ubuntu
+      image: quay.io/cybozu/ubuntu:20.04
+      command: ["/usr/local/bin/pause"]
+{{ if eq .volumeMode "Block" }}
+      volumeDevices:
+        - name: my-volume
+          devicePath: /dev/e2etest
+{{ else }}
+      volumeMounts:
+        - mountPath: /test1
+          name: my-volume
+{{ end }}
+  volumes:
+    - name: my-volume
+      persistentVolumeClaim:
+        claimName: {{ .pvcName }}
