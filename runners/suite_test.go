@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -30,6 +31,9 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 var cancelMgr func()
 var promClient = prometheusClientMock{}
+
+var scName string = "test-storageclass"
+var provName string = "test-provisioner"
 
 func TestRunners(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -89,6 +93,8 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
 
+	createStorageClass(ctx, scName, provName, true)
+
 	close(done)
 }, 60)
 
@@ -99,3 +105,21 @@ var _ = AfterSuite(func() {
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
 })
+
+func createStorageClass(ctx context.Context, name, provisioner string, enabled bool) {
+	t := true
+	sc := storagev1.StorageClass{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Provisioner:          provisioner,
+		AllowVolumeExpansion: &t,
+	}
+	if enabled {
+		sc.Annotations = map[string]string{
+			AutoResizeEnabledKey: "true",
+		}
+	}
+	err := k8sClient.Create(ctx, &sc)
+	Expect(err).NotTo(HaveOccurred())
+}

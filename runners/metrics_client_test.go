@@ -21,3 +21,12 @@ func (c *prometheusClientMock) GetMetrics(ctx context.Context) (map[types.Namesp
 	}
 	return copied, nil
 }
+
+func (c *prometheusClientMock) setResponce(key types.NamespacedName, stats *VolumeStats) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if c.stats == nil {
+		c.stats = make(map[types.NamespacedName]*VolumeStats)
+	}
+	c.stats[key] = stats
+}
