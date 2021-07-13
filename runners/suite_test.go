@@ -93,7 +93,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
 
-	createStorageClass(ctx, scName, provName, true)
+	createStorageClass(ctx, scName, provName)
 
 	close(done)
 }, 60)
@@ -106,19 +106,17 @@ var _ = AfterSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 })
 
-func createStorageClass(ctx context.Context, name, provisioner string, enabled bool) {
+func createStorageClass(ctx context.Context, name, provisioner string) {
 	t := true
 	sc := storagev1.StorageClass{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
+			Annotations: map[string]string{
+				AutoResizeEnabledKey: "true",
+			},
 		},
 		Provisioner:          provisioner,
 		AllowVolumeExpansion: &t,
-	}
-	if enabled {
-		sc.Annotations = map[string]string{
-			AutoResizeEnabledKey: "true",
-		}
 	}
 	err := k8sClient.Create(ctx, &sc)
 	Expect(err).NotTo(HaveOccurred())
