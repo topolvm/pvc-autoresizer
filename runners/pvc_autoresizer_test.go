@@ -135,8 +135,8 @@ var _ = Describe("test resizer", func() {
 				},
 			}
 
-			for counter, tc := range testCases {
-				pvcName := fmt.Sprintf("test-pvc-%d", counter + 1)
+			for i, tc := range testCases {
+				pvcName := fmt.Sprintf("test-pvc-%d", i)
 				pvcSizeGi := tc.pvcSizeGi
 				expectSizeGi := tc.expectSizeGi
 				threshold := tc.threshold
@@ -160,7 +160,9 @@ var _ = Describe("test resizer", func() {
 							return err
 						}
 						req := pvc.Spec.Resources.Requests.Storage().Value()
-						if req>>30 != expectSizeGi {
+
+						ALLOWANCE := int64(1 << 10)
+						if !(expectSizeGi<<30-ALLOWANCE < req && req <= expectSizeGi<<30+ALLOWANCE) {
 							return fmt.Errorf("request size(Gi) should be %d, but %d", expectSizeGi, req>>30)
 						}
 						return nil
