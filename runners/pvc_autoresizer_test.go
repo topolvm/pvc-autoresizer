@@ -226,6 +226,5 @@ func setMetrics(ns, name string, available, capacity int64) {
 	}, &VolumeStats{
 		AvailableBytes: available,
 		CapacityBytes:  capacity,
-		UsedBytes:      capacity - available,
 	})
 }
