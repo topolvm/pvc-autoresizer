@@ -135,10 +135,8 @@ var _ = Describe("test resizer", func() {
 				},
 			}
 
-			counter := 0
-			for _, tc := range testCases {
-				counter++
-				pvcName := fmt.Sprintf("test-pvc-%d", counter)
+			for counter, tc := range testCases {
+				pvcName := fmt.Sprintf("test-pvc-%d", counter + 1)
 				pvcSizeGi := tc.pvcSizeGi
 				expectSizeGi := tc.expectSizeGi
 				threshold := tc.threshold
