@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/topolvm/pvc-autoresizer/metrics"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -119,7 +120,10 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			}
 			err = w.resize(ctx, &pvc, vsMap[namespacedName])
 			if err != nil {
+				metrics.ResizerFailesLoopTotal.Increment(pvc.Namespace, pvc.Name)
 				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to resize PVC")
+			} else {
+				metrics.ResizerSuccessLoopTotal.Increment(pvc.Namespace, pvc.Name)
 			}
 		}
 	}

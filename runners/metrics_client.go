@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/api"
 	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"github.com/topolvm/pvc-autoresizer/metrics"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -29,6 +30,7 @@ func NewPrometheusClient(url string) (MetricsClient, error) {
 
 	return &prometheusClient{
 		prometheusAPI: v1api,
+		address:       url,
 	}, nil
 }
 
@@ -45,6 +47,7 @@ type VolumeStats struct {
 
 type prometheusClient struct {
 	prometheusAPI prometheusv1.API
+	address       string
 }
 
 func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
@@ -76,6 +79,7 @@ func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.Namespaced
 func (c *prometheusClient) getMetricValues(ctx context.Context, query string) (map[types.NamespacedName]int64, error) {
 	res, _, err := c.prometheusAPI.Query(ctx, query, time.Now())
 	if err != nil {
+		metrics.FailTotal.Increment(c.address, query)
 		return nil, err
 	}
 
