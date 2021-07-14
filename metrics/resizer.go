@@ -34,11 +34,11 @@ func (a *resizerFailedLoopTotalAdapter) Increment(ns, name string) {
 }
 
 type loopSecondsTotalAdapter struct {
-	metric *prometheus.CounterVec
+	metric prometheus.Counter
 }
 
-func (a *loopSecondsTotalAdapter) Add(value float64, ns, name string) {
-	a.metric.WithLabelValues(ns, name).Add(value)
+func (a *loopSecondsTotalAdapter) Add(value float64) {
+	a.metric.Add(value)
 }
 
 var (
@@ -54,11 +54,11 @@ var (
 		Help:      "counter that indicates how many volume expansion processing loops are failed.",
 	}, []string{"namespace", "name"})
 
-	resizerLoopSecondsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	resizerLoopSecondsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Subsystem: ResizerSubsystem,
 		Name:      ResizerLoopSecondsTotalKey,
 		Help:      "counter that indicates the sum of seconds spent on volume expansion processing loops.",
-	}, []string{"namespace", "name"})
+	})
 
 	ResizerSuccessLoopTotal *resizerSuccessLoopTotalAdapter = &resizerSuccessLoopTotalAdapter{metric: resizerSuccessLoopTotal}
 	ResizerFailesLoopTotal  *resizerFailedLoopTotalAdapter  = &resizerFailedLoopTotalAdapter{metric: resizerFailedLoopTotal}

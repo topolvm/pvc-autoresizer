@@ -59,7 +59,9 @@ func (w *pvcAutoresizer) Start(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
+			startTime := time.Now()
 			err := w.reconcile(ctx)
+			metrics.ResizerLoopSecondsTotal.Add(time.Since(startTime).Seconds())
 			if err != nil {
 				w.log.Error(err, "failed to reconcile")
 				return err
