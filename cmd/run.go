@@ -3,6 +3,7 @@ package cmd
 import (
 	"time"
 
+	"github.com/topolvm/pvc-autoresizer/client"
 	"github.com/topolvm/pvc-autoresizer/runners"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -61,7 +62,7 @@ func subMain() error {
 		return err
 	}
 
-	pvcAutoresizer := runners.NewPVCAutoresizer(promClient, mgr.GetClient(),
+	pvcAutoresizer := runners.NewPVCAutoresizer(promClient, client.NewClientWrapper(mgr.GetClient()),
 		ctrl.Log.WithName("pvc-autoresizer"),
 		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
 	if err := mgr.Add(pvcAutoresizer); err != nil {

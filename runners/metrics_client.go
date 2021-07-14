@@ -19,7 +19,7 @@ const (
 
 // NewPrometheusClient returns a new prometheusClient
 func NewPrometheusClient(url string) (MetricsClient, error) {
-
+	metrics.MetricsClientFailTotal.SetAddress(url)
 	client, err := api.NewClient(api.Config{
 		Address: url,
 	})
@@ -30,7 +30,6 @@ func NewPrometheusClient(url string) (MetricsClient, error) {
 
 	return &prometheusClient{
 		prometheusAPI: v1api,
-		address:       url,
 	}, nil
 }
 
@@ -47,7 +46,6 @@ type VolumeStats struct {
 
 type prometheusClient struct {
 	prometheusAPI prometheusv1.API
-	address       string
 }
 
 func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
@@ -79,7 +77,7 @@ func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.Namespaced
 func (c *prometheusClient) getMetricValues(ctx context.Context, query string) (map[types.NamespacedName]int64, error) {
 	res, _, err := c.prometheusAPI.Query(ctx, query, time.Now())
 	if err != nil {
-		metrics.FailTotal.Increment(c.address, query)
+		metrics.MetricsClientFailTotal.Increment(query)
 		return nil, err
 	}
 

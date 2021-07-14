@@ -10,6 +10,7 @@ const (
 	ResizerSubsystem           = "resizer"
 	ResizerSuccessLoopTotalKey = "success_loop_total"
 	ResizerFailedLoopTotalKey  = "failed_loop_total"
+	ResizerLoopSecondsTotalKey = "loop_seconds_total"
 )
 
 func init() {
@@ -32,6 +33,14 @@ func (a *resizerFailedLoopTotalAdapter) Increment(ns, name string) {
 	a.metric.WithLabelValues(ns, name).Inc()
 }
 
+type loopSecondsTotalAdapter struct {
+	metric *prometheus.CounterVec
+}
+
+func (a *loopSecondsTotalAdapter) Add(value float64, ns, name string) {
+	a.metric.WithLabelValues(ns, name).Add(value)
+}
+
 var (
 	resizerSuccessLoopTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Subsystem: ResizerSubsystem,
@@ -45,11 +54,19 @@ var (
 		Help:      "counter that indicates how many volume expansion processing loops are failed.",
 	}, []string{"namespace", "name"})
 
+	resizerLoopSecondsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Subsystem: ResizerSubsystem,
+		Name:      ResizerLoopSecondsTotalKey,
+		Help:      "counter that indicates the sum of seconds spent on volume expansion processing loops.",
+	}, []string{"namespace", "name"})
+
 	ResizerSuccessLoopTotal *resizerSuccessLoopTotalAdapter = &resizerSuccessLoopTotalAdapter{metric: resizerSuccessLoopTotal}
 	ResizerFailesLoopTotal  *resizerFailedLoopTotalAdapter  = &resizerFailedLoopTotalAdapter{metric: resizerFailedLoopTotal}
+	ResizerLoopSecondsTotal *loopSecondsTotalAdapter        = &loopSecondsTotalAdapter{metric: resizerLoopSecondsTotal}
 )
 
 func registerResizerMetrics() {
 	runtimemetrics.Registry.MustRegister(resizerSuccessLoopTotal)
 	runtimemetrics.Registry.MustRegister(resizerFailedLoopTotal)
+	runtimemetrics.Registry.MustRegister(resizerLoopSecondsTotal)
 }
