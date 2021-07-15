@@ -60,7 +60,7 @@ var (
 	})
 
 	ResizerSuccessLoopTotal *resizerSuccessLoopTotalAdapter = &resizerSuccessLoopTotalAdapter{metric: resizerSuccessLoopTotal}
-	ResizerFailesLoopTotal  *resizerFailedLoopTotalAdapter  = &resizerFailedLoopTotalAdapter{metric: resizerFailedLoopTotal}
+	ResizerFailedLoopTotal  *resizerFailedLoopTotalAdapter  = &resizerFailedLoopTotalAdapter{metric: resizerFailedLoopTotal}
 	ResizerLoopSecondsTotal *loopSecondsTotalAdapter        = &loopSecondsTotalAdapter{metric: resizerLoopSecondsTotal}
 )
 

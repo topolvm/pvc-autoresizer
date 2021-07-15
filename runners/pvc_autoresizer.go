@@ -122,7 +122,7 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			}
 			err = w.resize(ctx, &pvc, vsMap[namespacedName])
 			if err != nil {
-				metrics.ResizerFailesLoopTotal.Increment(pvc.Namespace, pvc.Name)
+				metrics.ResizerFailedLoopTotal.Increment(pvc.Namespace, pvc.Name)
 				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to resize PVC")
 			} else {
 				metrics.ResizerSuccessLoopTotal.Increment(pvc.Namespace, pvc.Name)
