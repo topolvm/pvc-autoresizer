@@ -7,7 +7,6 @@ import (
 
 // Metrics subsystem and all of the keys used by the resizer.
 const (
-	ResizerSubsystem           = "resizer"
 	ResizerSuccessLoopTotalKey = "success_loop_total"
 	ResizerFailedLoopTotalKey  = "failed_loop_total"
 	ResizerLoopSecondsTotalKey = "loop_seconds_total"
@@ -43,19 +42,19 @@ func (a *loopSecondsTotalAdapter) Add(value float64) {
 
 var (
 	resizerSuccessLoopTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Subsystem: ResizerSubsystem,
+		Namespace: MetricsNamespace,
 		Name:      ResizerSuccessLoopTotalKey,
 		Help:      "counter that indicates how many volume expansion processing loops succeed.",
 	}, []string{"namespace", "name"})
 
 	resizerFailedLoopTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Subsystem: ResizerSubsystem,
+		Namespace: MetricsNamespace,
 		Name:      ResizerFailedLoopTotalKey,
 		Help:      "counter that indicates how many volume expansion processing loops are failed.",
 	}, []string{"namespace", "name"})
 
 	resizerLoopSecondsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Subsystem: ResizerSubsystem,
+		Namespace: MetricsNamespace,
 		Name:      ResizerLoopSecondsTotalKey,
 		Help:      "counter that indicates the sum of seconds spent on volume expansion processing loops.",
 	})

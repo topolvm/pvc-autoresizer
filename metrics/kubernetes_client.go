@@ -25,6 +25,7 @@ func (a *KubernetesClientFailTotalAdapter) Increment(group, version, kind, verb 
 
 var (
 	kubernetesClientFailTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: MetricsNamespace,
 		Subsystem: KubernetesClientSubsystem,
 		Name:      KubernetesClientFailTotalKey,
 		Help:      "counter that indicates how many API requests to kube-api server are failed.",

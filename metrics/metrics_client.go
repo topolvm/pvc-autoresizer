@@ -30,6 +30,7 @@ func (a *metricsClientFailTotalAdapter) SetAddress(address string) {
 
 var (
 	metricsClientFailTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: MetricsNamespace,
 		Subsystem: MetricsClientSubsystem,
 		Name:      MetricsClientFailTotalKey,
 		Help:      "counter that indicates how many API requests to metrics server(e.g. prometheus) are failed.",
