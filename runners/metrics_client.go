@@ -19,7 +19,6 @@ const (
 
 // NewPrometheusClient returns a new prometheusClient
 func NewPrometheusClient(url string) (MetricsClient, error) {
-	metrics.MetricsClientFailTotal.SetAddress(url)
 	client, err := api.NewClient(api.Config{
 		Address: url,
 	})
@@ -77,7 +76,7 @@ func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.Namespaced
 func (c *prometheusClient) getMetricValues(ctx context.Context, query string) (map[types.NamespacedName]int64, error) {
 	res, _, err := c.prometheusAPI.Query(ctx, query, time.Now())
 	if err != nil {
-		metrics.MetricsClientFailTotal.Increment(query)
+		metrics.MetricsClientFailTotal.Increment()
 		return nil, err
 	}
 

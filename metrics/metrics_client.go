@@ -16,25 +16,20 @@ func init() {
 }
 
 type metricsClientFailTotalAdapter struct {
-	metric  *prometheus.CounterVec
-	address string
+	metric prometheus.Counter
 }
 
-func (a *metricsClientFailTotalAdapter) Increment(query string) {
-	a.metric.WithLabelValues(a.address, query).Inc()
-}
-
-func (a *metricsClientFailTotalAdapter) SetAddress(address string) {
-	a.address = address
+func (a *metricsClientFailTotalAdapter) Increment() {
+	a.metric.Inc()
 }
 
 var (
-	metricsClientFailTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	metricsClientFailTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
 		Subsystem: MetricsClientSubsystem,
 		Name:      MetricsClientFailTotalKey,
 		Help:      "counter that indicates how many API requests to metrics server(e.g. prometheus) are failed.",
-	}, []string{"namespace", "name"})
+	})
 
 	MetricsClientFailTotal *metricsClientFailTotalAdapter = &metricsClientFailTotalAdapter{metric: metricsClientFailTotal}
 )

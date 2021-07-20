@@ -45,13 +45,13 @@ var (
 		Namespace: MetricsNamespace,
 		Name:      ResizerSuccessLoopTotalKey,
 		Help:      "counter that indicates how many volume expansion processing loops succeed.",
-	}, []string{"namespace", "name"})
+	}, []string{"pvc_namespace", "pvc_name"})
 
 	resizerFailedLoopTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
 		Name:      ResizerFailedLoopTotalKey,
 		Help:      "counter that indicates how many volume expansion processing loops are failed.",
-	}, []string{"namespace", "name"})
+	}, []string{"pvc_namespace", "pvc_name"})
 
 	resizerLoopSecondsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
