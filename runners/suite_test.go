@@ -9,17 +9,19 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/topolvm/pvc-autoresizer/client"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	originalClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -27,10 +29,11 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var cfg *rest.Config
-var k8sClient client.Client
+var k8sClient originalClient.Client
 var testEnv *envtest.Environment
 var cancelMgr func()
 var promClient = prometheusClientMock{}
+var mgr *manager.Manager
 
 var scName string = "test-storageclass"
 var provName string = "test-provisioner"
@@ -65,31 +68,33 @@ var _ = BeforeSuite(func(done Done) {
 
 	// +kubebuilder:scaffold:scheme
 
-	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme,
+	m, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:             scheme,
+		MetricsBindAddress: ":8080",
 	})
 	Expect(err).ToNot(HaveOccurred())
+	mgr = &m
 
 	noCheck := os.Getenv("NO_ANNOTATION_CHECK") == "true"
-	err = SetupIndexer(mgr, noCheck)
+	err = SetupIndexer(m, noCheck)
 	Expect(err).ToNot(HaveOccurred())
 
-	pvcAutoresizer := NewPVCAutoresizer(&promClient, mgr.GetClient(),
+	pvcAutoresizer := NewPVCAutoresizer(&promClient, client.NewClientWrapper(m.GetClient()),
 		logf.Log.WithName("pvc-autoresizer"),
-		1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer"))
-	err = mgr.Add(pvcAutoresizer)
+		1*time.Second, m.GetEventRecorderFor("pvc-autoresizer"))
+	err = m.Add(pvcAutoresizer)
 	Expect(err).ToNot(HaveOccurred())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancelMgr = cancel
 	go func() {
-		err = mgr.Start(ctx)
+		err = m.Start(ctx)
 		if err != nil {
-			mgr.GetLogger().Error(err, "failed to start manager")
+			m.GetLogger().Error(err, "failed to start manager")
 		}
 	}()
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
+	k8sClient, err = originalClient.New(cfg, originalClient.Options{Scheme: scheme})
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
 
