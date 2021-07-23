@@ -176,6 +176,92 @@ var _ = Describe("test resizer", func() {
 				})
 			}
 		})
+
+		Context("metrics tests", func() {
+			It("should outout metrics", func() {
+				ctx := context.Background()
+				pvcNS := "default"
+				pvcName := "test-resize-metrics"
+				createPVC(ctx, pvcNS, pvcName, scName, "50%", "20Gi", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
+				By("running resize", func() {
+					setMetrics(pvcNS, pvcName, 3<<30, 7<<30)
+					Eventually(func() error {
+						var pvc corev1.PersistentVolumeClaim
+						err := k8sClient.Get(ctx, types.NamespacedName{Namespace: pvcNS, Name: pvcName}, &pvc)
+						if err != nil {
+							return err
+						}
+						req := pvc.Spec.Resources.Requests.Storage().Value()
+						if req != 30<<30 {
+							return fmt.Errorf("request size should be %d, but %d", 30<<30, req)
+						}
+						return nil
+					}, 3*time.Second).ShouldNot(HaveOccurred())
+				})
+
+				By("checking metrics", func() {
+					mfs, err := getMetricsFamily()
+					Expect(err).NotTo(HaveOccurred())
+					mf, ok := mfs["pvcautoresizer_loop_seconds_total"]
+					Expect(ok).To(BeTrue())
+
+					var val float64
+					for _, m := range mf.Metric {
+						if m.Counter == nil {
+							continue
+						}
+						if m.Counter.Value == nil {
+							continue
+						}
+						val = *m.Counter.Value
+					}
+					Expect(val).NotTo(Equal(float64(0)))
+
+					mf, ok = mfs["pvcautoresizer_success_loop_total"]
+					Expect(ok).To(BeTrue())
+					var val2 int
+					for _, m := range mf.Metric {
+						labels := map[string]string{
+							"pvc_namespace": pvcNS,
+							"pvc_name":      pvcName,
+						}
+						if !haveLabels(m, labels) {
+							continue
+						}
+						if m.Counter == nil {
+							continue
+						}
+						if m.Counter.Value == nil {
+							continue
+						}
+						val2 = int(*m.Counter.Value)
+					}
+					Expect(val2).NotTo(Equal(0))
+
+					// This metrics ouput from the pvcAutoresizer with FakeClientWrapper
+					mf, ok = mfs["pvcautoresizer_failed_loop_total"]
+					Expect(ok).To(BeTrue())
+					var val3 int
+					for _, m := range mf.Metric {
+						labels := map[string]string{
+							"pvc_namespace": pvcNS,
+							"pvc_name":      pvcName,
+						}
+						if !haveLabels(m, labels) {
+							continue
+						}
+						if m.Counter == nil {
+							continue
+						}
+						if m.Counter.Value == nil {
+							continue
+						}
+						val3 = int(*m.Counter.Value)
+					}
+					Expect(val3).NotTo(Equal(0))
+				})
+			})
+		})
 	})
 })
 

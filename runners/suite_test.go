@@ -85,6 +85,13 @@ var _ = BeforeSuite(func(done Done) {
 	err = m.Add(pvcAutoresizer)
 	Expect(err).ToNot(HaveOccurred())
 
+	// Add pvcAutoresizer with FakeClientWrapper for metrics tests
+	pvcAutoresizer2 := NewPVCAutoresizer(&promClient, client.NewFakeClientWrapper(m.GetClient()),
+		logf.Log.WithName("pvc-autoresizer2"),
+		1*time.Second, m.GetEventRecorderFor("pvc-autoresizer2"))
+	err = m.Add(pvcAutoresizer2)
+	Expect(err).ToNot(HaveOccurred())
+
 	ctx, cancel := context.WithCancel(context.Background())
 	cancelMgr = cancel
 	go func() {
