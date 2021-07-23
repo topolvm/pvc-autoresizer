@@ -49,7 +49,7 @@ var _ = Describe("test clientWrapper", func() {
 			}
 			value = int(*m.Counter.Value)
 		}
-		Expect(value).To(Equal(1))
+		Expect(value).NotTo(Equal(0))
 	})
 })
 
