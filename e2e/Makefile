@@ -19,7 +19,7 @@ SUDO := sudo
 BINDIR := $(shell pwd)/../bin
 TMPDIR := /tmp/autoresizer
 KUBECTL := $(BINDIR)/kubectl
-KUSTOMIZE := $(BINDIR)/kustomize
+HELM := $(BINDIR)/helm
 GINKGO := $(BINDIR)/ginkgo
 KIND := $(TMPDIR)/topolvm/bin/kind
 
@@ -39,9 +39,9 @@ init-cluster: launch-kind autoresizer.img kube-prometheus
 	$(KUBECTL) apply -f kube-prometheus/manifests/
 	# setup autoresizer
 	$(KIND) load image-archive --name=$(KIND_CLUSTER_NAME) autoresizer.img
-	$(KUSTOMIZE) build --load_restrictor='none' $(shell pwd)/manifests/pvc-autoresizer | $(KUBECTL) apply -f -
+	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../charts/pvc-autoresizer/ -f manifests/values/values.yaml
 	# storageclass for test
-	$(KUBECTL) apply -f manifests/storageclass.yaml
+	$(KUBECTL) apply -f manifests/common/storageclass.yaml
 
 .PHONY: test
 test:

@@ -12,10 +12,11 @@ image:
 controller:
   replicas: 1
   args:
-    - --prometheus-url=http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090
-    - --interval=10s
+    prometheusURL: http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090
+    interval: 10s
+    additionalArgs: []
   resources:
     requests:
       cpu: 100m
       memory: 20Mi
-  terminationGracePeriodSeconds: 10
+  terminationGracePeriodSeconds:  # 10
