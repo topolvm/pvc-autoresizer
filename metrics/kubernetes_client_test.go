@@ -19,7 +19,7 @@ func TestKubernetesClientFailTotal(t *testing.T) {
 	}
 
 	KubernetesClientFailTotal.Increment(group, version, kind, verb)
-	actual = testutil.ToFloat64(kubernetesClientFailTotal.WithLabelValues("", "v1", "Pod", "LIST"))
+	actual = testutil.ToFloat64(kubernetesClientFailTotal.WithLabelValues(group, version, kind, verb))
 	if actual != float64(2) {
 		t.Fatalf("group=%s version=%s kind=%s verb=%s value is not %d", group, version, kind, verb, 2)
 	}
