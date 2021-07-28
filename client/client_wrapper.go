@@ -26,14 +26,9 @@ func NewClientWrapper(c originalclient.Client) originalclient.Client {
 func (c *clientWrapper) List(ctx context.Context, list originalclient.ObjectList, opts ...originalclient.ListOption) error {
 	// https://github.com/kubernetes-sigs/controller-runtime/blob/v0.9.2/pkg/client/client.go#L257-L289
 	var gvk schema.GroupVersionKind
-	//lint:ignore S1034 ignore this
-	switch list.(type) {
+	switch v := list.(type) {
 	case *unstructured.UnstructuredList:
-		u, ok := list.(*unstructured.UnstructuredList)
-		if !ok {
-			return fmt.Errorf("unstructured client did not understand object: %T", list)
-		}
-		gvk = u.GroupVersionKind()
+		gvk = v.GroupVersionKind()
 	case *metav1.PartialObjectMetadataList:
 		gvk = list.GetObjectKind().GroupVersionKind()
 	default:
@@ -54,14 +49,9 @@ func (c *clientWrapper) List(ctx context.Context, list originalclient.ObjectList
 func (c *clientWrapper) Update(ctx context.Context, obj originalclient.Object, opts ...originalclient.UpdateOption) error {
 	// https://github.com/kubernetes-sigs/controller-runtime/blob/v0.9.2/pkg/client/client.go#L304-L315
 	var gvk schema.GroupVersionKind
-	//lint:ignore S1034 ignore this
-	switch obj.(type) {
+	switch v := obj.(type) {
 	case *unstructured.Unstructured:
-		u, ok := obj.(*unstructured.Unstructured)
-		if !ok {
-			return fmt.Errorf("unstructured client did not understand object: %T", obj)
-		}
-		gvk = u.GroupVersionKind()
+		gvk = v.GroupVersionKind()
 	case *metav1.PartialObjectMetadata:
 		return fmt.Errorf("cannot update using only metadata -- did you mean to patch?")
 	default:
