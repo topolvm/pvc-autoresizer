@@ -2,6 +2,8 @@ package runners
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 
 	. "github.com/onsi/ginkgo"
@@ -35,7 +37,12 @@ func (c *prometheusClientMock) setResponce(key types.NamespacedName, stats *Volu
 
 var _ = Describe("test prometheusClient", func() {
 	It("test metrics", func() {
-		c, err := NewPrometheusClient("http://noconnection")
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.NotFound(w, r)
+		}))
+		defer ts.Close()
+
+		c, err := NewPrometheusClient(ts.URL)
 		Expect(err).ToNot(HaveOccurred())
 		_, err = c.GetMetrics(context.TODO())
 		Expect(err).To(HaveOccurred())
