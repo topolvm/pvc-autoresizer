@@ -178,7 +178,7 @@ var _ = Describe("test resizer", func() {
 		})
 
 		Context("metrics tests", func() {
-			It("should outout metrics", func() {
+			It("should output metrics", func() {
 				ctx := context.Background()
 				pvcNS := "default"
 				pvcName := "test-resize-metrics"
