@@ -1,6 +1,9 @@
 apiVersion: v2
 name: pvc-autoresizer
 description: Auto-resize PersistentVolumeClaim objects based on Prometheus metrics.
+home: https://github.com/topolvm/pvc-autoresizer
+sources:
+  - https://github.com/topolvm/pvc-autoresizer
 
 # A chart can be either an 'application' or a 'library' chart.
 #
