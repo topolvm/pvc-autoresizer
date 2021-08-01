@@ -7,21 +7,16 @@ import (
 )
 
 func TestKubernetesClientFailTotal(t *testing.T) {
-	group := ""
-	version := "v1"
-	kind := "Pod"
-	verb := "LIST"
-
-	KubernetesClientFailTotal.Increment(group, version, kind, verb)
-	actual := testutil.ToFloat64(kubernetesClientFailTotal.WithLabelValues(group, version, kind, verb))
+	KubernetesClientFailTotal.Increment()
+	actual := testutil.ToFloat64(kubernetesClientFailTotal)
 	if actual != float64(1) {
-		t.Fatalf("group=%s version=%s kind=%s verb=%s value is not %d", group, version, kind, verb, 1)
+		t.Fatalf("value is not %d", 1)
 	}
 
-	KubernetesClientFailTotal.Increment(group, version, kind, verb)
-	actual = testutil.ToFloat64(kubernetesClientFailTotal.WithLabelValues(group, version, kind, verb))
+	KubernetesClientFailTotal.Increment()
+	actual = testutil.ToFloat64(kubernetesClientFailTotal)
 	if actual != float64(2) {
-		t.Fatalf("group=%s version=%s kind=%s verb=%s value is not %d", group, version, kind, verb, 2)
+		t.Fatalf("value is not %d", 2)
 	}
 
 	actual2 := testutil.CollectAndCount(kubernetesClientFailTotal)

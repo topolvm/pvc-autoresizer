@@ -16,20 +16,20 @@ func init() {
 }
 
 type KubernetesClientFailTotalAdapter struct {
-	metric *prometheus.CounterVec
+	metric prometheus.Counter
 }
 
-func (a *KubernetesClientFailTotalAdapter) Increment(group, version, kind, verb string) {
-	a.metric.WithLabelValues(group, version, kind, verb).Inc()
+func (a *KubernetesClientFailTotalAdapter) Increment() {
+	a.metric.Inc()
 }
 
 var (
-	kubernetesClientFailTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	kubernetesClientFailTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
 		Subsystem: KubernetesClientSubsystem,
 		Name:      KubernetesClientFailTotalKey,
 		Help:      "counter that indicates how many API requests to kube-api server are failed.",
-	}, []string{"group", "version", "kind", "verb"})
+	})
 
 	KubernetesClientFailTotal *KubernetesClientFailTotalAdapter = &KubernetesClientFailTotalAdapter{metric: kubernetesClientFailTotal}
 )

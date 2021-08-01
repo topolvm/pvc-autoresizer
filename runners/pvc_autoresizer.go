@@ -87,6 +87,7 @@ func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.St
 	var scs storagev1.StorageClassList
 	err := w.client.List(ctx, &scs, client.MatchingFields(map[string]string{resizeEnableIndexKey: "true"}))
 	if err != nil {
+		metrics.KubernetesClientFailTotal.Increment()
 		return nil, err
 	}
 	return &scs, nil
@@ -107,6 +108,7 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 		var pvcs corev1.PersistentVolumeClaimList
 		err = w.client.List(ctx, &pvcs, client.MatchingFields(map[string]string{storageClassNameIndexKey: sc.Name}))
 		if err != nil {
+			metrics.KubernetesClientFailTotal.Increment()
 			return err
 		}
 		for _, pvc := range pvcs.Items {
@@ -188,6 +190,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		pvc.Annotations[PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
 		err = w.client.Update(ctx, pvc)
 		if err != nil {
+			metrics.KubernetesClientFailTotal.Increment()
 			return err
 		}
 		log.Info("resize started",

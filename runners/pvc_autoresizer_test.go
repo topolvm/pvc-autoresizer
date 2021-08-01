@@ -259,6 +259,21 @@ var _ = Describe("test resizer", func() {
 						val3 = int(*m.Counter.Value)
 					}
 					Expect(val3).NotTo(Equal(0))
+
+					// This metrics ouput from the pvcAutoresizer with FakeClientWrapper
+					mf, ok = mfs["pvcautoresizer_kubernetes_client_fail_total"]
+					Expect(ok).To(BeTrue())
+					var val4 int
+					for _, m := range mf.Metric {
+						if m.Counter == nil {
+							continue
+						}
+						if m.Counter.Value == nil {
+							continue
+						}
+						val4 = int(*m.Counter.Value)
+					}
+					Expect(val4).NotTo(Equal(0))
 				})
 			})
 		})

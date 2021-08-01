@@ -2,6 +2,7 @@ package runners
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,7 +10,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/topolvm/pvc-autoresizer/client"
+	dto "github.com/prometheus/client_model/go"
+	"github.com/prometheus/common/expfmt"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,14 +81,14 @@ var _ = BeforeSuite(func(done Done) {
 	err = SetupIndexer(m, noCheck)
 	Expect(err).ToNot(HaveOccurred())
 
-	pvcAutoresizer := NewPVCAutoresizer(&promClient, client.NewClientWrapper(m.GetClient()),
+	pvcAutoresizer := NewPVCAutoresizer(&promClient, m.GetClient(),
 		logf.Log.WithName("pvc-autoresizer"),
 		1*time.Second, m.GetEventRecorderFor("pvc-autoresizer"))
 	err = m.Add(pvcAutoresizer)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Add pvcAutoresizer with FakeClientWrapper for metrics tests
-	pvcAutoresizer2 := NewPVCAutoresizer(&promClient, client.NewFakeClientWrapper(m.GetClient()),
+	pvcAutoresizer2 := NewPVCAutoresizer(&promClient, NewFakeClientWrapper(m.GetClient()),
 		logf.Log.WithName("pvc-autoresizer2"),
 		1*time.Second, m.GetEventRecorderFor("pvc-autoresizer2"))
 	err = m.Add(pvcAutoresizer2)
@@ -132,4 +134,28 @@ func createStorageClass(ctx context.Context, name, provisioner string) {
 	}
 	err := k8sClient.Create(ctx, &sc)
 	Expect(err).NotTo(HaveOccurred())
+}
+
+func getMetricsFamily() (map[string]*dto.MetricFamily, error) {
+	resp, err := http.Get("http://localhost:8080/metrics")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var parser expfmt.TextParser
+	return parser.TextToMetricFamilies(resp.Body)
+}
+
+func haveLabels(m *dto.Metric, labels map[string]string) bool {
+OUTER:
+	for k, v := range labels {
+		for _, label := range m.Label {
+			if k == *label.Name && v == *label.Value {
+				continue OUTER
+			}
+		}
+		return false
+	}
+	return true
 }
