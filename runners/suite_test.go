@@ -23,7 +23,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -35,7 +34,6 @@ var k8sClient originalClient.Client
 var testEnv *envtest.Environment
 var cancelMgr func()
 var promClient = prometheusClientMock{}
-var mgr *manager.Manager
 
 var scName string = "test-storageclass"
 var provName string = "test-provisioner"
@@ -70,36 +68,35 @@ var _ = BeforeSuite(func(done Done) {
 
 	// +kubebuilder:scaffold:scheme
 
-	m, err := ctrl.NewManager(cfg, ctrl.Options{
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: ":8080",
 	})
 	Expect(err).ToNot(HaveOccurred())
-	mgr = &m
 
 	noCheck := os.Getenv("NO_ANNOTATION_CHECK") == "true"
-	err = SetupIndexer(m, noCheck)
+	err = SetupIndexer(mgr, noCheck)
 	Expect(err).ToNot(HaveOccurred())
 
-	pvcAutoresizer := NewPVCAutoresizer(&promClient, m.GetClient(),
+	pvcAutoresizer := NewPVCAutoresizer(&promClient, mgr.GetClient(),
 		logf.Log.WithName("pvc-autoresizer"),
-		1*time.Second, m.GetEventRecorderFor("pvc-autoresizer"))
-	err = m.Add(pvcAutoresizer)
+		1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer"))
+	err = mgr.Add(pvcAutoresizer)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Add pvcAutoresizer with FakeClientWrapper for metrics tests
-	pvcAutoresizer2 := NewPVCAutoresizer(&promClient, NewFakeClientWrapper(m.GetClient()),
+	pvcAutoresizer2 := NewPVCAutoresizer(&promClient, NewFakeClientWrapper(mgr.GetClient()),
 		logf.Log.WithName("pvc-autoresizer2"),
-		1*time.Second, m.GetEventRecorderFor("pvc-autoresizer2"))
-	err = m.Add(pvcAutoresizer2)
+		1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer2"))
+	err = mgr.Add(pvcAutoresizer2)
 	Expect(err).ToNot(HaveOccurred())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancelMgr = cancel
 	go func() {
-		err = m.Start(ctx)
+		err = mgr.Start(ctx)
 		if err != nil {
-			m.GetLogger().Error(err, "failed to start manager")
+			mgr.GetLogger().Error(err, "failed to start manager")
 		}
 	}()
 
