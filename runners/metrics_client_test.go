@@ -37,9 +37,7 @@ func (c *prometheusClientMock) setResponce(key types.NamespacedName, stats *Volu
 
 var _ = Describe("test prometheusClient", func() {
 	It("test metrics", func() {
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			http.NotFound(w, r)
-		}))
+		ts := httptest.NewServer(http.HandlerFunc(http.NotFound))
 		defer ts.Close()
 
 		c, err := NewPrometheusClient(ts.URL)
