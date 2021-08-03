@@ -2,8 +2,12 @@ package runners
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -30,3 +34,32 @@ func (c *prometheusClientMock) setResponce(key types.NamespacedName, stats *Volu
 	}
 	c.stats[key] = stats
 }
+
+var _ = Describe("test prometheusClient", func() {
+	It("test metrics", func() {
+		ts := httptest.NewServer(http.HandlerFunc(http.NotFound))
+		defer ts.Close()
+
+		c, err := NewPrometheusClient(ts.URL)
+		Expect(err).ToNot(HaveOccurred())
+		_, err = c.GetMetrics(context.TODO())
+		Expect(err).To(HaveOccurred())
+
+		mfs, err := getMetricsFamily()
+		Expect(err).NotTo(HaveOccurred())
+		mf, ok := mfs["pvcautoresizer_metrics_client_fail_total"]
+		Expect(ok).To(BeTrue())
+
+		var value int
+		for _, m := range mf.Metric {
+			if m.Counter == nil {
+				continue
+			}
+			if m.Counter.Value == nil {
+				continue
+			}
+			value = int(*m.Counter.Value)
+		}
+		Expect(value).NotTo(Equal(0))
+	})
+})

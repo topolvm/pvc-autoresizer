@@ -7,6 +7,7 @@ COPY go.mod go.mod
 COPY go.sum go.sum
 # Copy the go source
 COPY main.go main.go
+COPY metrics/ metrics/
 COPY runners/ runners/
 COPY cmd/ cmd/
 

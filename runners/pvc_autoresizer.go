@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/topolvm/pvc-autoresizer/metrics"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -58,7 +59,9 @@ func (w *pvcAutoresizer) Start(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
+			startTime := time.Now()
 			err := w.reconcile(ctx)
+			metrics.ResizerLoopSecondsTotal.Add(time.Since(startTime).Seconds())
 			if err != nil {
 				w.log.Error(err, "failed to reconcile")
 				return err
@@ -84,6 +87,7 @@ func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.St
 	var scs storagev1.StorageClassList
 	err := w.client.List(ctx, &scs, client.MatchingFields(map[string]string{resizeEnableIndexKey: "true"}))
 	if err != nil {
+		metrics.KubernetesClientFailTotal.Increment()
 		return nil, err
 	}
 	return &scs, nil
@@ -104,6 +108,7 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 		var pvcs corev1.PersistentVolumeClaimList
 		err = w.client.List(ctx, &pvcs, client.MatchingFields(map[string]string{storageClassNameIndexKey: sc.Name}))
 		if err != nil {
+			metrics.KubernetesClientFailTotal.Increment()
 			return err
 		}
 		for _, pvc := range pvcs.Items {
@@ -119,7 +124,10 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			}
 			err = w.resize(ctx, &pvc, vsMap[namespacedName])
 			if err != nil {
+				metrics.ResizerFailedLoopTotal.Increment(pvc.Namespace, pvc.Name)
 				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to resize PVC")
+			} else {
+				metrics.ResizerSuccessLoopTotal.Increment(pvc.Namespace, pvc.Name)
 			}
 		}
 	}
@@ -182,6 +190,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		pvc.Annotations[PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
 		err = w.client.Update(ctx, pvc)
 		if err != nil {
+			metrics.KubernetesClientFailTotal.Increment()
 			return err
 		}
 		log.Info("resize started",
