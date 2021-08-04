@@ -81,6 +81,21 @@ releases page.
 Visit https://github.com/topolvm/pvc-autoresizer/releases to check
 the result.  You may manually edit the page to describe the release.
 
+
+Release Helm Chart
+-----------------
+
+pvc-autoresizer Helm Chart will be released independently from pvc-autoresizer's release.
+This will prevent the pvc-autoresizer version from going up just by modifying the Helm Chart.
+
+You must change the version of Chart.yaml when making changes to the Helm Chart. CI fails with lint error when creating a Pull Request without changing the version of Chart.yaml.
+
+When you release the Helm Chart, manually run the GitHub Actions workflow for the release.
+
+https://github.com/topolvm/pvc-autoresizer/actions/workflows/helm-release.yaml
+
+When you run workflow, helm/chart-releaser-action will automatically create a GitHub Release.
+
 [semver]: https://semver.org/spec/v2.0.0.html
 [example]: https://github.com/cybozu-go/etcdpasswd/commit/77d95384ac6c97e7f48281eaf23cb94f68867f79
 [GitHub Actions]: https://github.com/topolvm/pvc-autoresizer/actions
