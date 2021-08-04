@@ -33,11 +33,13 @@ In addition, configure scraping as follows:
 
 Specify the Prometheus URL to `pvc-autoresizer` argument as `--prometheus-url`.
 
-`pvc-autoresizer` can be deployed to a Kubernetes cluster via `kustomize` and `kubectl`:
+`pvc-autoresizer` can be deployed to a Kubernetes cluster via `helm`:
 
+```sh
+helm install --create-namespace --namespace pvc-autoresizer pvc-autoresizer pvc-autoresizer/pvc-autoresizer --set "controller.args.prometheusURL=<YOUR PROMETHEUS ENDPOINT>"
 ```
-kustomize build ./config/default | kubectl apply -f -
-```
+
+See the Chart [README.md](./charts/pvc-autoresizer/README.md) for detailed documentation on the Helm Chart.
 
 ## How to use
 

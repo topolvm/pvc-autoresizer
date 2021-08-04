@@ -4,7 +4,8 @@ ENVTEST_K8S_VERSION = 1.19.2
 KUBEBUILDER_VERSION = 3.1.0
 CTRLTOOLS_VERSION = 0.6.0
 CTRLRUNTIME_VERSION = 0.8.3
-KUSTOMIZE_VERSION = 3.8.7
+HELM_VERSION = 3.5.0
+HELM_DOCS_VERSION = 1.5.0
 
 export ENVTEST_K8S_VERSION
 
@@ -128,4 +129,6 @@ setup: # Setup tools
 	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CTRLTOOLS_VERSION)
 	curl -o $(BINDIR)/kubectl -sfL https://storage.googleapis.com/kubernetes-release/release/v$(ENVTEST_K8S_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(BINDIR)/kubectl
-	curl -sfL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv$(KUSTOMIZE_VERSION)/kustomize_v$(KUSTOMIZE_VERSION)_linux_amd64.tar.gz | tar -xz -C $(BINDIR)
+	GOBIN=$(BINDIR) go install github.com/norwoodj/helm-docs/cmd/helm-docs@v$(HELM_DOCS_VERSION)
+	curl -L -sS https://get.helm.sh/helm-v$(HELM_VERSION)-linux-amd64.tar.gz \
+	  | tar xvz -C $(BINDIR) --strip-components 1 linux-amd64/helm
