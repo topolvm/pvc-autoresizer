@@ -217,17 +217,10 @@ var _ = Describe("test resizer", func() {
 					}
 					Expect(val).NotTo(Equal(float64(0)))
 
-					mf, ok = mfs["pvcautoresizer_success_loop_total"]
+					mf, ok = mfs["pvcautoresizer_success_resize_total"]
 					Expect(ok).To(BeTrue())
 					var val2 int
 					for _, m := range mf.Metric {
-						labels := map[string]string{
-							"pvc_namespace": pvcNS,
-							"pvc_name":      pvcName,
-						}
-						if !haveLabels(m, labels) {
-							continue
-						}
 						if m.Counter == nil {
 							continue
 						}
@@ -239,17 +232,10 @@ var _ = Describe("test resizer", func() {
 					Expect(val2).NotTo(Equal(0))
 
 					// This metrics ouput from the pvcAutoresizer with FakeClientWrapper
-					mf, ok = mfs["pvcautoresizer_failed_loop_total"]
+					mf, ok = mfs["pvcautoresizer_failed_resize_total"]
 					Expect(ok).To(BeTrue())
 					var val3 int
 					for _, m := range mf.Metric {
-						labels := map[string]string{
-							"pvc_namespace": pvcNS,
-							"pvc_name":      pvcName,
-						}
-						if !haveLabels(m, labels) {
-							continue
-						}
 						if m.Counter == nil {
 							continue
 						}

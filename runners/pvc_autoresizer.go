@@ -96,12 +96,14 @@ func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.St
 func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 	scs, err := w.getStorageClassList(ctx)
 	if err != nil {
-		return err
+		w.log.Error(err, "getStorageClassList failed")
+		return nil
 	}
 
 	vsMap, err := w.metricsClient.GetMetrics(ctx)
 	if err != nil {
-		return err
+		w.log.Error(err, "metricsClient.GetMetrics failed")
+		return nil
 	}
 
 	for _, sc := range scs.Items {
@@ -109,7 +111,8 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 		err = w.client.List(ctx, &pvcs, client.MatchingFields(map[string]string{storageClassNameIndexKey: sc.Name}))
 		if err != nil {
 			metrics.KubernetesClientFailTotal.Increment()
-			return err
+			w.log.Error(err, "list pvc failed")
+			return nil
 		}
 		for _, pvc := range pvcs.Items {
 			if !isTargetPVC(&pvc) {
@@ -124,10 +127,10 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			}
 			err = w.resize(ctx, &pvc, vsMap[namespacedName])
 			if err != nil {
-				metrics.ResizerFailedLoopTotal.Increment(pvc.Namespace, pvc.Name)
+				metrics.ResizerFailedResizeTotal.Increment()
 				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to resize PVC")
 			} else {
-				metrics.ResizerSuccessLoopTotal.Increment(pvc.Namespace, pvc.Name)
+				metrics.ResizerSuccessResizeTotal.Increment()
 			}
 		}
 	}
