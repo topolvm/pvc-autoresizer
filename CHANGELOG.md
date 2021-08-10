@@ -7,6 +7,27 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.1.6] - 2021-08-06
+
+### Added
+- Expose metrics (#52, #57)
+  - Add metrics description to README.md (#60)
+- Add pvc-autoresizer helm charts (#54)
+
+### Changed
+- Remove about used_bytes (#49)
+
+### Fixed
+- Update kubebuilder to v3 (#41)
+- Add e2e test (#44)
+- Upgrade controller-runtime to v0.9.2 (#47)
+- Add parameter tests for resizing (#48)
+- Fix e2e image (#53)
+
+### Contributors
+- @bells17
+- @d-kuro
+
 ## [0.1.5] - 2021-05-06
 
 ### Notice
@@ -21,7 +42,7 @@ You can specify the limit by the annotation `resize.topolvm.io/storage_limit`.
 - don't crash on a single PVC resizing failure (#33)
 
 ### Contributors
-@anas-aso
+- @anas-aso
 
 ## [0.1.4] - 2021-03-22
 ### Changed
@@ -59,7 +80,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.2...v0.1.3
