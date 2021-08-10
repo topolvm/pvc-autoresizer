@@ -108,3 +108,25 @@ spec:
 Container images are available on [Quay.io](https://quay.io/repository/topolvm/pvc-autoresizer)
 
 [releases]: https://github.com/topolvm/pvc-autoresizer/releases
+
+## Prometheus metrics
+
+###  `pvcautoresizer_kubernetes_client_fail_total`
+
+`pvcautoresizer_kubernetes_client_fail_total` is a counter that indicates how many API requests to kube-api server are failed.
+
+### `pvcautoresizer_metrics_client_fail_total`
+
+`pvcautoresizer_metrics_client_fail_total` is a counter that indicates how many API requests to metrics server(e.g. prometheus) are failed.
+
+### `pvcautoresizer_success_loop_total`
+
+`pvcautoresizer_success_loop_total` is a counter that indicates how many volume expansion processing loops succeed.
+
+### `pvcautoresizer_failed_loop_total`
+
+`pvcautoresizer_failed_loop_total` is a counter that indicates how many volume expansion processing loops are failed.
+
+### `pvcautoresizer_loop_seconds_total`
+
+`pvcautoresizer_loop_seconds_total` is a counter that indicates the sum of seconds spent on volume expansion processing loops.
