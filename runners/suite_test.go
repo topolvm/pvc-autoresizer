@@ -143,16 +143,3 @@ func getMetricsFamily() (map[string]*dto.MetricFamily, error) {
 	var parser expfmt.TextParser
 	return parser.TextToMetricFamilies(resp.Body)
 }
-
-func haveLabels(m *dto.Metric, labels map[string]string) bool {
-OUTER:
-	for k, v := range labels {
-		for _, label := range m.Label {
-			if k == *label.Name && v == *label.Value {
-				continue OUTER
-			}
-		}
-		return false
-	}
-	return true
-}

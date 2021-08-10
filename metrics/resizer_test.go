@@ -7,25 +7,19 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
-func TestResizerSuccessLoopTotal(t *testing.T) {
-	ns := "default"
-	name := "pvc"
-
-	ResizerSuccessLoopTotal.Increment(ns, name)
-	actual := testutil.ToFloat64(resizerSuccessLoopTotal.WithLabelValues(ns, name))
+func TestResizerSuccessResizeTotal(t *testing.T) {
+	ResizerSuccessResizeTotal.Increment()
+	actual := testutil.ToFloat64(resizerSuccessResizeTotal)
 	if actual != float64(1) {
-		t.Fatalf("namespace=%s name=%s value is not %d", ns, name, 1)
+		t.Fatalf("value is not %d", 1)
 	}
 }
 
-func TestResizerFailedLoopTotal(t *testing.T) {
-	ns := "default"
-	name := "pvc"
-
-	ResizerFailedLoopTotal.Increment(ns, name)
-	actual := testutil.ToFloat64(resizerFailedLoopTotal.WithLabelValues(ns, name))
+func TestResizerFailedResizeTotal(t *testing.T) {
+	ResizerFailedResizeTotal.Increment()
+	actual := testutil.ToFloat64(resizerFailedResizeTotal)
 	if actual != float64(1) {
-		t.Fatalf("namespace=%s name=%s value is not %d", ns, name, 1)
+		t.Fatalf("value is not %d", 1)
 	}
 }
 
