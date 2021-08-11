@@ -63,6 +63,7 @@ metadata:
   annotations:
     resize.topolvm.io/threshold: 20%
     resize.topolvm.io/increase: 20Gi
+    resize.topolvm.io/storage_limit: 100Gi
 spec:
   accessModes:
   - ReadWriteOnce
@@ -70,13 +71,12 @@ spec:
   resources:
     requests:
       storage: 30Gi
-    limits:
-      storage: 100Gi
   storageClassName: topolvm-provisioner
 ```
 
 - `spec.storageClassName` should be put above StorageClass (in this case "topolvm-provisioner").
-- To allow automatic resizing, PVC must have `spec.resources.limits.storage`.
+- To allow automatic resizing, PVC must have `resize.topolvm.io/storage_limit` annotation.
+  We could have configured with `spec.resources.limits.storage`, but it is deprecated.
 - pvc-autoresizer increases PVC's `spec.resources.requests.storage` up to the given limits.
 - The threshold of free space is given by `resize.topolvm.io/threshold` annotation.
 - The amount of increased size can be specified by `resize.topolvm.io/increase` annotation.
