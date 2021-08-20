@@ -6,6 +6,7 @@ metadata:
   annotations:
     resize.topolvm.io/threshold: "{{ .thresholdAnnotation }}"
     resize.topolvm.io/increase: "{{ .increaseAnnotation }}"
+    resize.topolvm.io/inodes-threshold: "{{ .inodesThresholdAnnotation }}"
     resize.topolvm.io/storage_limit: "{{ .storageLimitAnnotation }}"
 spec:
   accessModes:

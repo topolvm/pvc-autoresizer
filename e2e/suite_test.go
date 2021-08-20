@@ -11,6 +11,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -159,7 +162,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := ""
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit)
 
 		By("create a file with a size that does not exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "fallocate", "-l", "400M", "/test1/test1.txt")
@@ -193,7 +196,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := ""
 		storageLimit := ""
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit)
 
 		By("create a file with a size that does not exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "fallocate", "-l", "9G", "/test1/test1.txt")
@@ -213,7 +216,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := "2Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit)
 
 		By("create a file with a size that exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "fallocate", "-l", "600M", "/test1/test1.txt")
@@ -240,7 +243,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := ""
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit)
 
 		By("write data with a size that exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "dd", "if=/dev/zero", "of=/dev/e2etest", "count=600M", "iflag=count_bytes")
@@ -260,7 +263,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := ""
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit)
 
 		By("create a file with a size that exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "fallocate", "-l", "600M", "/test1/test1.txt")
@@ -269,9 +272,54 @@ var _ = Describe("pvc-autoresizer", func() {
 		By("checking the disk does not resize")
 		checkDoesNotResize(pvcName, "1Gi")
 	})
+
+	It("should resize PVC based on PVC spec and annotations(inode)", func() {
+		pvcName := "test-pvc"
+		sc := "topolvm-provisioner-annotated"
+		mode := string(corev1.PersistentVolumeFilesystem)
+		request := "1Gi"
+		limit := "2Gi"
+		threshold := "50%"
+		increase := "1Gi"
+		inodesThreshold := "99%"
+		storageLimit := ""
+
+		var capacityInode int64
+		var availableInode int64
+
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, inodesThreshold, increase, storageLimit)
+
+		By("getting available inode size and capacity inode size")
+		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "df", "/test1", "--output=target,itotal,iavail")
+		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
+		lines := regexp.MustCompile(`\n`).Split(string(stdout), -1)
+		Expect(len(lines)).Should(Equal(3))
+
+		cs := regexp.MustCompile(`\s+`).Split(string(lines[1]), -1)
+		capacityInode, err = strconv.ParseInt(cs[1], 10, 64)
+		Expect(err).ShouldNot(HaveOccurred())
+		availableInode, err = strconv.ParseInt(cs[2], 10, 64)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(capacityInode).ShouldNot(Equal(int64(0)))
+		Expect(availableInode).ShouldNot(Equal(int64(0)))
+
+		By("checking the disk does not resize")
+		checkDoesNotResize(pvcName, request)
+
+		By("create files for consume an inodes")
+		rate, err := strconv.ParseFloat(strings.TrimRight(inodesThreshold, "%"), 64)
+		Expect(err).ShouldNot(HaveOccurred())
+		th := int64(float64(capacityInode) * rate / 100.0)
+		num := capacityInode - th
+		stdout, stderr, err = kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "bash", "-c", fmt.Sprintf("touch /test1/testfile_{0..%d}.txt", num))
+		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
+
+		By("checking the disk resizing")
+		checkDiskResize(pvcName, "2Gi", true)
+	})
 })
 
-func buildPodPVCTemplateYAML(pvcName, storageClassName, volumeMode, podName, request, limit, threshold, increase, storageLimit string) ([]byte, error) {
+func buildPodPVCTemplateYAML(pvcName, storageClassName, volumeMode, podName, request, limit, threshold, inodesThreshold, increase, storageLimit string) ([]byte, error) {
 	var b bytes.Buffer
 	var err error
 
@@ -288,25 +336,26 @@ func buildPodPVCTemplateYAML(pvcName, storageClassName, volumeMode, podName, req
 	}
 
 	params := map[string]string{
-		"pvcName":                pvcName,
-		"storageClassName":       storageClassName,
-		"volumeMode":             volumeMode,
-		"podName":                podName,
-		"namespace":              testNamespace,
-		"useAnnotation":          useAnnotation,
-		"thresholdAnnotation":    threshold,
-		"increaseAnnotation":     increase,
-		"storageLimitAnnotation": storageLimit,
-		"resourceRequest":        request,
-		"resourceLimit":          limit,
+		"pvcName":                   pvcName,
+		"storageClassName":          storageClassName,
+		"volumeMode":                volumeMode,
+		"podName":                   podName,
+		"namespace":                 testNamespace,
+		"useAnnotation":             useAnnotation,
+		"thresholdAnnotation":       threshold,
+		"increaseAnnotation":        increase,
+		"inodesThresholdAnnotation": inodesThreshold,
+		"storageLimitAnnotation":    storageLimit,
+		"resourceRequest":           request,
+		"resourceLimit":             limit,
 	}
 	err = podPVCTmpl.Execute(&b, params)
 	return b.Bytes(), err
 }
 
-func createPodPVC(resources []resource, pvcName, storageClassName, volumeMode, podName, request, limit, threshold, increase, storageLimit string) []resource {
+func createPodPVC(resources []resource, pvcName, storageClassName, volumeMode, podName, request, limit, threshold, inodesThreshold, increase, storageLimit string) []resource {
 	By("create a PVC and a pod for test")
-	podPVCYAML, err := buildPodPVCTemplateYAML(pvcName, storageClassName, volumeMode, pvcName, request, limit, threshold, increase, storageLimit)
+	podPVCYAML, err := buildPodPVCTemplateYAML(pvcName, storageClassName, volumeMode, pvcName, request, limit, threshold, inodesThreshold, increase, storageLimit)
 	Expect(err).ShouldNot(HaveOccurred())
 	stdout, stderr, err := kubectlWithInput(podPVCYAML, "apply", "-f", "-")
 	Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s yaml=\n%s", stdout, stderr, podPVCYAML)
