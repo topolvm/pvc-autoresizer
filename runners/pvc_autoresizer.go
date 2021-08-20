@@ -148,6 +148,13 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		return nil
 	}
 
+	inodesThreshold, err := convertSize(pvc.Annotations[ResizeInodesThresholdAnnotation], vs.CapacityInodeSize, DefaultInodesThreshold)
+	if err != nil {
+		log.V(logLevelWarn).Info("failed to convert threshold annotation", "error", err.Error())
+		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
+		return nil
+	}
+
 	curReq := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
 	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], curReq.Value(), DefaultIncrease)
 	if err != nil {
@@ -170,7 +177,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		}
 	}
 
-	if threshold > vs.AvailableBytes {
+	if threshold > vs.AvailableBytes || inodesThreshold > vs.AvailableInodeSize {
 		if pvc.Annotations == nil {
 			pvc.Annotations = make(map[string]string)
 		}
@@ -201,6 +208,8 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 			"to", newReq.Value(),
 			"threshold", threshold,
 			"available", vs.AvailableBytes,
+			"inodesThreshold", inodesThreshold,
+			"inodesAvailable", vs.AvailableInodeSize,
 		)
 		w.recorder.Eventf(pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
 	}
@@ -249,18 +258,8 @@ func convertSizeInBytes(valStr string, capacity int64, defaultVal string) (int64
 	if len(valStr) == 0 {
 		valStr = defaultVal
 	}
-
 	if strings.HasSuffix(valStr, "%") {
-		rate, err := strconv.ParseFloat(strings.TrimRight(valStr, "%"), 64)
-		if err != nil {
-			return 0, err
-		}
-		if rate < 0 {
-			return 0, fmt.Errorf("annotation value should be positive: %s", valStr)
-		}
-
-		res := int64(float64(capacity) * rate / 100.0)
-		return res, nil
+		return calcSize(valStr, capacity)
 	}
 
 	quantity, err := resource.ParseQuantity(valStr)
@@ -272,6 +271,29 @@ func convertSizeInBytes(valStr string, capacity int64, defaultVal string) (int64
 		return 0, fmt.Errorf("annotation value should be positive: %s", valStr)
 	}
 	return val, nil
+}
+
+func convertSize(valStr string, capacity int64, defaultVal string) (int64, error) {
+	if len(valStr) == 0 {
+		valStr = defaultVal
+	}
+	if strings.HasSuffix(valStr, "%") {
+		return calcSize(valStr, capacity)
+	}
+	return 0, fmt.Errorf("annotation value should be in percent notation: %s", valStr)
+}
+
+func calcSize(valStr string, capacity int64) (int64, error) {
+	rate, err := strconv.ParseFloat(strings.TrimRight(valStr, "%"), 64)
+	if err != nil {
+		return 0, err
+	}
+	if rate < 0 || rate > 100 {
+		return 0, fmt.Errorf("annotation value should between 0 and 100: %s", valStr)
+	}
+
+	res := int64(float64(capacity) * rate / 100.0)
+	return res, nil
 }
 
 func pvcStorageLimit(pvc *corev1.PersistentVolumeClaim) (resource.Quantity, error) {
