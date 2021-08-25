@@ -93,6 +93,16 @@ This will prevent the pvc-autoresizer version from going up just by modifying th
 
 You must change the version of Chart.yaml when making changes to the Helm Chart. CI fails with lint error when creating a Pull Request without changing the version of Chart.yaml.
 
+```console
+$ VERSION=1.2.3
+$ export VERSION
+$ CHART_VERSION=1.2.3
+$ export CHART_VERSION
+$ sed -r -i "s/version: [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/version: ${CHART_VERSION}/g" charts/pvc-autoresizer/Chart.yaml
+$ sed -r -i "s/appVersion: [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/appVersion: ${VERSION}/g" charts/pvc-autoresizer/Chart.yaml
+$ sed -r -i "s/tag:  # [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/tag:  # ${VERSION}/g" charts/pvc-autoresizer/values.yaml
+```
+
 When you release the Helm Chart, manually run the GitHub Actions workflow for the release.
 
 https://github.com/topolvm/pvc-autoresizer/actions/workflows/helm-release.yaml
