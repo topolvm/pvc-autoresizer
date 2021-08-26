@@ -125,7 +125,7 @@ nilerr: ## Install nilerr
 .PHONY: setup
 setup: # Setup tools
 	mkdir -p bin
-	curl -sfL https://go.kubebuilder.io/dl/$(KUBEBUILDER_VERSION)/$(GOOS)/$(GOARCH) > $(BINDIR)/kubebuilder
+	curl -sfL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(GOOS)_$(GOARCH) > $(BINDIR)/kubebuilder
 	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CTRLTOOLS_VERSION)
 	curl -o $(BINDIR)/kubectl -sfL https://storage.googleapis.com/kubernetes-release/release/v$(ENVTEST_K8S_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(BINDIR)/kubectl
