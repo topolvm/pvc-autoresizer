@@ -7,6 +7,9 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+### Changed
+- Change license to Apache License Version 2.0.
+
 ## [0.1.6] - 2021-08-06
 
 ### Added
