@@ -51,11 +51,11 @@ spec:
             httpGet:
               path: /healthz
               port: health
-    {{- with .Values.nodeSelector }}
+    {{- with .Values.controller.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
     {{- end }}
-    {{- with .Values.tolerations }}
+    {{- with .Values.controller.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}

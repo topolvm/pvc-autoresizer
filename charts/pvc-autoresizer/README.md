@@ -37,11 +37,11 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | controller.replicas | int | `1` | Specify the number of replicas of the controller Pod. |
 | controller.resources | object | `{"requests":{"cpu":"100m","memory":"20Mi"}}` | Specify resources. |
 | controller.terminationGracePeriodSeconds | string | `nil` | Specify terminationGracePeriodSeconds. |
+| controller.nodeSelector | object | `{}` | Map of key-value pairs for scheduling pods on specific nodes |
+| controller.tolerations | object | `{}` | Ensure pods are not scheduled on inappropriate nodes |
 | image.pullPolicy | string | `nil` | pvc-autoresizer image pullPolicy. |
 | image.repository | string | `"quay.io/topolvm/pvc-autoresizer"` | pvc-autoresizer image repository to use. |
 | image.tag | string | `{{ .Chart.AppVersion }}` | pvc-autoresizer image tag to use. |
-| nodeSelector | object | `{}` | Map of key-value pairs for scheduling pods on specific nodes |
-| tolerations | object | `{}` | Ensure pods are not scheduled on inappropriate nodes |
 
 ## Generate Manifests
 
