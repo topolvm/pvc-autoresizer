@@ -34,11 +34,11 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | controller.args.additionalArgs | list | `[]` | Specify additional args. |
 | controller.args.interval | string | `"10s"` | Specify interval to monitor pvc capacity. Used as "--interval" option |
 | controller.args.prometheusURL | string | `"http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090"` | Specify Prometheus URL to query volume stats. Used as "--prometheus-url" option |
+| controller.nodeSelector | object | `{}` | Map of key-value pairs for scheduling pods on specific nodes. |
 | controller.replicas | int | `1` | Specify the number of replicas of the controller Pod. |
 | controller.resources | object | `{"requests":{"cpu":"100m","memory":"20Mi"}}` | Specify resources. |
 | controller.terminationGracePeriodSeconds | string | `nil` | Specify terminationGracePeriodSeconds. |
-| controller.nodeSelector | object | `{}` | Map of key-value pairs for scheduling pods on specific nodes |
-| controller.tolerations | object | `{}` | Ensure pods are not scheduled on inappropriate nodes |
+| controller.tolerations | object | `{}` | Ensure pods are not scheduled on inappropriate nodes. |
 | image.pullPolicy | string | `nil` | pvc-autoresizer image pullPolicy. |
 | image.repository | string | `"quay.io/topolvm/pvc-autoresizer"` | pvc-autoresizer image repository to use. |
 | image.tag | string | `{{ .Chart.AppVersion }}` | pvc-autoresizer image tag to use. |
