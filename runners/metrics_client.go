@@ -15,6 +15,8 @@ import (
 const (
 	volumeAvailableQuery = "kubelet_volume_stats_available_bytes"
 	volumeCapacityQuery  = "kubelet_volume_stats_capacity_bytes"
+	inodesAvailableQuery = "kubelet_volume_stats_inodes_free"
+	inodesCapacityQuery  = "kubelet_volume_stats_inodes"
 )
 
 // NewPrometheusClient returns a new prometheusClient
@@ -39,8 +41,10 @@ type MetricsClient interface {
 
 // VolumeStats is a struct containing metrics used by pvc-autoresizer
 type VolumeStats struct {
-	AvailableBytes int64
-	CapacityBytes  int64
+	AvailableBytes     int64
+	CapacityBytes      int64
+	AvailableInodeSize int64
+	CapacityInodeSize  int64
 }
 
 type prometheusClient struct {
@@ -60,12 +64,28 @@ func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.Namespaced
 		return nil, err
 	}
 
+	availableInodeSize, err := c.getMetricValues(ctx, inodesAvailableQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	capacityInodeSize, err := c.getMetricValues(ctx, inodesCapacityQuery)
+	if err != nil {
+		return nil, err
+	}
+
 	for key, val := range availableBytes {
 		vs := &VolumeStats{AvailableBytes: val}
 		if cb, ok := capacityBytes[key]; !ok {
 			continue
 		} else {
 			vs.CapacityBytes = cb
+		}
+		if ais, ok := availableInodeSize[key]; ok {
+			vs.AvailableInodeSize = ais
+		}
+		if cis, ok := capacityInodeSize[key]; ok {
+			vs.CapacityInodeSize = cis
 		}
 		volumeStatsMap[key] = vs
 	}
