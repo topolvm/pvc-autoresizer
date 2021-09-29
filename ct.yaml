@@ -1,4 +1,4 @@
 # This file is the config file for helm/chart-testing
 target-branch: main
 validate-maintainers: false
-check-version-increment: true
+check-version-increment: false
