@@ -34,8 +34,8 @@ controller:
   # controller.terminationGracePeriodSeconds -- Specify terminationGracePeriodSeconds.
   terminationGracePeriodSeconds:  # 10
 
-  # controller.tolerations -- Ensure pods are not scheduled on inappropriate nodes
+  # controller.tolerations -- Ensure pods are not scheduled on inappropriate nodes.
   tolerations: {}
   
-  # controller.nodeSelector -- Map of key-value pairs for scheduling pods on specific nodes
+  # controller.nodeSelector -- Map of key-value pairs for scheduling pods on specific nodes.
   nodeSelector: {}
