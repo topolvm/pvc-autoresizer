@@ -15,6 +15,10 @@ spec:
       labels:
         app.kubernetes.io/name: pvc-autoresizer
     spec:
+      {{- with .Values.controller.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       serviceAccountName: {{ template "pvc-autoresizer.fullname" . }}-controller
       {{- with .Values.controller.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ . }}

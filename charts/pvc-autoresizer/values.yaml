@@ -31,5 +31,8 @@ controller:
       cpu: 100m
       memory: 20Mi
 
+  # controller.nodeSelector -- Specify nodeSelector.
+  nodeSelector: {}
+
   # controller.terminationGracePeriodSeconds -- Specify terminationGracePeriodSeconds.
   terminationGracePeriodSeconds:  # 10
