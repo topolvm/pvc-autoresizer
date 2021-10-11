@@ -33,3 +33,11 @@ func TestResizerLoopSecondsTotal(t *testing.T) {
 		t.Fatalf("namespace=%s name=%s value is not %d", ns, name, 10)
 	}
 }
+
+func TestResizerLimitReachedTotal(t *testing.T) {
+	ResizerLimitReachedTotal.Increment()
+	actual := testutil.ToFloat64(resizerLimitReachedTotal)
+	if actual != float64(1) {
+		t.Fatalf("value is not %d", 1)
+	}
+}
