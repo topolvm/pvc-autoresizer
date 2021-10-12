@@ -125,7 +125,7 @@ Container images are available on [Quay.io](https://quay.io/repository/topolvm/p
 
 ###  `pvcautoresizer_success_resize_total`
 
-`pvcautoresizer_success_resize_total` is a counter that indicates how many volume expansion processing resizes succeed..
+`pvcautoresizer_success_resize_total` is a counter that indicates how many volume expansion processing resizes succeed.
 
 ###  `pvcautoresizer_failed_resize_total`
 
