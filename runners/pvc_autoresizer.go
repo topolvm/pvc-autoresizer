@@ -191,11 +191,6 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		}
 		newReqBytes := int64(math.Ceil(float64(curReq.Value()+increase)/(1<<30))) << 30
 		newReq := resource.NewQuantity(newReqBytes, resource.BinarySI)
-		if err != nil {
-			log.Error(err, "fetching storage limit failed")
-			return err
-		}
-
 		if newReq.Cmp(limitRes) > 0 {
 			newReq = &limitRes
 		}
