@@ -72,7 +72,7 @@ func (w *pvcAutoresizer) Start(ctx context.Context) error {
 func isTargetPVC(pvc *corev1.PersistentVolumeClaim) (bool, error) {
 	quantity, err := pvcStorageLimit(pvc)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("invalid storage limit: %w", err)
 	}
 	if quantity.IsZero() {
 		return false, nil
