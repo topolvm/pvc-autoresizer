@@ -2,7 +2,6 @@ package runners
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -70,17 +69,21 @@ func (w *pvcAutoresizer) Start(ctx context.Context) error {
 	}
 }
 
-func isTargetPVC(pvc *corev1.PersistentVolumeClaim) bool {
-	if _, err := pvcStorageLimit(pvc); err != nil {
-		return false
+func isTargetPVC(pvc *corev1.PersistentVolumeClaim) (bool, error) {
+	quantity, err := pvcStorageLimit(pvc)
+	if err != nil {
+		return false, fmt.Errorf("invalid storage limit: %w", err)
+	}
+	if quantity.IsZero() {
+		return false, nil
 	}
 	if pvc.Spec.VolumeMode != nil && *pvc.Spec.VolumeMode != corev1.PersistentVolumeFilesystem {
-		return false
+		return false, nil
 	}
 	if pvc.Status.Phase != corev1.ClaimBound {
-		return false
+		return false, nil
 	}
-	return true
+	return true, nil
 }
 
 func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.StorageClassList, error) {
@@ -115,7 +118,12 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			return nil
 		}
 		for _, pvc := range pvcs.Items {
-			if !isTargetPVC(&pvc) {
+			isTarget, err := isTargetPVC(&pvc)
+			if err != nil {
+				metrics.ResizerFailedResizeTotal.Increment()
+				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to check target PVC")
+				continue
+			} else if !isTarget {
 				continue
 			}
 			namespacedName := types.NamespacedName{
@@ -298,13 +306,10 @@ func calcSize(valStr string, capacity int64) (int64, error) {
 
 func pvcStorageLimit(pvc *corev1.PersistentVolumeClaim) (resource.Quantity, error) {
 	// storage limit on the annotation has precedence
-	if storageLimit, err := resource.ParseQuantity(pvc.Annotations[StorageLimitAnnotation]); err == nil {
-		return storageLimit, nil
+	if annotation, ok := pvc.Annotations[StorageLimitAnnotation]; ok && annotation != "" {
+		return resource.ParseQuantity(annotation)
 	}
 
-	if !pvc.Spec.Resources.Limits.Storage().IsZero() {
-		return *pvc.Spec.Resources.Limits.Storage(), nil
-	}
-
-	return resource.Quantity{}, errors.New("storage limit is not set or malformatted")
+	// Storage() returns 0 valued Quantity if Limits does not set
+	return *pvc.Spec.Resources.Limits.Storage(), nil
 }
