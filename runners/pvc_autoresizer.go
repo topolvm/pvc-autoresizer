@@ -129,8 +129,6 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			if err != nil {
 				metrics.ResizerFailedResizeTotal.Increment()
 				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to resize PVC")
-			} else {
-				metrics.ResizerSuccessResizeTotal.Increment()
 			}
 		}
 	}
@@ -176,6 +174,16 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 			return nil
 		}
 	}
+	limitRes, err := pvcStorageLimit(pvc)
+	if err != nil {
+		log.Error(err, "fetching storage limit failed")
+		return err
+	}
+	if curReq.Cmp(limitRes) == 0 {
+		log.Info("volume storage limit reached")
+		metrics.ResizerLimitReachedTotal.Increment()
+		return nil
+	}
 
 	if threshold > vs.AvailableBytes || inodesThreshold > vs.AvailableInodeSize {
 		if pvc.Annotations == nil {
@@ -183,15 +191,6 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		}
 		newReqBytes := int64(math.Ceil(float64(curReq.Value()+increase)/(1<<30))) << 30
 		newReq := resource.NewQuantity(newReqBytes, resource.BinarySI)
-		limitRes, err := pvcStorageLimit(pvc)
-		if err != nil {
-			log.Error(err, "fetching storage limit failed")
-			return err
-		}
-
-		if curReq.Cmp(limitRes) == 0 {
-			return nil
-		}
 		if newReq.Cmp(limitRes) > 0 {
 			newReq = &limitRes
 		}
@@ -212,6 +211,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 			"inodesAvailable", vs.AvailableInodeSize,
 		)
 		w.recorder.Eventf(pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
+		metrics.ResizerSuccessResizeTotal.Increment()
 	}
 
 	return nil

@@ -10,6 +10,7 @@ const (
 	ResizerSuccessResizeTotalKey = "success_resize_total"
 	ResizerFailedResizeTotalKey  = "failed_resize_total"
 	ResizerLoopSecondsTotalKey   = "loop_seconds_total"
+	ResizerLimitReachedTotalKey  = "limit_reached_total"
 )
 
 func init() {
@@ -40,6 +41,14 @@ func (a *resizerLoopSecondsTotalAdapter) Add(value float64) {
 	a.metric.Add(value)
 }
 
+type resizerLimitReachedTotalAdapter struct {
+	metric prometheus.Counter
+}
+
+func (a *resizerLimitReachedTotalAdapter) Increment() {
+	a.metric.Inc()
+}
+
 var (
 	resizerSuccessResizeTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
@@ -59,13 +68,21 @@ var (
 		Help:      "counter that indicates the sum of seconds spent on volume expansion processing loops.",
 	})
 
+	resizerLimitReachedTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: MetricsNamespace,
+		Name:      ResizerLimitReachedTotalKey,
+		Help:      "counter that indicates how many storage limit was reached.",
+	})
+
 	ResizerSuccessResizeTotal *resizerSuccessResizeTotalAdapter = &resizerSuccessResizeTotalAdapter{metric: resizerSuccessResizeTotal}
 	ResizerFailedResizeTotal  *resizerFailedResizeTotalAdapter  = &resizerFailedResizeTotalAdapter{metric: resizerFailedResizeTotal}
 	ResizerLoopSecondsTotal   *resizerLoopSecondsTotalAdapter   = &resizerLoopSecondsTotalAdapter{metric: resizerLoopSecondsTotal}
+	ResizerLimitReachedTotal  *resizerLimitReachedTotalAdapter  = &resizerLimitReachedTotalAdapter{metric: resizerLimitReachedTotal}
 )
 
 func registerResizerMetrics() {
 	runtimemetrics.Registry.MustRegister(resizerSuccessResizeTotal)
 	runtimemetrics.Registry.MustRegister(resizerFailedResizeTotal)
 	runtimemetrics.Registry.MustRegister(resizerLoopSecondsTotal)
+	runtimemetrics.Registry.MustRegister(resizerLimitReachedTotal)
 }
