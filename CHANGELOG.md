@@ -8,7 +8,7 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 ## [Unreleased]
 ## [0.3.0] - 2021-10-28
 ### Changed
-- Output error when storage_limit annotation is invalid (#76).
+- Output error when storage_limit annotation is invalid (#76)
 
 ### Added
 - Add inode checking feature (#65)
