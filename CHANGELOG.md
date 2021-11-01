@@ -7,6 +7,19 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.2.1] - 2021-11-01
+
+### Added
+- Add inode checking feature (#65)
+- Storage limit reached (#75)
+
+### Fixed
+- output error when storage_limit annotation is invalid (#76)
+
+### Contributors
+- @bells17
+- @cmotta2016
+
 ## [0.2.0] - 2021-09-08
 ### Changed
 - Change license to Apache License Version 2.0.
@@ -84,7 +97,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.6...v0.2.0
 [0.1.6]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.4...v0.1.5
