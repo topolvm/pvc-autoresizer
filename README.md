@@ -10,6 +10,10 @@ It queries the volume usage metrics from Prometheus that collects metrics from `
 
 **Status**: beta
 
+## Confirmed environments
+
+- Kubernetes: 1.21, 1.20, 1.19
+
 ## Target CSI Drivers
 
 `pvc-autoresizer` supports CSI Drivers that meet the following requirements:
