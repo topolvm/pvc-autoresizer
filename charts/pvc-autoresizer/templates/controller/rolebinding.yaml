@@ -1,15 +1,34 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ template "pvc-autoresizer.fullname" . }}-leader-election-rolebinding
+  name: {{ template "pvc-autoresizer.fullname" . }}-leader-election
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "pvc-autoresizer.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ template "pvc-autoresizer.fullname" . }}-leader-election-role
+  name: {{ template "pvc-autoresizer.fullname" . }}-leader-election
 subjects:
 - kind: ServiceAccount
   name: {{ template "pvc-autoresizer.fullname" . }}-controller
   namespace: {{ .Release.Namespace }}
+
+{{- range .Values.controller.args.namespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ template "pvc-autoresizer.fullname" $ }}-controller
+  namespace: {{ . }}
+  labels:
+    {{- include "pvc-autoresizer.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "pvc-autoresizer.fullname" $ }}-controller
+subjects:
+- kind: ServiceAccount
+  name: {{ template "pvc-autoresizer.fullname" $ }}-controller
+  namespace: {{ $.Release.Namespace }}
+{{- end }}

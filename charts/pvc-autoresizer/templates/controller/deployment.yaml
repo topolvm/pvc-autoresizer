@@ -26,6 +26,9 @@ spec:
           args:
             - --prometheus-url={{ .Values.controller.args.prometheusURL }}
             - --interval={{ .Values.controller.args.interval }}
+          {{- if .Values.controller.args.namespaces }}
+            - --namespaces={{ join "," .Values.controller.args.namespaces }}
+          {{- end }}
           {{- with .Values.controller.args.additionalArgs -}}
             {{ toYaml . | nindent 12 }}
           {{- end }}

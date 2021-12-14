@@ -33,6 +33,7 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 |-----|------|---------|-------------|
 | controller.args.additionalArgs | list | `[]` | Specify additional args. |
 | controller.args.interval | string | `"10s"` | Specify interval to monitor pvc capacity. Used as "--interval" option |
+| controller.args.namespaces | list | `[]` | Specify namespaces to control the pvcs of. Empty for all namespaces. Used as "--namespaces" option |
 | controller.args.prometheusURL | string | `"http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090"` | Specify Prometheus URL to query volume stats. Used as "--prometheus-url" option |
 | controller.nodeSelector | object | `{}` | Map of key-value pairs for scheduling pods on specific nodes. |
 | controller.replicas | int | `1` | Specify the number of replicas of the controller Pod. |

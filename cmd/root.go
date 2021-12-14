@@ -11,6 +11,7 @@ import (
 var config struct {
 	metricsAddr    string
 	healthAddr     string
+	namespaces     []string
 	watchInterval  time.Duration
 	prometheusURL  string
 	skipAnnotation bool
@@ -41,6 +42,7 @@ func init() {
 	fs := rootCmd.Flags()
 	fs.StringVar(&config.metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	fs.StringVar(&config.healthAddr, "health-addr", ":8081", "The address of health/readiness probes.")
+	fs.StringSliceVar(&config.namespaces, "namespaces", []string{}, "Namespaces to resize PersistentVolumeClaims within. Empty for all namespaces.")
 	fs.DurationVar(&config.watchInterval, "interval", 1*time.Minute, "Interval to monitor pvc capacity.")
 	fs.StringVar(&config.prometheusURL, "prometheus-url", "", "Prometheus URL to query volume stats.")
 	fs.BoolVar(&config.skipAnnotation, "no-annotation-check", false, "Skip annotation check for StorageClass")
