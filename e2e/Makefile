@@ -11,7 +11,7 @@ endif
 export KUBERNETES_VERSION
 
 KUBE_PROMETHEUS_VERSION := 0.9.0
-TOPOLVM_VERSION := 7c269d04b0b8ac8569c8c76c69569a8f9a0b92a8
+TOPOLVM_VERSION := 0.10.3
 KIND_NODE_IMAGE=kindest/node:v$(KUBERNETES_VERSION)
 KIND_CLUSTER_NAME := autoresizer-e2e
 
@@ -71,7 +71,7 @@ endef
 
 $(TMPDIR)/topolvm:
 	git clone https://github.com/topolvm/topolvm.git $@
-	cd $@ && git checkout $(TOPOLVM_VERSION)
+	cd $@ && git checkout v$(TOPOLVM_VERSION)
 	make -C $(TMPDIR)/topolvm/example setup
 
 autoresizer.img:
