@@ -10,7 +10,7 @@ It queries the volume usage metrics from Prometheus that collects metrics from `
 
 **Status**: beta
 
-## Confirmed environments
+## Supported environments
 
 - Kubernetes: 1.22, 1.21, 1.20
 
