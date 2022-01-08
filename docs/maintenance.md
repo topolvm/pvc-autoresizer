@@ -3,7 +3,7 @@ Maintenance guide
 
 This is the maintenance guide for pvc-autoresizer.
 
-How to upgrade supported Kubernetes version
+How to change the supported Kubernetes minor versions
 -------------------------------------------
 
 pvc-autoresizer depends on some Kubernetes repositories like `k8s.io/client-go` and should support 3 consecutive Kubernets versions at a time.
