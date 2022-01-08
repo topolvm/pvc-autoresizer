@@ -38,7 +38,7 @@ If we find some interesting features added in new versions, please consider if w
 
 ### Update written versions
 
-Once we decide the versions we are going to upgrade, we should update the versions written in the following files manually.
+We should also update the following files.
 
 - `README.md`: Documentation which indicates what versions are supported by pvc-autoresizer
 - `Makefile`: Makefile for running envtest
