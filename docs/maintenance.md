@@ -17,7 +17,7 @@ First of all, we should have a look at the release notes in the order below.
 
 1. Kubernetes
     - Choose the next version and check the [release note](https://kubernetes.io/docs/setup/release/notes/). e.g. 1.17, 1.18, 1.19 -> 1.18, 1.19, 1.20
-    - Read the [release note](https://github.com/kubernetes-sigs/controller-runtime/releases), and check which version is compatible with the Kubernetes versions.
+    - Read the [release note](https://github.com/kubernetes-sigs/controller-runtime/releases), and check whether there are serious security fixes and whether the new minor version is compatible with older versions from the pvc-autoresizer's point of view. If there are breaking changes, we should decide how to manage these changes.
     - Read the [kubebuilder go.mod](https://github.com/kubernetes-sigs/kubebuilder/blob/master/go.mod), and check the controller-tools version corresponding to controller-runtime.
 2. TopoLVM
     - Choose the [TopoLVM](https://github.com/topolvm/topolvm/releases) version that supported target Kubernetes version.
