@@ -31,7 +31,7 @@ First of all, we should have a look at the release notes in the order below.
   - Read [csi-test go.mod](https://github.com/kubernetes-csi/csi-test/blob/master/go.mod), and update the `ginkgo` and `gomega` modules.
 
 We should write down in the github issue of this task what are the important changes and the required actions to manage incompatibilities if exist.
-The format is up to you, but this is very important to keep track of what changes are made in this task, so please do not forget to do it.
+The format is up to you.
 
 Basically, we should pay attention to breaking changes and security fixes first.
 If we find some interesting features added in new versions, please consider if we are going to use them or not and make a GitHub issue to incorporate them after the upgrading task is done.
