@@ -25,7 +25,6 @@ First of all, we should have a look at the release notes in the order below.
       - [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/releases)
 4. Depending modules
   - Read [kubernetes go.mod](https://github.com/kubernetes/kubernetes/blob/master/go.mod), and update the `prometheus/*` modules.
-  - Read [csi-test go.mod](https://github.com/kubernetes-csi/csi-test/blob/master/go.mod), and update the `ginkgo` and `gomega` modules.
 
 We should write down in the github issue of this task what are the important changes and the required actions to manage incompatibilities if exist.
 The format is up to you.
