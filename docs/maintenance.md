@@ -74,7 +74,7 @@ These are minimal changes for the Kubernetes upgrade, but if there are some brea
 
 ### Release the changes
 
-We should follow [RELEASE.md](../RELEASE.md) and upgrade the minor version.
+We should update [RELEASE.md](../RELEASE.md) to add the entry for the new pvc-autoresizer's version.
 
 ### Prepare for the next upgrade
 
