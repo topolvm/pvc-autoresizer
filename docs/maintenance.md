@@ -44,7 +44,7 @@ Once we decide the versions we are going to upgrade, we should update the versio
 - `Makefile`: Makefile for running envtest
 - `e2e/Makefile`: Makefile for running e2e tests
 
-`git grep 1.18`, `git grep image:`, and `git grep -i VERSION` might help us avoid overlooking necessary changes.
+`git grep <the kubernetes version which support will be dropped>, `git grep image:`, and `git grep -i VERSION` might help to avoid overlooking necessary changes.
 Please update the versions in the code and docs with great care.
 
 ### Update dependencies
