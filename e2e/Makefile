@@ -2,18 +2,20 @@
 TEST_KUBERNETES_TARGET ?= current
 
 ifeq ($(TEST_KUBERNETES_TARGET),current)
-KUBERNETES_VERSION := 1.21.2
+KUBERNETES_VERSION := 1.22.4
 else ifeq ($(TEST_KUBERNETES_TARGET),prev)
-KUBERNETES_VERSION := 1.20.7
+KUBERNETES_VERSION := 1.21.2
 else ifeq ($(TEST_KUBERNETES_TARGET),prev2)
-KUBERNETES_VERSION := 1.19.11
+KUBERNETES_VERSION := 1.20.7
 endif
 export KUBERNETES_VERSION
 
-KUBE_PROMETHEUS_VERSION := 0.8.0
-TOPOLVM_VERSION := 3f3854c808df5d68f46ba316e96bfe6bb7edcd48
+KUBE_PROMETHEUS_VERSION := 0.9.0
+TOPOLVM_VERSION := 0.10.3
 KIND_NODE_IMAGE=kindest/node:v$(KUBERNETES_VERSION)
 KIND_CLUSTER_NAME := autoresizer-e2e
+
+GINKGO_VERSION := $(shell awk '/github.com\/onsi\/ginkgo/ {print substr($$2, 2)}' ../go.mod)
 
 SUDO := sudo
 BINDIR := $(shell pwd)/../bin
@@ -29,7 +31,7 @@ setup:
 	mkdir -p $(BINDIR)
 	curl -o $(BINDIR)/kubectl -sfL https://storage.googleapis.com/kubernetes-release/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(BINDIR)/kubectl
-	GOBIN=$(BINDIR) go install github.com/onsi/ginkgo/ginkgo@latest
+	GOBIN=$(BINDIR) go install github.com/onsi/ginkgo/ginkgo@v$(GINKGO_VERSION)
 
 .PHONY: init-cluster
 init-cluster: launch-kind autoresizer.img kube-prometheus
@@ -69,7 +71,7 @@ endef
 
 $(TMPDIR)/topolvm:
 	git clone https://github.com/topolvm/topolvm.git $@
-	cd $@ && git checkout $(TOPOLVM_VERSION)
+	cd $@ && git checkout v$(TOPOLVM_VERSION)
 	make -C $(TMPDIR)/topolvm/example setup
 
 autoresizer.img:

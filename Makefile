@@ -1,13 +1,9 @@
 # Makefile for pvc-autoresizer
 
-ENVTEST_K8S_VERSION = 1.19.2
-KUBEBUILDER_VERSION = 3.1.0
-CTRLTOOLS_VERSION = 0.6.0
-CTRLRUNTIME_VERSION = 0.8.3
-HELM_VERSION = 3.5.0
-HELM_DOCS_VERSION = 1.5.0
-
-export ENVTEST_K8S_VERSION
+ENVTEST_K8S_VERSION = 1.22.1
+CTRLTOOLS_VERSION = 0.7.0
+HELM_VERSION = 3.7.2
+HELM_DOCS_VERSION = 1.6.0
 
 ## DON'T EDIT BELOW THIS LINE
 GOOS := $(shell go env GOOS)
@@ -67,16 +63,12 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate tools fmt vet ## Run tests.
 	$(shell go env GOPATH)/bin/staticcheck ./...
 	test -z "$$($(shell go env GOPATH)/bin/nilerr ./... 2>&1 | tee /dev/stderr)"
 	go install ./...
-
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v$(CTRLRUNTIME_VERSION)/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(shell pwd)
-	go test -race -v -count 1 ./...
+	source <($(SETUP_ENVTEST) use -p env $(ENVTEST_K8S_VERSION)); \
+		go test -race -v -count 1 ./...
 
 ##@ Build
 
@@ -108,7 +100,7 @@ push: ## Push docker image.
 ##@ Tools
 
 .PHONY: tools
-tools: staticcheck nilerr
+tools: staticcheck nilerr setup-envtest
 
 .PHONY: staticcheck
 staticcheck: ## Install staticcheck
@@ -122,10 +114,16 @@ nilerr: ## Install nilerr
 		env GOFLAGS= go install github.com/gostaticanalysis/nilerr/cmd/nilerr@latest; \
 	fi
 
+SETUP_ENVTEST := $(BINDIR)/setup-envtest
+.PHONY: setup-envtest
+setup-envtest: $(SETUP_ENVTEST) ## Download setup-envtest locally if necessary
+$(SETUP_ENVTEST):
+	# see https://github.com/kubernetes-sigs/controller-runtime/tree/master/tools/setup-envtest
+	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+
 .PHONY: setup
 setup: # Setup tools
 	mkdir -p bin
-	curl -sfL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(GOOS)_$(GOARCH) > $(BINDIR)/kubebuilder
 	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CTRLTOOLS_VERSION)
 	curl -o $(BINDIR)/kubectl -sfL https://storage.googleapis.com/kubernetes-release/release/v$(ENVTEST_K8S_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(BINDIR)/kubectl
