@@ -1,4 +1,4 @@
-name: Lint and Test Charts
+name: "Lint and Test Charts"
 
 on:
   pull_request:
@@ -7,57 +7,57 @@ on:
 
 jobs:
   lint-test:
-    runs-on: ubuntu-18.04
+    runs-on: "ubuntu-18.04"
 
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Setup Go
+      - name: "Setup Go"
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: "1.17"
 
-      - name: Setup Helm
+      - name: "Setup Helm"
         uses: azure/setup-helm@v1
         with:
-          version: v3.5.0
+          version: "v3.8.0"
 
-      - name: Setup helm-docs
+      - name: "Setup helm-docs"
         run: |
-          HELM_DOCS_VERSION="1.5.0"
+          HELM_DOCS_VERSION="1.7.0"
           OS=$(uname)
           curl -L -sS https://github.com/norwoodj/helm-docs/releases/download/v"${HELM_DOCS_VERSION}"/helm-docs_"${HELM_DOCS_VERSION}"_${OS}_x86_64.tar.gz \
             | tar zx -C /tmp
           sudo mv /tmp/helm-docs /usr/local/bin
 
-      - name: Run helm-docs
+      - name: "Run helm-docs"
         run: helm-docs && git diff --no-patch --exit-code
 
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: "3.10"
 
-      - name: Set up chart-testing
+      - name: "Set up chart-testing"
         uses: helm/chart-testing-action@v2.0.1
 
-      - name: Run chart-testing (list-changed)
-        id: list-changed
+      - name: "Run chart-testing (list-changed)"
+        id: "list-changed"
         run: |
           changed=$(ct list-changed --config ct.yaml)
           if [[ -n "$changed" ]]; then
             echo "::set-output name=changed::true"
           fi
 
-      - name: Run chart-testing (lint)
+      - name: "Run chart-testing (lint)"
         run: ct lint --config ct.yaml
 
-      - name: Setup kind
+      - name: "Setup kind"
         run: |
           make -C e2e setup
           make -C e2e init-cluster
 
-      - name: Run chart-testing (install)
+      - name: "Run chart-testing (install)"
         run: ct install --config ct.yaml

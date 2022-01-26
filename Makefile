@@ -1,9 +1,10 @@
 # Makefile for pvc-autoresizer
 
-ENVTEST_K8S_VERSION = 1.22.1
+K8S_VERSION = 1.23.3
+ENVTEST_K8S_VERSION = $(shell echo $(K8S_VERSION) | cut -d "." -f 1-2)
 CTRLTOOLS_VERSION = 0.7.0
-HELM_VERSION = 3.7.2
-HELM_DOCS_VERSION = 1.6.0
+HELM_VERSION = 3.8.0
+HELM_DOCS_VERSION = 1.7.0
 
 ## DON'T EDIT BELOW THIS LINE
 GOOS := $(shell go env GOOS)
@@ -68,7 +69,7 @@ test: manifests generate tools fmt vet ## Run tests.
 	test -z "$$($(shell go env GOPATH)/bin/nilerr ./... 2>&1 | tee /dev/stderr)"
 	go install ./...
 	source <($(SETUP_ENVTEST) use -p env $(ENVTEST_K8S_VERSION)); \
-		go test -race -v -count 1 ./...
+		go test -race -v -count 1 ./... --timeout=60s
 
 ##@ Build
 
@@ -125,7 +126,7 @@ $(SETUP_ENVTEST):
 setup: # Setup tools
 	mkdir -p bin
 	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CTRLTOOLS_VERSION)
-	curl -o $(BINDIR)/kubectl -sfL https://storage.googleapis.com/kubernetes-release/release/v$(ENVTEST_K8S_VERSION)/bin/linux/amd64/kubectl
+	curl -o $(BINDIR)/kubectl -sfL https://storage.googleapis.com/kubernetes-release/release/v$(K8S_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(BINDIR)/kubectl
 	GOBIN=$(BINDIR) go install github.com/norwoodj/helm-docs/cmd/helm-docs@v$(HELM_DOCS_VERSION)
 	curl -L -sS https://get.helm.sh/helm-v$(HELM_VERSION)-linux-amd64.tar.gz \
