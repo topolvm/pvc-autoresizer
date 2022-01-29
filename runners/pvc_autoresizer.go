@@ -120,7 +120,7 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 		for _, pvc := range pvcs.Items {
 			isTarget, err := isTargetPVC(&pvc)
 			if err != nil {
-				metrics.ResizerFailedResizeTotal.Increment()
+				metrics.ResizerFailedResizeTotal.Increment(pvc.Name)
 				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to check target PVC")
 				continue
 			} else if !isTarget {
@@ -135,7 +135,7 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			}
 			err = w.resize(ctx, &pvc, vsMap[namespacedName])
 			if err != nil {
-				metrics.ResizerFailedResizeTotal.Increment()
+				metrics.ResizerFailedResizeTotal.Increment(pvc.Name)
 				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to resize PVC")
 			}
 		}
@@ -189,7 +189,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 	}
 	if curReq.Cmp(limitRes) == 0 {
 		log.Info("volume storage limit reached")
-		metrics.ResizerLimitReachedTotal.Increment()
+		metrics.ResizerLimitReachedTotal.Increment(pvc.Name)
 		return nil
 	}
 
@@ -219,7 +219,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 			"inodesAvailable", vs.AvailableInodeSize,
 		)
 		w.recorder.Eventf(pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
-		metrics.ResizerSuccessResizeTotal.Increment()
+		metrics.ResizerSuccessResizeTotal.Increment(pvc.Name)
 	}
 
 	return nil
