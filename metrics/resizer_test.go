@@ -8,7 +8,7 @@ import (
 )
 
 func TestResizerSuccessResizeTotal(t *testing.T) {
-	ResizerSuccessResizeTotal.Increment("my-test-pvc")
+	ResizerSuccessResizeTotal.Increment("my-test-pvc", "my-test-namespace")
 	actual := testutil.ToFloat64(resizerSuccessResizeTotal)
 	if actual != float64(1) {
 		t.Fatalf("value is not %d", 1)
@@ -16,7 +16,7 @@ func TestResizerSuccessResizeTotal(t *testing.T) {
 }
 
 func TestResizerFailedResizeTotal(t *testing.T) {
-	ResizerFailedResizeTotal.Increment("my-test-pvc")
+	ResizerFailedResizeTotal.Increment("my-test-pvc", "my-test-namespace")
 	actual := testutil.ToFloat64(resizerFailedResizeTotal)
 	if actual != float64(1) {
 		t.Fatalf("value is not %d", 1)
@@ -35,7 +35,7 @@ func TestResizerLoopSecondsTotal(t *testing.T) {
 }
 
 func TestResizerLimitReachedTotal(t *testing.T) {
-	ResizerLimitReachedTotal.Increment("my-test-pvc")
+	ResizerLimitReachedTotal.Increment("my-test-pvc", "my-test-namespace")
 	actual := testutil.ToFloat64(resizerLimitReachedTotal)
 	if actual != float64(1) {
 		t.Fatalf("value is not %d", 1)

@@ -21,16 +21,16 @@ type resizerSuccessResizeTotalAdapter struct {
 	metric prometheus.CounterVec
 }
 
-func (a *resizerSuccessResizeTotalAdapter) Increment(pvcname string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname}).Inc()
+func (a *resizerSuccessResizeTotalAdapter) Increment(pvcname string, pvcns string) {
+	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "persistentvolumeclaimnamespace": pvcns}).Inc()
 }
 
 type resizerFailedResizeTotalAdapter struct {
 	metric prometheus.CounterVec
 }
 
-func (a *resizerFailedResizeTotalAdapter) Increment(pvcname string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname}).Inc()
+func (a *resizerFailedResizeTotalAdapter) Increment(pvcname string, pvcns string) {
+	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "persistentvolumeclaimnamespace": pvcns}).Inc()
 }
 
 type resizerLoopSecondsTotalAdapter struct {
@@ -45,22 +45,22 @@ type resizerLimitReachedTotalAdapter struct {
 	metric prometheus.CounterVec
 }
 
-func (a *resizerLimitReachedTotalAdapter) Increment(pvcname string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname}).Inc()
+func (a *resizerLimitReachedTotalAdapter) Increment(pvcname string, pvcns string) {
+	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "persistentvolumeclaimnamespace": pvcns}).Inc()
 }
 
 var (
 	resizerSuccessResizeTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
 		Name:      ResizerSuccessResizeTotalKey,
-		Help:      "counter that indicates how m any volume expansion processing resized succeed.",
-	}, []string{"persistentvolumeclaim"})
+		Help:      "counter that indicates how many volume expansion processing resized succeed.",
+	}, []string{"persistentvolumeclaim", "persistentvolumeclaimnamespace"})
 
 	resizerFailedResizeTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
 		Name:      ResizerFailedResizeTotalKey,
 		Help:      "counter that indicates how many volume expansion processing resizes fail.",
-	}, []string{"persistentvolumeclaim"})
+	}, []string{"persistentvolumeclaim", "persistentvolumeclaimnamespace"})
 
 	resizerLoopSecondsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
@@ -72,7 +72,7 @@ var (
 		Namespace: MetricsNamespace,
 		Name:      ResizerLimitReachedTotalKey,
 		Help:      "counter that indicates how many storage limits were reached.",
-	}, []string{"persistentvolumeclaim"})
+	}, []string{"persistentvolumeclaim", "persistentvolumeclaimnamespace"})
 
 	ResizerSuccessResizeTotal *resizerSuccessResizeTotalAdapter = &resizerSuccessResizeTotalAdapter{metric: *resizerSuccessResizeTotal}
 	ResizerFailedResizeTotal  *resizerFailedResizeTotalAdapter  = &resizerFailedResizeTotalAdapter{metric: *resizerFailedResizeTotal}
