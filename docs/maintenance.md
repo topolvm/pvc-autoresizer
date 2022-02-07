@@ -24,7 +24,9 @@ First of all, we should have a look at the release notes in the order below.
       - [helm-docs](github.com/norwoodj/helm-docs/releases)
       - [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/releases)
 4. Depending modules
-  - Read [kubernetes go.mod](https://github.com/kubernetes/kubernetes/blob/master/go.mod), and update the `prometheus/*` modules.
+    - Read [kubernetes go.mod](https://github.com/kubernetes/kubernetes/blob/master/go.mod), and update the `prometheus/*` modules.
+5. Golang version
+    - Consider whether the golang should be updated.
 
 We should write down in the github issue of this task what are the important changes and the required actions to manage incompatibilities if exist.
 The format is up to you.
@@ -38,6 +40,7 @@ We should also update the following files.
 - `README.md`: Documentation which indicates what versions are supported by pvc-autoresizer
 - `Makefile`: Makefile for running envtest
 - `e2e/Makefile`: Makefile for running e2e tests
+- `.github/workflows`: Configuration files of github actions
 
 `git grep <the kubernetes version which support will be dropped>, `git grep image:`, and `git grep -i VERSION` might help to avoid overlooking necessary changes.
 
@@ -46,11 +49,10 @@ We should also update the following files.
 Next, we should update `go.mod` by the following commands.
 
 ```bash
+# If the new kubernetes version is v1.x.y", the `VERSION` will be v0.x.y.
 $ VERSION=<upgrading Kubernetes release version>
 $ go get k8s.io/api@v${VERSION} k8s.io/apimachinery@v${VERSION} k8s.io/client-go@v${VERSION}
 ```
-
-If the new kubernetes version is v1.x.y", the new pvc-autoresizer's version will be v0.x.y.
 
 If we need to upgrade the `controller-runtime` version, do the following as well.
 
