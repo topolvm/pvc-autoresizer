@@ -7,6 +7,17 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.2.3] - 2022-02-07
+
+### Changed
+- Support Kubernetes v1.23 (#92)
+
+### Fixed
+- Update example to use preferred storage_limit annotation (#94)
+
+### Contributors
+- @tylerauerbeck
+
 ## [0.2.2] - 2022-01-12
 
 ### Changed
@@ -105,7 +116,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.1.6...v0.2.0
