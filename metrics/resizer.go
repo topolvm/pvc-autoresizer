@@ -22,7 +22,7 @@ type resizerSuccessResizeTotalAdapter struct {
 }
 
 func (a *resizerSuccessResizeTotalAdapter) Increment(pvcname string, pvcns string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "persistentvolumeclaimnamespace": pvcns}).Inc()
+	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Inc()
 }
 
 type resizerFailedResizeTotalAdapter struct {
@@ -30,7 +30,7 @@ type resizerFailedResizeTotalAdapter struct {
 }
 
 func (a *resizerFailedResizeTotalAdapter) Increment(pvcname string, pvcns string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "persistentvolumeclaimnamespace": pvcns}).Inc()
+	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Inc()
 }
 
 type resizerLoopSecondsTotalAdapter struct {
@@ -46,7 +46,7 @@ type resizerLimitReachedTotalAdapter struct {
 }
 
 func (a *resizerLimitReachedTotalAdapter) Increment(pvcname string, pvcns string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "persistentvolumeclaimnamespace": pvcns}).Inc()
+	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Inc()
 }
 
 var (
@@ -54,13 +54,13 @@ var (
 		Namespace: MetricsNamespace,
 		Name:      ResizerSuccessResizeTotalKey,
 		Help:      "counter that indicates how many volume expansion processing resized succeed.",
-	}, []string{"persistentvolumeclaim", "persistentvolumeclaimnamespace"})
+	}, []string{"persistentvolumeclaim", "namespace"})
 
 	resizerFailedResizeTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
 		Name:      ResizerFailedResizeTotalKey,
 		Help:      "counter that indicates how many volume expansion processing resizes fail.",
-	}, []string{"persistentvolumeclaim", "persistentvolumeclaimnamespace"})
+	}, []string{"persistentvolumeclaim", "namespace"})
 
 	resizerLoopSecondsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
@@ -72,7 +72,7 @@ var (
 		Namespace: MetricsNamespace,
 		Name:      ResizerLimitReachedTotalKey,
 		Help:      "counter that indicates how many storage limits were reached.",
-	}, []string{"persistentvolumeclaim", "persistentvolumeclaimnamespace"})
+	}, []string{"persistentvolumeclaim", "namespace"})
 
 	ResizerSuccessResizeTotal *resizerSuccessResizeTotalAdapter = &resizerSuccessResizeTotalAdapter{metric: *resizerSuccessResizeTotal}
 	ResizerFailedResizeTotal  *resizerFailedResizeTotalAdapter  = &resizerFailedResizeTotalAdapter{metric: *resizerFailedResizeTotal}
