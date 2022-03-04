@@ -60,7 +60,9 @@ launch-kind: $(TMPDIR)/topolvm
 	make -C $(TMPDIR)/topolvm/example run \
 		KUBERNETES_VERSION=$(KUBERNETES_VERSION) \
 		KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) \
-		TMPDIR=$(TMPDIR)
+		TMPDIR=$(TMPDIR) || true
+	$(KUBECTL) get pod -n topolvm-system
+	$(KUBECTL) describe pod -n topolvm-system -lapp.kubernetes.io/name=topolvm-controller
 
 .PHONY: shutdown-kind
 shutdown-kind:
