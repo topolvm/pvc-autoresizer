@@ -7,6 +7,19 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.3.0] - 2022-03-04
+
+### Notice
+
+The data types of `pvcautoresizer_success_resize_total`, `pvcautoresizer_failed_resize_total` and
+`pvcautoresizer_limit_reached_total` are changed to vector.
+
+### Changed
+- Extend metrics to include pvc name (#93)
+
+### Contributors
+- @tylerauerbeck
+
 ## [0.2.3] - 2022-02-07
 
 ### Changed
@@ -116,7 +129,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.0...v0.2.1
