@@ -92,6 +92,12 @@ kube-prometheus:
 
 .PHONY: clean
 clean: stop-lvmd
+	for f in $$($(SUDO) find $(TMPDIR) -type f); do \
+		if $(SUDO) mountpoint -q $$f; then \
+			$(SUDO) umount $$f; \
+		fi; \
+	done
+	$(SUDO) rm -rf $(TMPDIR)/controller $(TMPDIR)/worker
 	rm -rf \
 		$(TMPDIR) \
 		autoresizer.img \
