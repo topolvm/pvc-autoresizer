@@ -432,6 +432,9 @@ func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold
 	Expect(err).NotTo(HaveOccurred())
 
 	pvc.Status.Phase = corev1.ClaimBound
+	pvc.Status.Capacity = map[corev1.ResourceName]resource.Quantity{
+		corev1.ResourceStorage: *resource.NewQuantity(request, resource.BinarySI),
+	}
 	err = k8sClient.Status().Update(ctx, &pvc)
 	Expect(err).NotTo(HaveOccurred())
 }
