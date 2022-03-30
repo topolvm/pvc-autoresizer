@@ -198,7 +198,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		log.Error(err, "fetching storage limit failed")
 		return err
 	}
-	if cap.Cmp(limitRes) == 0 || cap.Cmp(limitRes) == 1 {
+	if cap.Cmp(limitRes) >= 0 {
 		log.Info("volume storage limit reached")
 		metrics.ResizerLimitReachedTotal.Increment(pvc.Name, pvc.Namespace)
 		return nil
