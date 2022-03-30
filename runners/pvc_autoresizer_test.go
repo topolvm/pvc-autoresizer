@@ -171,6 +171,7 @@ var _ = Describe("test resizer", func() {
 			testCases := []struct {
 				description        string
 				pvcSizeGi          int64
+				pvcCapSizeGi       int64
 				expectSizeGi       int64
 				threshold          string
 				availableByte      int64
@@ -181,6 +182,7 @@ var _ = Describe("test resizer", func() {
 				{
 					description:        "Should resize(absolute value)",
 					pvcSizeGi:          10,
+					pvcCapSizeGi:       10,
 					expectSizeGi:       11,
 					threshold:          "5Gi",
 					availableByte:      5<<30 - 1,
@@ -190,6 +192,7 @@ var _ = Describe("test resizer", func() {
 				{
 					description:        "Should not resize(absolute value)",
 					pvcSizeGi:          10,
+					pvcCapSizeGi:       10,
 					expectSizeGi:       10,
 					threshold:          "5Gi",
 					availableByte:      5 << 30,
@@ -199,6 +202,7 @@ var _ = Describe("test resizer", func() {
 				{
 					description:        "Should resize(%)",
 					pvcSizeGi:          10,
+					pvcCapSizeGi:       10,
 					expectSizeGi:       11,
 					threshold:          "50%",
 					availableByte:      5<<30 - 1,
@@ -208,6 +212,7 @@ var _ = Describe("test resizer", func() {
 				{
 					description:        "Should not resize(%)",
 					pvcSizeGi:          10,
+					pvcCapSizeGi:       10,
 					expectSizeGi:       10,
 					threshold:          "50%",
 					availableByte:      5 << 30,
@@ -217,6 +222,7 @@ var _ = Describe("test resizer", func() {
 				{
 					description:        "Should resize(inode)",
 					pvcSizeGi:          10,
+					pvcCapSizeGi:       10,
 					expectSizeGi:       11,
 					threshold:          "50%",
 					availableByte:      5 << 30,
@@ -226,6 +232,7 @@ var _ = Describe("test resizer", func() {
 				{
 					description:        "Should resize(inode with annotation)",
 					pvcSizeGi:          10,
+					pvcCapSizeGi:       10,
 					expectSizeGi:       11,
 					threshold:          "50%",
 					availableByte:      5 << 30,
@@ -236,6 +243,7 @@ var _ = Describe("test resizer", func() {
 				{
 					description:        "Should not resize(inode)",
 					pvcSizeGi:          10,
+					pvcCapSizeGi:       10,
 					expectSizeGi:       10,
 					threshold:          "50%",
 					availableByte:      5 << 30,
@@ -244,8 +252,19 @@ var _ = Describe("test resizer", func() {
 					inodesThreshold:    "0%",
 				},
 				{
+					description:        "Should resize(capacity size check)",
+					pvcSizeGi:          1,
+					pvcCapSizeGi:       10,
+					expectSizeGi:       11,
+					threshold:          "5Gi",
+					availableByte:      5<<30 - 1,
+					availableInodeSize: 100,
+					capacityInodeSize:  100,
+				},
+				{
 					description:        "Should not resize(inode - 0 capacityInodeSize)",
 					pvcSizeGi:          10,
+					pvcCapSizeGi:       10,
 					expectSizeGi:       10,
 					threshold:          "50%",
 					availableByte:      5 << 30,
@@ -253,11 +272,22 @@ var _ = Describe("test resizer", func() {
 					capacityInodeSize:  0,
 					inodesThreshold:    "20%",
 				},
+				{
+					description:        "Should not resize(no capacity value set)",
+					pvcSizeGi:          10,
+					pvcCapSizeGi:       -1,
+					expectSizeGi:       10,
+					threshold:          "5Gi",
+					availableByte:      5<<30 - 1,
+					availableInodeSize: 100,
+					capacityInodeSize:  100,
+				},
 			}
 
 			for i, tc := range testCases {
 				pvcName := fmt.Sprintf("test-pvc-%d", i)
 				pvcSizeGi := tc.pvcSizeGi
+				pvcCapSizeGi := tc.pvcCapSizeGi
 				expectSizeGi := tc.expectSizeGi
 				threshold := tc.threshold
 				availableByte := tc.availableByte
@@ -277,7 +307,7 @@ var _ = Describe("test resizer", func() {
 					inodesThreshold)
 
 				It(description, func() {
-					createPVC(ctx, pvcNS, pvcName, scName, threshold, inodesThreshold, increase, pvcSizeGi<<30, limit, volumeMode)
+					createPVC(ctx, pvcNS, pvcName, scName, threshold, inodesThreshold, increase, pvcSizeGi<<30, limit, pvcCapSizeGi<<30, volumeMode)
 					setMetrics(pvcNS, pvcName, availableByte, pvcSizeGi<<30, availableInodeSize, capacityInodeSize)
 					testFunc := func() error {
 						var pvc corev1.PersistentVolumeClaim
@@ -308,7 +338,7 @@ var _ = Describe("test resizer", func() {
 				ctx := context.Background()
 				pvcNS := "default"
 				pvcName := "test-resize-metrics"
-				createPVC(ctx, pvcNS, pvcName, scName, "50%", "", "20Gi", 10<<30, 100<<30, corev1.PersistentVolumeFilesystem)
+				createPVC(ctx, pvcNS, pvcName, scName, "50%", "", "20Gi", 10<<30, 100<<30, 10<<30, corev1.PersistentVolumeFilesystem)
 				By("running resize", func() {
 					setMetrics(pvcNS, pvcName, 3<<30, 7<<30, 2050246, 2050246)
 					Eventually(func() error {
@@ -392,7 +422,7 @@ var _ = Describe("test resizer", func() {
 	})
 })
 
-func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold, increase string, request, limit int64, mode corev1.PersistentVolumeMode) {
+func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold, increase string, request, limit, capacity int64, mode corev1.PersistentVolumeMode) {
 	pvc := corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
@@ -432,8 +462,10 @@ func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold
 	Expect(err).NotTo(HaveOccurred())
 
 	pvc.Status.Phase = corev1.ClaimBound
-	pvc.Status.Capacity = map[corev1.ResourceName]resource.Quantity{
-		corev1.ResourceStorage: *resource.NewQuantity(request, resource.BinarySI),
+	if capacity >= 0 {
+		pvc.Status.Capacity = map[corev1.ResourceName]resource.Quantity{
+			corev1.ResourceStorage: *resource.NewQuantity(capacity, resource.BinarySI),
+		}
 	}
 	err = k8sClient.Status().Update(ctx, &pvc)
 	Expect(err).NotTo(HaveOccurred())
