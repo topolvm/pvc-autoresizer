@@ -84,7 +84,7 @@ spec:
   storageClassName: topolvm-provisioner
 ```
 
-The PVC can optionally have `resize.topolvm.io/threshold` and `resize.topolvm.io/increase` annotations.
+The PVC can optionally have `resize.topolvm.io/threshold`, `resize.topolvm.io/inodes-threshold` and `resize.topolvm.io/increase` annotations.
 (If they are not given, the default value is `10%`.)
 
 When the amount of free space of the volume is below `resize.topolvm.io/threshold`
