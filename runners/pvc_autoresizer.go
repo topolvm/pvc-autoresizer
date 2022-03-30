@@ -164,19 +164,16 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 	cap, exists := pvc.Status.Capacity[corev1.ResourceStorage]
 	if !exists {
 		log.Info("skip resizing because pvc capacity is not set yet")
-		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
 		return nil
 	}
 	if cap.Value() == 0 {
 		log.Info("skip resizing because pvc capacity size is zero")
-		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
 		return nil
 	}
 
 	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], cap.Value(), DefaultIncrease)
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert increase annotation", "error", err.Error())
-		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
 		return nil
 	}
 
