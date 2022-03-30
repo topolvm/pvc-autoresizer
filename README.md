@@ -87,7 +87,8 @@ spec:
 The PVC can optionally have `resize.topolvm.io/threshold` and `resize.topolvm.io/increase` annotations.
 (If they are not given, the default value is `10%`.)
 
-When the amount of free space of the volume is below `resize.topolvm.io/threshold`,
+When the amount of free space of the volume is below `resize.topolvm.io/threshold`
+or the amount of free number of the inodes is below `resize.topolvm.io/inodes-threshold`,
 `.spec.resources.requests.storage` is increased by `resize.topolvm.io/increase`.
 
 If `resize.topolvm.io/increase` is given as a percentage, the value is calculated as
@@ -102,6 +103,7 @@ metadata:
   annotations:
     resize.topolvm.io/storage_limit: 100Gi
     resize.topolvm.io/threshold: 20%
+    resize.topolvm.io/inodes-threshold: 20%
     resize.topolvm.io/increase: 20Gi
 spec:
   <snip>
