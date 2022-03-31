@@ -161,11 +161,19 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		return nil
 	}
 
-	curReq := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
-	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], curReq.Value(), DefaultIncrease)
+	cap, exists := pvc.Status.Capacity[corev1.ResourceStorage]
+	if !exists {
+		log.Info("skip resizing because pvc capacity is not set yet")
+		return nil
+	}
+	if cap.Value() == 0 {
+		log.Info("skip resizing because pvc capacity size is zero")
+		return nil
+	}
+
+	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], cap.Value(), DefaultIncrease)
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert increase annotation", "error", err.Error())
-		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
 		return nil
 	}
 
@@ -187,7 +195,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		log.Error(err, "fetching storage limit failed")
 		return err
 	}
-	if curReq.Cmp(limitRes) == 0 {
+	if cap.Cmp(limitRes) >= 0 {
 		log.Info("volume storage limit reached")
 		metrics.ResizerLimitReachedTotal.Increment(pvc.Name, pvc.Namespace)
 		return nil
@@ -197,7 +205,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		if pvc.Annotations == nil {
 			pvc.Annotations = make(map[string]string)
 		}
-		newReqBytes := int64(math.Ceil(float64(curReq.Value()+increase)/(1<<30))) << 30
+		newReqBytes := int64(math.Ceil(float64(cap.Value()+increase)/(1<<30))) << 30
 		newReq := resource.NewQuantity(newReqBytes, resource.BinarySI)
 		if newReq.Cmp(limitRes) > 0 {
 			newReq = &limitRes
@@ -211,7 +219,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 			return err
 		}
 		log.Info("resize started",
-			"from", curReq.Value(),
+			"from", cap.Value(),
 			"to", newReq.Value(),
 			"threshold", threshold,
 			"available", vs.AvailableBytes,
