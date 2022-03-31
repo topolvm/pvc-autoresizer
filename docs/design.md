@@ -62,6 +62,7 @@ metadata:
   name: topolvm-pvc
   annotations:
     resize.topolvm.io/threshold: 20%
+    resize.topolvm.io/inodes-threshold: 20%
     resize.topolvm.io/increase: 20Gi
     resize.topolvm.io/storage_limit: 100Gi
 spec:
@@ -79,6 +80,7 @@ spec:
   We could have configured with `spec.resources.limits.storage`, but it is deprecated.
 - pvc-autoresizer increases PVC's `spec.resources.requests.storage` up to the given limits.
 - The threshold of free space is given by `resize.topolvm.io/threshold` annotation.
+- The threshold of free inodes is given by `resize.topolvm.io/inodes-threshold` annotation.
 - The amount of increased size can be specified by `resize.topolvm.io/increase` annotation.
 - The value of the annotations can be a ratio like `20%` or a value like `10Gi`.
 - The default value for both threshold and amount is `10%`.
