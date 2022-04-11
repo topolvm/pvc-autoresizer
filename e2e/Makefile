@@ -33,7 +33,7 @@ KIND := $(TMPDIR)/topolvm/bin/kind
 setup:
 	$(MAKE) -C ../ setup
 	mkdir -p $(BINDIR)
-	curl -o $(BINDIR)/kubectl -sfL https://storage.googleapis.com/kubernetes-release/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
+	curl -o $(BINDIR)/kubectl -sSfL https://storage.googleapis.com/kubernetes-release/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(BINDIR)/kubectl
 	GOBIN=$(BINDIR) go install github.com/onsi/ginkgo/v2/ginkgo@v$(GINKGO_VERSION)
 
@@ -84,11 +84,9 @@ autoresizer.img:
 	docker save -o $@ pvc-autoresizer:devel
 
 kube-prometheus:
-	wget https://github.com/prometheus-operator/kube-prometheus/archive/refs/tags/v$(KUBE_PROMETHEUS_VERSION).tar.gz -O - \
-		|  tar xvfz - -C $(shell pwd) \
-		&& mkdir $(shell pwd)/kube-prometheus \
-		&& mv $(shell pwd)/kube-prometheus-$(KUBE_PROMETHEUS_VERSION)/manifests kube-prometheus/manifests \
-		&& rm -fr $(shell pwd)/kube-prometheus-$(KUBE_PROMETHEUS_VERSION)
+	mkdir $(shell pwd)/kube-prometheus && \
+	curl -sSfL https://github.com/prometheus-operator/kube-prometheus/archive/refs/tags/v$(KUBE_PROMETHEUS_VERSION).tar.gz \
+		| tar xfz - -C $(shell pwd)/kube-prometheus --strip-components=1 kube-prometheus-$(KUBE_PROMETHEUS_VERSION)/manifests
 
 .PHONY: clean
 clean: stop-lvmd
