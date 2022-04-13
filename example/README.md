@@ -23,7 +23,7 @@ Load the container image of `pvc-autoresizer` to [kind] as follows:
 
 ```
 make image
-kind load docker-image --name topolvm-example quay.io/topolvm/pvc-autoresizer:devel
+kind load docker-image --name topolvm-example ghcr.io/topolvm/pvc-autoresizer:devel
 ```
 
 Deploy `pvc-autoresizer`:

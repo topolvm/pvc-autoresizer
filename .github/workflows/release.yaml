@@ -19,7 +19,7 @@ jobs:
           if [ $(echo $VERSION | grep "-") ]; then PRERELEASE=true; else PRERELEASE=false; fi
           echo "::set-output name=version::${VERSION}"
           echo "::set-output name=prerelease::${PRERELEASE}"
-      - run: echo ${{ secrets.QUAY_PASSWORD }} | docker login -u ${{ secrets.QUAY_USER }} --password-stdin quay.io
+      - run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ secrets.GHCR_USER }} --password-stdin
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:

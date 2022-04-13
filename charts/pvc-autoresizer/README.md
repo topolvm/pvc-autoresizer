@@ -40,7 +40,7 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | controller.terminationGracePeriodSeconds | string | `nil` | Specify terminationGracePeriodSeconds. |
 | controller.tolerations | object | `{}` | Ensure pods are not scheduled on inappropriate nodes. |
 | image.pullPolicy | string | `nil` | pvc-autoresizer image pullPolicy. |
-| image.repository | string | `"quay.io/topolvm/pvc-autoresizer"` | pvc-autoresizer image repository to use. |
+| image.repository | string | `"ghcr.io/topolvm/pvc-autoresizer"` | pvc-autoresizer image repository to use. |
 | image.tag | string | `{{ .Chart.AppVersion }}` | pvc-autoresizer image tag to use. |
 
 ## Generate Manifests
