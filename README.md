@@ -111,7 +111,8 @@ spec:
 
 ## Container images
 
-Container images are available on [Quay.io](https://quay.io/repository/topolvm/pvc-autoresizer)
+Container images are available on [ghcr.io](https://github.com/topolvm/pvc-autoresizer/pkgs/container/pvc-autoresizer)  
+**Please note that [the images on quay.io](https://quay.io/repository/topolvm/pvc-autoresizer) are currently deprecated and will no longer be available in the future.**
 
 [releases]: https://github.com/topolvm/pvc-autoresizer/releases
 

@@ -3,7 +3,7 @@ kind: Kustomization
 images:
 - name: pvc-autoresizer
   newTag: 0.3.1
-  newName: quay.io/topolvm/pvc-autoresizer
+  newName: ghcr.io/topolvm/pvc-autoresizer
 
 # Adds namespace to all resources.
 namespace: pvc-autoresizer

@@ -1,6 +1,6 @@
 image:
   # image.repository -- pvc-autoresizer image repository to use.
-  repository: quay.io/topolvm/pvc-autoresizer
+  repository: ghcr.io/topolvm/pvc-autoresizer
 
   # image.tag -- pvc-autoresizer image tag to use.
   # @default -- `{{ .Chart.AppVersion }}`

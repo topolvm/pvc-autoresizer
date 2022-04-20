@@ -18,7 +18,7 @@ KUBEBUILDER_ASSETS := $(BINDIR)
 export KUBEBUILDER_ASSETS
 
 IMAGE_TAG ?= latest
-IMAGE_PREFIX ?= quay.io/topolvm/
+IMAGE_PREFIX ?= ghcr.io/topolvm/
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
