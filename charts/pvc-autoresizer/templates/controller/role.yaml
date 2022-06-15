@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ template "pvc-autoresizer.fullname" . }}-leader-election-role
+  name: {{ template "pvc-autoresizer.fullname" . }}-leader-election
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "pvc-autoresizer.labels" . | nindent 4 }}

@@ -18,6 +18,10 @@ controller:
     # Used as "--prometheus-url" option
     prometheusURL: http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090
 
+    # controller.args.namespaces -- Specify namespaces to control the pvcs of. Empty for all namespaces.
+    # Used as "--namespaces" option
+    namespaces: []
+
     # controller.args.interval -- Specify interval to monitor pvc capacity.
     # Used as "--interval" option
     interval: 10s
