@@ -118,10 +118,11 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			return nil
 		}
 		for _, pvc := range pvcs.Items {
+			log := w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name)
 			isTarget, err := isTargetPVC(&pvc)
 			if err != nil {
 				metrics.ResizerFailedResizeTotal.Increment(pvc.Name, pvc.Namespace)
-				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to check target PVC")
+				log.Error(err, "failed to check target PVC")
 				continue
 			} else if !isTarget {
 				continue
@@ -131,12 +132,22 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 				Name:      pvc.Name,
 			}
 			if _, ok := vsMap[namespacedName]; !ok {
+				// Do not increment ResizerFailedResizeTotal here. The controller cannot get volume
+				// stats for "offline" volumes (i.e. volumes not mounted by any pod) since kubelet
+				// exports volume stats of a persistent volume claim only if it is online. Besides,
+				// NodeExpandVolume RPC assumes that the volume to be published or staged on a node
+				// (and hence online), the resize request of controller for offline PVC will not be
+				// processed for the time being. So, we do not regard it as a resize failure that
+				// the controller failed to retrieve volume stats for the PVC. This may result in a
+				// failure to increment the counter in the case which the PVC is online but fails
+				// to retrieve its metrics, but accept this as a limitation for now.
+				log.Info("failed to get volume stats")
 				continue
 			}
 			err = w.resize(ctx, &pvc, vsMap[namespacedName])
 			if err != nil {
 				metrics.ResizerFailedResizeTotal.Increment(pvc.Name, pvc.Namespace)
-				w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name).Error(err, "failed to resize PVC")
+				log.Error(err, "failed to resize PVC")
 			}
 		}
 	}
