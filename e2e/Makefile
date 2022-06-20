@@ -60,7 +60,14 @@ launch-kind: $(TMPDIR)/topolvm
 	make -C $(TMPDIR)/topolvm/example run \
 		KUBERNETES_VERSION=$(KUBERNETES_VERSION) \
 		KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) \
-		TMPDIR=$(TMPDIR)
+		TMPDIR=$(TMPDIR) || true
+	$(KUBECTL) get -n topolvm-system certificate -owide
+	$(KUBECTL) get -n topolvm-system all -owide
+	$(KUBECTL) get -n topolvm-system cm -owide
+	$(KUBECTL) get -n topolvm-system secret -owide
+	$(KUBECTL) logs -n topolvm-system deploy/topolvm-controller -c topolvm-controller
+	free -m
+	sar 2 5
 
 .PHONY: shutdown-kind
 shutdown-kind:
