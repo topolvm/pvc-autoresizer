@@ -36,6 +36,11 @@ func NewPrometheusClient(url string) (MetricsClient, error) {
 
 // MetricsClient is an interface for getting metrics
 type MetricsClient interface {
+	// GetMetrics returns volume stats metrics of PVCs
+	//
+	// The volume stats consist of available bytes, capacity bytes, available inodes and capacity
+	// inodes. This method returns volume stats for a PVC only if all four metrics of the PVC was
+	// retrieved from the metrics source.
 	GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error)
 }
 
@@ -51,6 +56,7 @@ type prometheusClient struct {
 	prometheusAPI prometheusv1.API
 }
 
+// GetMetrics implements MetricsClient.GetMetrics
 func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
 	volumeStatsMap := make(map[types.NamespacedName]*VolumeStats)
 
@@ -76,16 +82,20 @@ func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.Namespaced
 
 	for key, val := range availableBytes {
 		vs := &VolumeStats{AvailableBytes: val}
-		if cb, ok := capacityBytes[key]; !ok {
-			continue
-		} else {
+		if cb, ok := capacityBytes[key]; ok {
 			vs.CapacityBytes = cb
+		} else {
+			continue
 		}
 		if ais, ok := availableInodeSize[key]; ok {
 			vs.AvailableInodeSize = ais
+		} else {
+			continue
 		}
 		if cis, ok := capacityInodeSize[key]; ok {
 			vs.CapacityInodeSize = cis
+		} else {
+			continue
 		}
 		volumeStatsMap[key] = vs
 	}

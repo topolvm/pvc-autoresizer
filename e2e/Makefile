@@ -3,15 +3,19 @@ TEST_KUBERNETES_TARGET ?= current
 
 ifeq ($(TEST_KUBERNETES_TARGET),current)
 KUBERNETES_VERSION := 1.23.3
-TOPOLVM_VERSION := 0.11.1
+# In This commit, flakiness of CI due to webhook readiness is addressed.
+# todo: Use tag if this commit is released
+TOPOLVM_VERSION := 31f8d5329c7e518240fb33681245e43f2d3491f3
 else ifeq ($(TEST_KUBERNETES_TARGET),prev)
 KUBERNETES_VERSION := 1.22.4
-TOPOLVM_VERSION := 0.11.1
+# In This commit, flakiness of CI due to webhook readiness is addressed.
+# todo: Use tag if this commit is released
+TOPOLVM_VERSION := 31f8d5329c7e518240fb33681245e43f2d3491f3
 else ifeq ($(TEST_KUBERNETES_TARGET),prev2)
 KUBERNETES_VERSION := 1.21.2
 # Kubernetes 1.21 does not support KubeSchedulerConfiguration  API version v1beta2,
 # so use older version of TopoLVM
-TOPOLVM_VERSION := 0.10.4
+TOPOLVM_VERSION := v0.10.4
 endif
 export KUBERNETES_VERSION
 
@@ -76,7 +80,7 @@ endef
 
 $(TMPDIR)/topolvm:
 	git clone https://github.com/topolvm/topolvm.git $@
-	cd $@ && git checkout v$(TOPOLVM_VERSION)
+	cd $@ && git checkout $(TOPOLVM_VERSION)
 	make -C $(TMPDIR)/topolvm/example setup
 
 autoresizer.img:
