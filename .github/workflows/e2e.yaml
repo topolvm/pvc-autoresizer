@@ -14,7 +14,7 @@ jobs:
     env:
       TEST_KUBERNETES_TARGET: "${{ matrix.test_kubernetes_target }}"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-go@v2
         with:
           go-version: "1.17"
