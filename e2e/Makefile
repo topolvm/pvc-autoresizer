@@ -3,14 +3,10 @@ TEST_KUBERNETES_TARGET ?= current
 
 ifeq ($(TEST_KUBERNETES_TARGET),current)
 KUBERNETES_VERSION := 1.23.3
-# In This commit, flakiness of CI due to webhook readiness is addressed.
-# todo: Use tag if this commit is released
-TOPOLVM_VERSION := 31f8d5329c7e518240fb33681245e43f2d3491f3
+TOPOLVM_VERSION := v0.14.0
 else ifeq ($(TEST_KUBERNETES_TARGET),prev)
 KUBERNETES_VERSION := 1.22.4
-# In This commit, flakiness of CI due to webhook readiness is addressed.
-# todo: Use tag if this commit is released
-TOPOLVM_VERSION := 31f8d5329c7e518240fb33681245e43f2d3491f3
+TOPOLVM_VERSION := v0.14.0
 else ifeq ($(TEST_KUBERNETES_TARGET),prev2)
 KUBERNETES_VERSION := 1.21.2
 # Kubernetes 1.21 does not support KubeSchedulerConfiguration  API version v1beta2,
