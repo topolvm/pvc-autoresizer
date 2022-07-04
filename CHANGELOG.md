@@ -7,6 +7,34 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.4.0] - 2022-07-04
+
+### Added
+
+- add CODEOWNERS (#110)
+- Add support for namespace allow list (#120)
+- automate adding items to project (#123)
+- Update github-actions automatically (#124)
+
+### Changed
+
+- revise CODEOWNERS. (#111)
+- generalize curl options (#113)
+- Modified to use ghcr.io as a container registry (#114)
+- Update e2e topolvm version (#116)
+- Bump actions/checkout from 2 to 3 (#125)
+- Bump actions/setup-go from 2 to 3 (#127)
+- Remove setup-python (#130)
+
+### Fixed
+
+- reconcile: do not resize volume if failed to get inode stats (#121)
+
+### Contributors
+
+- @bells17
+- @ryanprobus
+
 ## [0.3.1] - 2022-04-04
 
 ### Fixed
@@ -138,7 +166,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.2...v0.2.3
