@@ -7,6 +7,17 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.4.0] - 2022-07-04
+
+### Added
+
+- Add support for namespace allow list (#120)
+
+### Changed
+
+- Bump helm/chart-testing-action from 2.0.1 to 2.2.1 (#126)
+- Bump helm/chart-releaser-action from 1.2.1 to 1.4.0 (#128)
+
 ## [0.3.6] - 2022-04-04
 
 ### Changed
@@ -48,7 +59,8 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 ## [0.2.0] - 2021-08-10
 - First release.
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.3.6...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.4.0...HEAD
+[0.4.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.3.6...pvc-autoresizer-chart-v0.4.0
 [0.3.6]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.3.5...pvc-autoresizer-chart-v0.3.6
 [0.3.5]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.3.4...pvc-autoresizer-chart-v0.3.5
 [0.3.4]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.3.3...pvc-autoresizer-chart-v0.3.4
