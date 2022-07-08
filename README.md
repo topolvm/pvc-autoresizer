@@ -12,7 +12,7 @@ It queries the volume usage metrics from Prometheus that collects metrics from `
 
 ## Supported environments
 
-- Kubernetes: 1.23, 1.22, 1.21
+- Kubernetes: 1.24, 1.23, 1.22
 
 ## Target CSI Drivers
 
