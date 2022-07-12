@@ -40,6 +40,7 @@ Specify the Prometheus URL to `pvc-autoresizer` argument as `--prometheus-url`.
 `pvc-autoresizer` can be deployed to a Kubernetes cluster via `helm`:
 
 ```sh
+helm repo add pvc-autoresizer https://topolvm.github.io/pvc-autoresizer/
 helm install --create-namespace --namespace pvc-autoresizer pvc-autoresizer pvc-autoresizer/pvc-autoresizer --set "controller.args.prometheusURL=<YOUR PROMETHEUS ENDPOINT>"
 ```
 
