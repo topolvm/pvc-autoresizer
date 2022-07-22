@@ -66,7 +66,6 @@ vet: ## Run go vet against code.
 
 test: manifests generate tools fmt vet ## Run tests.
 	$(shell go env GOPATH)/bin/staticcheck ./...
-	test -z "$$($(shell go env GOPATH)/bin/nilerr ./... 2>&1 | tee /dev/stderr)"
 	go install ./...
 	source <($(SETUP_ENVTEST) use -p env $(ENVTEST_K8S_VERSION)); \
 		go test -race -v -count 1 ./... --timeout=60s
@@ -101,18 +100,12 @@ push: ## Push docker image.
 ##@ Tools
 
 .PHONY: tools
-tools: staticcheck nilerr setup-envtest
+tools: staticcheck setup-envtest
 
 .PHONY: staticcheck
 staticcheck: ## Install staticcheck
 	if ! which staticcheck >/dev/null; then \
 		env GOFLAGS= go install honnef.co/go/tools/cmd/staticcheck@latest; \
-	fi
-
-.PHONY: nilerr
-nilerr: ## Install nilerr
-	if ! which nilerr >/dev/null; then \
-		env GOFLAGS= go install github.com/gostaticanalysis/nilerr/cmd/nilerr@latest; \
 	fi
 
 SETUP_ENVTEST := $(BINDIR)/setup-envtest
