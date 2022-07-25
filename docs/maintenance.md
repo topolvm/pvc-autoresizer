@@ -5,60 +5,70 @@ How to change the supported Kubernetes minor versions
 -------------------------------------------
 
 pvc-autoresizer depends on some Kubernetes repositories like `k8s.io/client-go` and should support 3 consecutive Kubernetes versions at a time.
+
 Issues and PRs related to the last upgrade task also help you understand how to upgrade the supported versions,
 so checking them together(e.g https://github.com/topolvm/pvc-autoresizer/pull/85) with this guide is recommended when you do this task.
 
-### Check release notes
-
-First of all, we should have a look at the release notes in the order below.
-
-1. TopoLVM
-    - Choose the [TopoLVM](https://github.com/topolvm/topolvm/releases) version that supported target Kubernetes version.
-2. Kubernetes
-    - Choose the next version and check the [release note](https://kubernetes.io/docs/setup/release/notes/). e.g. 1.17, 1.18, 1.19 -> 1.18, 1.19, 1.20
-    - Read the [release note](https://github.com/kubernetes-sigs/controller-runtime/releases), and check whether there are serious security fixes and whether the new minor version is compatible with older versions from the pvc-autoresizer's point of view. If there are breaking changes, we should decide how to manage these changes.
-    - Read the [kubebuilder go.mod](https://github.com/kubernetes-sigs/kubebuilder/blob/master/go.mod), and check the controller-tools version corresponding to controller-runtime.
-3. Depending tools
-    - They does not depend on other software, use latest versions.
-      - [helm](https://github.com/helm/helm/releases)
-      - [helm-docs](github.com/norwoodj/helm-docs/releases)
-      - [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/releases)
-4. Depending modules
-    - Read [kubernetes go.mod](https://github.com/kubernetes/kubernetes/blob/master/go.mod), and update the `prometheus/*` modules.
-5. Golang version
-    - Consider whether the golang should be updated.
+### Upgrade procedure
 
 We should write down in the github issue of this task what are the important changes and the required actions to manage incompatibilities if exist.
 The format is up to you.
 
 Basically, we should pay attention to breaking changes and security fixes first.
 
-### Update written versions
+#### TopoLVM
 
-We should also update the following files.
+Choose the [TopoLVM](https://github.com/topolvm/topolvm/releases) version that supports target Kubernetes version.
 
-- `README.md`: Documentation which indicates what versions are supported by pvc-autoresizer
-- `Makefile`: Makefile for running envtest
-- `e2e/Makefile`: Makefile for running e2e tests
-- `.github/workflows`: Configuration files of github actions
+To change the version, edit `e2e/Makefile`. If TopoLVM which supports the target Kubernetes version has not released yet, you can specify the commit hash instead of the tag.
 
-`git grep <the kubernetes version which support will be dropped>, `git grep image:`, and `git grep -i VERSION` might help to avoid overlooking necessary changes.
+#### Kubernetes
 
-### Update dependencies
+Choose the next version and check the [release note](https://kubernetes.io/docs/setup/release/notes/). e.g. 1.17, 1.18, 1.19 -> 1.18, 1.19, 1.20
 
-Next, we should update `go.mod` by the following commands.
+To change the version, edit the following files.
+
+- `Makefile`
+- `README.md`
+- `e2e/Makefile`
+
+We should also update go.mod by the following commands. Please note that Kubernetes v1 corresponds with v0 for the release tags. For example, v1.17.2 corresponds with the v0.17.2 tag.
 
 ```bash
-# If the new kubernetes version is v1.x.y", the `VERSION` will be v0.x.y.
 $ VERSION=<upgrading Kubernetes release version>
 $ go get k8s.io/api@v${VERSION} k8s.io/apimachinery@v${VERSION} k8s.io/client-go@v${VERSION}
 ```
 
-If we need to upgrade the `controller-runtime` version, do the following as well.
+Read the [`controller-runtime`'s release note](https://github.com/kubernetes-sigs/controller-runtime/releases), and update to the newest version that is compatible with all supported kubernetes versions. If there are breaking changes, we should decide how to manage these changes.
 
-```bash
+```
 $ VERSION=<upgrading controller-runtime version>
 $ go get sigs.k8s.io/controller-runtime@v${VERSION}
+```
+
+Read the kubebuilder's `go.mod`(https://github.com/kubernetes-sigs/kubebuilder/blob/\<upgrading Kubernetes release version\>/go.mod), and check the `controller-tools` version corresponding to `controller-runtime`. To change the version, edit `Makefile`. 
+
+#### Depending tools
+
+The following tools do not depend on other software, use latest versions.
+- [helm](https://github.com/helm/helm/releases)
+  - To change the version, edit the following files.
+    - `.github/workflows/helm.yaml`
+    - `Makefile`   
+- [helm-docs](github.com/norwoodj/helm-docs/releases)
+  - To change the version, edit the following files.
+  - `.github/workflows/helm.yaml`
+  - `Makefile`
+- [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/releases)
+  - To change the version, edit `Makefile`.
+
+#### Depending modules
+
+Read `kubernetes' go.mod`(https://github.com/kubernetes/kubernetes/blob/\<upgrading Kubernetes release version\>/go.mod), and update the `prometheus/*` modules. Here is the example to update `prometheus/client_golang`.
+
+```
+$ VERSION=v1.12.1
+$ go get github.com/prometheus/client_golang@$VERSION
 ```
 
 Then, please tidy up the dependencies.
@@ -67,12 +77,10 @@ Then, please tidy up the dependencies.
 $ go mod tidy
 ```
 
-These are minimal changes for the Kubernetes upgrade, but if there are some breaking changes found in the release notes, you have to handle them as well in this step.
+#### Golang version
 
-### Release the changes
+Update golang if necessary.
 
-We should update [RELEASE.md](../RELEASE.md) to add the entry for the new pvc-autoresizer's version.
+#### Final check
 
-### Prepare for the next upgrade
-
-We should create an issue for the next upgrade. Besides, Please update this document if we find something to be updated.
+`git grep <the kubernetes version which support will be dropped>`, `git grep image:`, and `git grep -i VERSION` might help to avoid overlooking necessary changes.
