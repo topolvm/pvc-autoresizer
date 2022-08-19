@@ -57,15 +57,21 @@ Bump version
 
 3. Edit `CHANGELOG.md` for the new version ([example][]).
 4. Edit `config/default/kustomization.yaml` and update `newTag` value for the new version.
-5. Commit the change and create a pull request:
+
+    ```console
+    $ sed -i -s "s/newTag:.*/newTag: ${VERSION}/" config/default/kustomization.yaml
+    ```
+
+5. Change `TOPOLVM_VERSION` in `e2e/Makefile` to the latest topolvm chart release tag. (e.g. topolvm-chart-vX.Y.Z)
+6. Commit the change and create a pull request:
 
     ```console
     $ git commit -a -m "Bump version to $VERSION"
     $ git push -u origin bump-$VERSION
     ```
 
-6. Merge the new pull request.
-7. Add a new tag and push it as follows:
+7. Merge the new pull request.
+8. Add a new tag and push it as follows:
 
     ```console
     $ git checkout main
