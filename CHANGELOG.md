@@ -7,6 +7,22 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.5.0] - 2022-08-19
+
+### Added
+
+- Add ESASHIKA Kaoru as a reviewer (#139)
+
+### Changed
+
+- e2e: bump TopoLVM version again (#133)
+- Add helm repo to README (#137)
+- support Kubernetes v1.24 (#136)
+
+### Contributors
+
+- @isaaguilar
+
 ## [0.4.0] - 2022-07-04
 
 ### Added
@@ -166,7 +182,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.2.3...v0.3.0
