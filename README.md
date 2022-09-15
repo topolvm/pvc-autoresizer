@@ -8,6 +8,8 @@
 `pvc-autoresizer` resizes PersistentVolumeClaims (PVCs) when the free amount of storage is below the threshold.
 It queries the volume usage metrics from Prometheus that collects metrics from `kubelet`.
 
+If you have any questions, please use [discussions](https://github.com/topolvm/topolvm/discussions).
+
 **Status**: beta
 
 ## Supported environments
