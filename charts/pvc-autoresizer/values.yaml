@@ -43,3 +43,34 @@ controller:
 
   # controller.nodeSelector -- Map of key-value pairs for scheduling pods on specific nodes.
   nodeSelector: {}
+
+# -- deploy a PodMonitor. This is not tested in CI so make sure to test it yourself.
+podMonitor:
+  # podMonitor.enabled -- If true, creates a Prometheus Operator PodMonitor.
+  enabled: false
+  # podMonitor.scheme -- Scheme to use for scraping.
+  scheme: http
+  # podMonitor.interval -- Interval that Prometheus scrapes metrics.
+  interval: ""
+  # podMonitor.scrapeTimeout -- The timeout after which the scrape is ended
+  scrapeTimeout: ""
+  # podMonitor.namespace -- Namespace which Prometheus is running in.
+  namespace: ""
+  # podMonitor.relabelings -- RelabelConfigs to apply to samples before scraping.
+  relabelings: []
+  # - sourceLabels: [__meta_kubernetes_service_label_cluster]
+  #   targetLabel: cluster
+  #   regex: (.*)
+  #   replacement: ${1}
+  #   action: replace
+
+  # podMonitor.metricRelabelings -- MetricRelabelConfigs to apply to samples before ingestion.
+  metricRelabelings: []
+  # - sourceLabels: [__meta_kubernetes_service_label_cluster]
+  #   targetLabel: cluster
+  #   regex: (.*)
+  #   replacement: ${1}
+  #   action: replace
+
+  # podMonitor.additionalLabels -- Additional labels that can be used so PodMonitor will be discovered by Prometheus.
+  additionalLabels: {}
