@@ -52,9 +52,20 @@ help: ## Display this help.
 manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=controller webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
-.PHONY: generate
-generate: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+.PHONY: generate-api
+generate-api: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+.PHONY: generate-helm-docs
+generate-helm-docs:
+	./bin/helm-docs -c charts/pvc-autoresizer/
+
+.PHONY: generate
+generate: manifests generate-api generate-helm-docs
+
+.PHONY: check-uncommitted
+check-uncommitted: generate ## Check if latest generated artifacts are committed.
+	git diff --exit-code --name-only
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -73,7 +84,7 @@ test: manifests generate tools fmt vet ## Run tests.
 ##@ Build
 
 .PHONY: build
-build: generate ## Build manager binary.
+build: generate-api ## Build manager binary.
 	go build -o $(BINDIR)/manager main.go
 
 .PHONY: run

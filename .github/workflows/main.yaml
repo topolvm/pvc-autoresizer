@@ -14,6 +14,7 @@ jobs:
         with:
           go-version: "1.18"
       - run: make setup
+      - run: make check-uncommitted
       - run: make
       - run: make test
       - run: env NO_ANNOTATION_CHECK=true make test
