@@ -1,0 +1,42 @@
+{{- if .Values.podMonitor.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ template "pvc-autoresizer.fullname" . }}
+  {{- if .Values.podMonitor.namespace }}
+  namespace: {{ .Values.podMonitor.namespace }}
+  {{- end }}
+  labels:
+    {{- include "pvc-autoresizer.labels" . | nindent 4 }}
+    {{- with .Values.podMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  jobLabel: {{ .Release.Name }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pvc-autoresizer
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      {{- if .Values.podMonitor.scheme }}
+      scheme: {{ .Values.podMonitor.scheme }}
+      {{- end }}
+      {{- with .Values.podMonitor.interval }}
+      interval: {{ . }}
+      {{- end }}
+      {{- with .Values.podMonitor.scrapeTimeout  }}
+      scrapeTimeout: {{ . }}
+      {{- end }}
+      {{- with .Values.podMonitor.relabelings }}
+      relabelings:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.podMonitor.metricRelabelings }}
+      metricRelabelings:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end -}}
