@@ -32,6 +32,8 @@ Must update Kubernetes with each new version of Kubernetes.
   - https://github.com/kubernetes-sigs/controller-runtime/releases
 - [ ] sigs.k8s.io/controller-tools
   - https://github.com/kubernetes-sigs/controller-tools/releases
+- [ ] topolvm
+  - https://github.com/topolvm/topolvm/blob/main/CHANGELOG.md
 
 ## Checklist
 
