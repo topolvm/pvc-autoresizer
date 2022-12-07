@@ -3,6 +3,19 @@ entries:
   pvc-autoresizer:
   - apiVersion: v2
     appVersion: 0.5.0
+    created: "2022-12-07T04:09:39.15493825Z"
+    description: Auto-resize PersistentVolumeClaim objects based on Prometheus metrics.
+    digest: 90294a1a921beef88009dca31e9655ae25e0bf17cd16fbca00c05ed09fd2e76a
+    home: https://github.com/topolvm/pvc-autoresizer
+    name: pvc-autoresizer
+    sources:
+    - https://github.com/topolvm/pvc-autoresizer
+    type: application
+    urls:
+    - https://github.com/topolvm/pvc-autoresizer/releases/download/pvc-autoresizer-chart-v0.6.0/pvc-autoresizer-0.6.0.tgz
+    version: 0.6.0
+  - apiVersion: v2
+    appVersion: 0.5.0
     created: "2022-08-19T06:24:39.673819651Z"
     description: Auto-resize PersistentVolumeClaim objects based on Prometheus metrics.
     digest: b0ef70e6dd7901c0e25173a04d4ea18e76d1470ddaab00c342e67ea8c9d80301
@@ -131,4 +144,4 @@ entries:
     urls:
     - https://github.com/topolvm/pvc-autoresizer/releases/download/pvc-autoresizer-chart-v0.2.0/pvc-autoresizer-0.2.0.tgz
     version: 0.2.0
-generated: "2022-08-19T06:24:39.673892852Z"
+generated: "2022-12-07T04:09:39.155008452Z"
