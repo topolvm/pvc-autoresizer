@@ -43,7 +43,7 @@ metadata:
   name: topolvm-provisioner
   annotations:
     resize.topolvm.io/enabled: "true" 
-provisioner: topolvm.cybozu.com
+provisioner: topolvm.io
 parameters:
   "csi.storage.k8s.io/fstype": "xfs"
 volumeBindingMode: WaitForFirstConsumer

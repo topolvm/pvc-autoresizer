@@ -61,7 +61,7 @@ metadata:
   name: topolvm-provisioner
   annotations:
     resize.topolvm.io/enabled: "true"
-provisioner: topolvm.cybozu.com
+provisioner: topolvm.io
 allowVolumeExpansion: true
 ```
 
