@@ -29,8 +29,8 @@ KIND := $(TMPDIR)/topolvm/bin/kind
 setup:
 	$(MAKE) -C ../ setup
 	mkdir -p $(BINDIR)
-	curl -o $(BINDIR)/kubectl -sSfL https://storage.googleapis.com/kubernetes-release/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
-	chmod a+x $(BINDIR)/kubectl
+	curl -o $(KUBECTL) -sSfL https://storage.googleapis.com/kubernetes-release/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
+	chmod a+x $(KUBECTL)
 	GOBIN=$(BINDIR) go install github.com/onsi/ginkgo/v2/ginkgo@v$(GINKGO_VERSION)
 
 .PHONY: init-cluster
@@ -57,6 +57,11 @@ launch-kind: $(TMPDIR)/topolvm
 		KUBERNETES_VERSION=$(KUBERNETES_VERSION) \
 		KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) \
 		TMPDIR=$(TMPDIR)
+	$(KUBECTL) delete pod my-pod-thin
+	$(KUBECTL) delete pvc topolvm-pvc-thin
+	$(KUBECTL) delete sc topolvm-provisioner-thin
+	sudo lvremove -f myvg1/thinpool
+
 
 .PHONY: shutdown-kind
 shutdown-kind:
