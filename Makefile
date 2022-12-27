@@ -1,9 +1,9 @@
 # Makefile for pvc-autoresizer
 
-K8S_VERSION = 1.24.2
+K8S_VERSION = 1.25.3
 ENVTEST_K8S_VERSION = $(shell echo $(K8S_VERSION) | cut -d "." -f 1-2)
-CTRLTOOLS_VERSION = 0.9.0
-HELM_VERSION = 3.9.0
+CONTROLLER_TOOLS_VERSION = 0.10.0
+HELM_VERSION = 3.10.3
 HELM_DOCS_VERSION = 1.11.0
 
 ## DON'T EDIT BELOW THIS LINE
@@ -129,7 +129,7 @@ $(SETUP_ENVTEST):
 .PHONY: setup
 setup: # Setup tools
 	mkdir -p bin
-	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CTRLTOOLS_VERSION)
+	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CONTROLLER_TOOLS_VERSION)
 	curl -o $(BINDIR)/kubectl -sSfL https://storage.googleapis.com/kubernetes-release/release/v$(K8S_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(BINDIR)/kubectl
 	GOBIN=$(BINDIR) go install github.com/norwoodj/helm-docs/cmd/helm-docs@v$(HELM_DOCS_VERSION)

@@ -2,15 +2,15 @@
 TEST_KUBERNETES_TARGET ?= current
 
 ifeq ($(TEST_KUBERNETES_TARGET),current)
-KUBERNETES_VERSION := 1.24.2
+KUBERNETES_VERSION := 1.25.3
 else ifeq ($(TEST_KUBERNETES_TARGET),prev)
-KUBERNETES_VERSION := 1.23.6
+KUBERNETES_VERSION := 1.24.7
 else ifeq ($(TEST_KUBERNETES_TARGET),prev2)
-KUBERNETES_VERSION := 1.22.9
+KUBERNETES_VERSION := 1.23.13
 endif
 export KUBERNETES_VERSION
 
-TOPOLVM_VERSION := topolvm-chart-v9.0.1
+TOPOLVM_VERSION := 31acde774d47c920ef3969b5569935761ba82834
 KUBE_PROMETHEUS_VERSION := 0.11.0
 KIND_NODE_IMAGE=kindest/node:v$(KUBERNETES_VERSION)
 KIND_CLUSTER_NAME := autoresizer-e2e
@@ -29,8 +29,8 @@ KIND := $(TMPDIR)/topolvm/bin/kind
 setup:
 	$(MAKE) -C ../ setup
 	mkdir -p $(BINDIR)
-	curl -o $(BINDIR)/kubectl -sSfL https://storage.googleapis.com/kubernetes-release/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
-	chmod a+x $(BINDIR)/kubectl
+	curl -o $(KUBECTL) -sSfL https://storage.googleapis.com/kubernetes-release/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
+	chmod a+x $(KUBECTL)
 	GOBIN=$(BINDIR) go install github.com/onsi/ginkgo/v2/ginkgo@v$(GINKGO_VERSION)
 
 .PHONY: init-cluster
@@ -57,6 +57,11 @@ launch-kind: $(TMPDIR)/topolvm
 		KUBERNETES_VERSION=$(KUBERNETES_VERSION) \
 		KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) \
 		TMPDIR=$(TMPDIR)
+	$(KUBECTL) delete pod my-pod-thin
+	$(KUBECTL) delete pvc topolvm-pvc-thin
+	$(KUBECTL) delete sc topolvm-provisioner-thin
+	sudo lvremove -f myvg1/thinpool
+
 
 .PHONY: shutdown-kind
 shutdown-kind:

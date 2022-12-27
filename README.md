@@ -14,7 +14,7 @@ If you have any questions, please use [discussions](https://github.com/topolvm/t
 
 ## Supported environments
 
-- Kubernetes: 1.24, 1.23, 1.22
+- Kubernetes: 1.25, 1.24, 1.23
 
 ## Target CSI Drivers
 
@@ -61,7 +61,7 @@ metadata:
   name: topolvm-provisioner
   annotations:
     resize.topolvm.io/enabled: "true"
-provisioner: topolvm.cybozu.com
+provisioner: topolvm.io
 allowVolumeExpansion: true
 ```
 
