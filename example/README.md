@@ -13,8 +13,9 @@ Deploy [TopoLVM] on [kind] as follows:
 Deploy [Prometheus Operator] via [helm] as follows:
 
 ```
-kubectl create ns prometheus
-helm install prometheus stable/prometheus-operator --namespace=prometheus
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install prometheus prometheus-community/kube-prometheus-stack --create-namespace --namespace=prometheus
 ```
 
 ## Deploy pvc-autoresizer
@@ -29,7 +30,8 @@ kind load docker-image --name topolvm-example ghcr.io/topolvm/pvc-autoresizer:de
 Deploy `pvc-autoresizer`:
 
 ```
-make deploy
+helm repo add pvc-autoresizer https://topolvm.github.io/pvc-autoresizer/
+helm install --create-namespace --namespace pvc-autoresizer pvc-autoresizer pvc-autoresizer/pvc-autoresizer --set "controller.args.prometheusURL=http://prometheus-kube-prometheus-prometheus.prometheus.svc:9090"
 ```
 
 ## Enable auto-resizing
