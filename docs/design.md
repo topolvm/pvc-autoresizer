@@ -21,7 +21,50 @@ a lot of such persistent volumes.
 
 ## Architecture
 
-![component diagram](http://www.plantuml.com/plantuml/svg/TP8_QyCm4CLtVOh3dHtedycK4iZKfGG2MKg7YtrnH6NBw4v9qvBlNicHOtNeOk6xz-v-p_AI1PtupgZUDWHluV6Z0Du__OuCoGVS6TqUP6SyXNA3WZjaWerOXosbxfcCiITrKUecm44pkICvG8OYJYjlfI8R2d6RergmRmt1SAn7mveSQnRgPMkDxsXbK7V1bpRb5huw4b4GCi_2Yvg5w8E4M7ydgB2hp6eJLUk8-iosThOZEP3d33lhrwmRfwUagyqhN5zd29MDWD8FvGkapmjGGHkEq7MwPXNZFvUDFVLbZbl1_MBK2RfuhBShLba_3Otk2fuMG5y3zWrmkgGQ1wordFzQ3Eqbc7As2eh7HGu4TZzEaNnCaJ33pYny1IUK-X3Pr5mD2wPVfPgmZkEDAludwiELO1CY1aaPKwabzOtlp2y0)
+```mermaid
+%%{init:{'theme': 'default'}}%%
+
+flowchart LR
+
+    style Architecture fill:#FFFFFF
+    subgraph Architecture
+
+      classDef storageComponent fill:#FFFF00
+      classDef component fill:#ADD8E6
+
+      style PVCA fill:#90EE90
+      style storage fill:#FFFFE0
+      style Node fill-opacity:0
+
+      CD[CSI Driver]:::storageComponent
+      PVC[PersistentVolumeClaim]:::storageComponent
+      SC[StorageClass]:::storageComponent
+      PVCA[pvc-autoresizer]
+
+      kubelet:::component
+      Prometheus:::component
+      kube-apiserver:::component
+
+      subgraph Node
+        kubelet
+        storage
+      end
+
+      subgraph kube-apiserver
+        SC --- PVC
+      end
+
+      CD -- watch PVC --> PVC
+      CD -- expand volume --> storage[(Storage)]
+      Prometheus -- get metrics --> kubelet
+
+      PVCA -- 1. get target PVCs --> PVC
+      PVCA -- 2. get SCs --> SC
+      PVCA -- 3. get metrics of storage capacity --> Prometheus
+      PVCA -- 4. expand storage capacity --> PVC
+
+    end
+```
 
 ### How pvc-autoresizer works
 
