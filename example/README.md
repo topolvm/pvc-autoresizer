@@ -31,7 +31,8 @@ Deploy `pvc-autoresizer`:
 
 ```
 helm repo add pvc-autoresizer https://topolvm.github.io/pvc-autoresizer/
-helm install --create-namespace --namespace pvc-autoresizer pvc-autoresizer pvc-autoresizer/pvc-autoresizer --set "controller.args.prometheusURL=http://prometheus-kube-prometheus-prometheus.prometheus.svc:9090"
+helm repo update
+helm install pvc-autoresizer pvc-autoresizer/pvc-autoresizer --create-namespace --namespace=pvc-autoresizer --set "controller.args.prometheusURL=http://prometheus-kube-prometheus-prometheus.prometheus.svc:9090"
 ```
 
 ## Enable auto-resizing
