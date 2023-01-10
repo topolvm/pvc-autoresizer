@@ -7,6 +7,11 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.6.1] - 2023-01-12
+
+### Changed
+- appVersion was changed to 0.6.0.
+
 ## [0.6.0] - 2022-12-07
 
 ### Added
@@ -78,7 +83,8 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 ## [0.2.0] - 2021-08-10
 - First release.
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.0...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.1...HEAD
+[0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.0...pvc-autoresizer-chart-v0.6.1
 [0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.5.0...pvc-autoresizer-chart-v0.6.0
 [0.5.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.4.0...pvc-autoresizer-chart-v0.5.0
 [0.4.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.3.6...pvc-autoresizer-chart-v0.4.0
