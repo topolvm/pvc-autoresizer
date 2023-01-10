@@ -7,6 +7,28 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.6.0] - 2023-01-10
+
+### Changed
+
+- Use discussions instead of slack. ([#145](https://github.com/topolvm/pvc-autoresizer/pull/145))
+- Bump actions/stale from 5 to 6 ([#147](https://github.com/topolvm/pvc-autoresizer/pull/147))
+- create generate-.* make target ([#150](https://github.com/topolvm/pvc-autoresizer/pull/150))
+- github/workflows: Use output parameter instead of set-output command ([#151](https://github.com/topolvm/pvc-autoresizer/pull/151))
+- add a command to list the relevant PRs in the release procedure. ([#153](https://github.com/topolvm/pvc-autoresizer/pull/153))
+- add issue template to update supporting kubernetes ([#154](https://github.com/topolvm/pvc-autoresizer/pull/154))
+- update update_supporting_kubernetes.md ([#156](https://github.com/topolvm/pvc-autoresizer/pull/156))
+- support Kubernetes v1.25 ([#159](https://github.com/topolvm/pvc-autoresizer/pull/159))
+- Bump actions/stale from 6 to 7 ([#162](https://github.com/topolvm/pvc-autoresizer/pull/162))
+
+### Contributors
+
+- @toshipp
+- @llamerada-jp
+- @pluser
+- @peng225
+- @cupnes
+
 ## [0.5.0] - 2022-08-19
 
 ### Added
@@ -182,7 +204,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.3.0...v0.3.1
