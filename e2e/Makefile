@@ -40,6 +40,9 @@ init-cluster: launch-kind autoresizer.img kube-prometheus
 	$(KUBECTL) apply -f kube-prometheus/manifests/setup --force-conflicts=true --server-side
 	until $(KUBECTL) get servicemonitors --all-namespaces ; do date; sleep 1; echo ""; done
 	$(KUBECTL) apply -f kube-prometheus/manifests/
+	# prometheus-adapter is required to get "metrics.k8s.io/v1beta1"
+	$(KUBECTL) wait deployment -n monitoring prometheus-adapter --for=condition=Available=True --timeout=120s
+	sleep 10
 	# setup autoresizer
 	$(KIND) load image-archive --name=$(KIND_CLUSTER_NAME) autoresizer.img
 	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../charts/pvc-autoresizer/ -f manifests/values/values.yaml
