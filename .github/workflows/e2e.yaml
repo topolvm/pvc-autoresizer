@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: "1.18"
+          go-version-file: "go.mod"
       - run: make -C e2e setup
       - run: make -C e2e init-cluster
       - run: make -C e2e test
