@@ -14,6 +14,10 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: pvc-autoresizer
+      {{ if .Values.controller.podAnnotations -}}
+      annotations:
+        {{- toYaml .Values.controller.podAnnotations | nindent 8 }}
+      {{ end -}}
     spec:
       serviceAccountName: {{ template "pvc-autoresizer.fullname" . }}-controller
       {{- with .Values.controller.terminationGracePeriodSeconds }}
