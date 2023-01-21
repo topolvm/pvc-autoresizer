@@ -18,7 +18,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.6.2
+version: 0.6.1
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -31,5 +31,4 @@ annotations:
     - name: pvc-autoresizer
       image: ghcr.io/topolvm/pvc-autoresizer:0.6.0
   artifacthub.io/license: Apache-2.0
-  artifacthub.io/operator: "true"
   artifacthub.io/operatorCapabilities: deep insights

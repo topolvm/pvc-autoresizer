@@ -130,6 +130,7 @@ You must change the version of Chart.yaml when making changes to the Helm Chart.
     ```console
     $ sed -r -i "s/version: [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/version: ${CHARTVERSION}/g" charts/pvc-autoresizer/Chart.yaml
     $ sed -r -i "s/appVersion: [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/appVersion: ${APPVERSION}/g" charts/pvc-autoresizer/Chart.yaml
+    $ sed -r -i "s/ghcr.io\/topolvm\/pvc-autoresizer:[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/ghcr.io\/topolvm\/pvc-autoresizer:${APPVERSION}/g" charts/pvc-autoresizer/Chart.yaml
     $ sed -r -i "s/tag:  # [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/tag:  # ${APPVERSION}/g" charts/pvc-autoresizer/values.yaml
     ```
 
