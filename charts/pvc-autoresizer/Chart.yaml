@@ -31,4 +31,3 @@ annotations:
     - name: pvc-autoresizer
       image: ghcr.io/topolvm/pvc-autoresizer:0.6.0
   artifacthub.io/license: Apache-2.0
-  artifacthub.io/operatorCapabilities: deep insights
