@@ -114,6 +114,7 @@ push: ## Push docker image.
 .PHONY: ct-lint
 ct-lint: # Lint and validate a chart.
 	docker run \
+		--rm \
 		--workdir=/data \
 		--volume $(shell pwd):/data \
 		quay.io/helmpack/chart-testing:v$(CHART_TESTING_VERSION) \
@@ -122,6 +123,7 @@ ct-lint: # Lint and validate a chart.
 .PHONY: ct-install
 ct-install: #  Install and test a chart.
 	docker run \
+		--rm \
 		--network host \
 		--workdir=/data \
 		--volume ~/.kube/config:/root/.kube/config:ro \
