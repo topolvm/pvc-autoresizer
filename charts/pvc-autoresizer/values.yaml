@@ -35,6 +35,9 @@ controller:
       cpu: 100m
       memory: 20Mi
 
+  # controller.podAnnotations -- Annotations to be added to controller pods.
+  podAnnotations: {}
+
   # controller.terminationGracePeriodSeconds -- Specify terminationGracePeriodSeconds.
   terminationGracePeriodSeconds:  # 10
 
