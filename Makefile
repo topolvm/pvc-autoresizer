@@ -115,6 +115,7 @@ push: ## Push docker image.
 ct-lint: # Lint and validate a chart.
 	docker run \
 		--rm \
+		--user $(shell id -u $(USER)) \
 		--workdir=/data \
 		--volume $(shell pwd):/data \
 		quay.io/helmpack/chart-testing:v$(CHART_TESTING_VERSION) \
@@ -124,6 +125,7 @@ ct-lint: # Lint and validate a chart.
 ct-install: #  Install and test a chart.
 	docker run \
 		--rm \
+		--user $(shell id -u $(USER)) \
 		--network host \
 		--workdir=/data \
 		--volume ~/.kube/config:/root/.kube/config:ro \
