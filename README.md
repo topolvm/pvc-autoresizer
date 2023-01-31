@@ -3,27 +3,27 @@
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/topolvm/pvc-autoresizer?tab=overview)](https://pkg.go.dev/github.com/topolvm/pvc-autoresizer?tab=overview)
 [![Go Report Card](https://goreportcard.com/badge/github.com/topolvm/pvc-autoresizer)](https://goreportcard.com/badge/github.com/topolvm/pvc-autoresizer)
 
-# pvc-autoresizer
+# Welcome to the pvc-autoresizer Project!
 
 `pvc-autoresizer` resizes PersistentVolumeClaims (PVCs) when the free amount of storage is below the threshold.
+
 It queries the volume usage metrics from Prometheus that collects metrics from `kubelet`.
 
-If you have any questions, please use [discussions](https://github.com/topolvm/topolvm/discussions).
+- **Project Status**: Testing for production
 
-**Status**: beta
-
-## Supported environments
+Our supported platforms are:
 
 - Kubernetes: 1.25, 1.24, 1.23
+- CSI drivers that implements the following features
+  - [Volume Expansion](https://kubernetes-csi.github.io/docs/volume-expansion.html)
+  - [NodeGetVolumeStats](https://github.com/container-storage-interface/spec/blob/master/spec.md#nodegetvolumestats)
 
-## Target CSI Drivers
+Container images are available on [ghcr.io](https://github.com/topolvm/pvc-autoresizer/pkgs/container/pvc-autoresizer).  
+**Please note that [the images on quay.io](https://quay.io/repository/topolvm/pvc-autoresizer) are currently deprecated and will no longer be available in the future.**
 
-`pvc-autoresizer` supports CSI Drivers that meet the following requirements:
+## Getting Started
 
-- implement [Volume Expansion](https://kubernetes-csi.github.io/docs/volume-expansion.html).
-- implement [NodeGetVolumeStats](https://github.com/container-storage-interface/spec/blob/master/spec.md#nodegetvolumestats)
-
-## Prepare
+### Prepare
 
 `pvc-autoresizer` behaves based on the metrics that prometheus collects from kubelet.
 
@@ -35,7 +35,7 @@ In addition, configure scraping as follows:
 
 - [Monitoring with Prometheus | TopoLVM](https://github.com/topolvm/topolvm/blob/master/docs/prometheus.md)
 
-## Installation
+### Installation
 
 Specify the Prometheus URL to `pvc-autoresizer` argument as `--prometheus-url`.
 
@@ -48,7 +48,7 @@ helm install --create-namespace --namespace pvc-autoresizer pvc-autoresizer pvc-
 
 See the Chart [README.md](./charts/pvc-autoresizer/README.md) for detailed documentation on the Helm Chart.
 
-## How to use
+### How to use
 
 To allow auto volume expansion, the StorageClass of PVC need to allow volume expansion and
 have `resize.topolvm.io/enabled: "true"` annotation.  The annotation may be omitted if
@@ -112,35 +112,47 @@ spec:
   <snip>
 ```
 
-## Container images
+### Prometheus metrics
 
-Container images are available on [ghcr.io](https://github.com/topolvm/pvc-autoresizer/pkgs/container/pvc-autoresizer)  
-**Please note that [the images on quay.io](https://quay.io/repository/topolvm/pvc-autoresizer) are currently deprecated and will no longer be available in the future.**
-
-[releases]: https://github.com/topolvm/pvc-autoresizer/releases
-
-## Prometheus metrics
-
-###  `pvcautoresizer_kubernetes_client_fail_total`
+####  `pvcautoresizer_kubernetes_client_fail_total`
 
 `pvcautoresizer_kubernetes_client_fail_total` is a counter that indicates how many API requests to kube-api server are failed.
 
-### `pvcautoresizer_metrics_client_fail_total`
+#### `pvcautoresizer_metrics_client_fail_total`
 
 `pvcautoresizer_metrics_client_fail_total` is a counter that indicates how many API requests to metrics server(e.g. prometheus) are failed.
 
-### `pvcautoresizer_loop_seconds_total`
+#### `pvcautoresizer_loop_seconds_total`
 
 `pvcautoresizer_loop_seconds_total` is a counter that indicates the sum of seconds spent on volume expansion processing loops.
 
-###  `pvcautoresizer_success_resize_total`
+####  `pvcautoresizer_success_resize_total`
 
 `pvcautoresizer_success_resize_total` is a counter that indicates how many volume expansion processing resizes succeed.
 
-###  `pvcautoresizer_failed_resize_total`
+####  `pvcautoresizer_failed_resize_total`
 
 `pvcautoresizer_failed_resize_total` is a counter that indicates how many volume expansion processing resizes fail.
 
-###  `pvcautoresizer_limit_reached_total`
+####  `pvcautoresizer_limit_reached_total`
 
 `pvcautoresizer_limit_reached_total` is a counter that indicates how many storage limit was reached.
+
+## Contributing
+
+pvc-autoresizer project welcomes contributions from any member of our community. To get
+started contributing, please see our [Contributor Guide](CONTRIBUTING.md).
+
+## Communications
+
+If you have any questions or ideas, please use [discussions](https://github.com/topolvm/topolvm/discussions).
+
+## Resources
+
+[docs](docs/) directory contains designs, and so on.
+
+## License
+
+This project is licensed under [Apache License 2.0](LICENSE).
+
+[releases]: https://github.com/topolvm/pvc-autoresizer/releases
