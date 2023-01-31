@@ -122,7 +122,7 @@ ct-lint: ## Lint and validate a chart.
 		ct lint --config ct.yaml
 
 .PHONY: ct-install
-ct-install: #  Install and test a chart.
+ct-install: ##  Install and test a chart.
 	docker run \
 		--rm \
 		--user $(shell id -u $(USER)) \
