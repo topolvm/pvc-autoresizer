@@ -9,6 +9,7 @@ COPY go.sum go.sum
 COPY main.go main.go
 COPY metrics/ metrics/
 COPY runners/ runners/
+COPY hooks/ hooks/
 COPY cmd/ cmd/
 
 # Build

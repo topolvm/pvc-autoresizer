@@ -1,0 +1,54 @@
+{{- if not .Values.webhook.caBundle }}
+{{- if not .Values.webhook.existingCertManagerIssuer }}
+# Generate a CA Certificate used to sign certificates for the webhook
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ template "pvc-autoresizer.fullname" . }}-webhook-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "pvc-autoresizer.labels" . | nindent 4 }}
+spec:
+  secretName: {{ template "pvc-autoresizer.fullname" . }}-webhook-ca
+  duration: 87600h # 10y
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: {{ template "pvc-autoresizer.fullname" . }}-webhook-selfsign
+  commonName: ca.webhook.pvc-autoresizer
+  isCA: true
+  usages:
+    - digital signature
+    - key encipherment
+    - cert sign
+{{- end }}
+---
+# Finally, generate a serving certificate for the webhook to use
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ template "pvc-autoresizer.fullname" . }}-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "pvc-autoresizer.labels" . | nindent 4 }}
+spec:
+  secretName: {{ template "pvc-autoresizer.fullname" . }}-controller
+  duration: 8760h # 1y
+  issuerRef:
+    {{- with .Values.webhook.existingCertManagerIssuer }}
+    {{- toYaml . | nindent 4 -}}
+    {{- else }}
+    group: cert-manager.io
+    kind: Issuer
+    name: {{ template "pvc-autoresizer.fullname" . }}-webhook-ca
+    {{- end }}
+  dnsNames:
+    - {{ template "pvc-autoresizer.fullname" . }}-controller
+    - {{ template "pvc-autoresizer.fullname" . }}-controller.{{ .Release.Namespace }}
+    - {{ template "pvc-autoresizer.fullname" . }}-controller.{{ .Release.Namespace }}.svc
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+    - client auth
+{{- end }}

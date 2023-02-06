@@ -1,0 +1,36 @@
+{{- if .Values.webhook.pvcMutatingWebhook.enabled }}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    {{- if not .Values.webhook.caBundle }}
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ template "pvc-autoresizer.fullname" . }}-controller
+    {{- end }}
+  labels:
+    {{- include "pvc-autoresizer.labels" . | nindent 4 }}
+  name: '{{ template "pvc-autoresizer.fullname" . }}-mutating-webhook-configuration'
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    {{- with .Values.webhook.caBundle }}
+    caBundle: {{ . }}
+    {{- end }}
+    service:
+      name: '{{ template "pvc-autoresizer.fullname" . }}-controller'
+      namespace: '{{ .Release.Namespace }}'
+      path: /pvc/mutate
+  failurePolicy: Fail
+  name: mpersistentvolumeclaim.kb.io
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    resources:
+    - persistentvolumeclaims
+  sideEffects: None
+{{- end }}

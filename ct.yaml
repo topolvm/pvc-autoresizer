@@ -2,3 +2,5 @@
 target-branch: main
 validate-maintainers: false
 check-version-increment: false
+chart-repos:
+  - jetstack=https://charts.jetstack.io

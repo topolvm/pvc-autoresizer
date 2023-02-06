@@ -70,7 +70,7 @@ func (w *pvcAutoresizer) Start(ctx context.Context) error {
 }
 
 func isTargetPVC(pvc *corev1.PersistentVolumeClaim) (bool, error) {
-	quantity, err := pvcStorageLimit(pvc)
+	quantity, err := PvcStorageLimit(pvc)
 	if err != nil {
 		return false, fmt.Errorf("invalid storage limit: %w", err)
 	}
@@ -201,7 +201,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 			return nil
 		}
 	}
-	limitRes, err := pvcStorageLimit(pvc)
+	limitRes, err := PvcStorageLimit(pvc)
 	if err != nil {
 		log.Error(err, "fetching storage limit failed")
 		return err
@@ -323,7 +323,7 @@ func calcSize(valStr string, capacity int64) (int64, error) {
 	return res, nil
 }
 
-func pvcStorageLimit(pvc *corev1.PersistentVolumeClaim) (resource.Quantity, error) {
+func PvcStorageLimit(pvc *corev1.PersistentVolumeClaim) (resource.Quantity, error) {
 	// storage limit on the annotation has precedence
 	if annotation, ok := pvc.Annotations[StorageLimitAnnotation]; ok && annotation != "" {
 		return resource.ParseQuantity(annotation)

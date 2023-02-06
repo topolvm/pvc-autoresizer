@@ -31,6 +31,7 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| cert-manager.enabled | bool | `false` | Install cert-manager together. # ref: https://cert-manager.io/docs/installation/helm/#installing-with-helm |
 | controller.args.additionalArgs | list | `[]` | Specify additional args. |
 | controller.args.interval | string | `"10s"` | Specify interval to monitor pvc capacity. Used as "--interval" option |
 | controller.args.namespaces | list | `[]` | Specify namespaces to control the pvcs of. Empty for all namespaces. Used as "--namespaces" option |
@@ -53,6 +54,9 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | podMonitor.relabelings | list | `[]` | RelabelConfigs to apply to samples before scraping. |
 | podMonitor.scheme | string | `"http"` | Scheme to use for scraping. |
 | podMonitor.scrapeTimeout | string | `""` | The timeout after which the scrape is ended |
+| webhook.caBundle | string | `nil` | Specify the certificate to be used for AdmissionWebhook. |
+| webhook.existingCertManagerIssuer | object | `{}` | Specify the cert-manager issuer to be used for AdmissionWebhook. |
+| webhook.pvcMutatingWebhook.enabled | bool | `true` | Enable PVC MutatingWebhook. |
 
 ## Generate Manifests
 

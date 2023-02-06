@@ -18,6 +18,9 @@ const StorageLimitAnnotation = "resize.topolvm.io/storage_limit"
 // PreviousCapacityBytesAnnotation is the key of previous volume capacity.
 const PreviousCapacityBytesAnnotation = "resize.topolvm.io/pre_capacity_bytes"
 
+// InitialResizeGroupByAnnotation is the key of the initial-resize group by.
+const InitialResizeGroupByAnnotation = "resize.topolvm.io/initial-resize-group-by"
+
 // DefaultThreshold is the default value of ResizeThresholdAnnotation.
 const DefaultThreshold = "10%"
 

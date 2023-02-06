@@ -43,9 +43,11 @@ jobs:
         run: ct lint --config ct.yaml
 
       - name: "Setup kind"
+        if:  startsWith(github.head_ref, 'bump-chart-')
         run: |
           make -C e2e setup
-          make -C e2e init-cluster
+          make -C e2e launch-kind
 
       - name: "Run chart-testing (install)"
+        if:  startsWith(github.head_ref, 'bump-chart-')
         run: ct install --config ct.yaml

@@ -77,3 +77,20 @@ podMonitor:
 
   # podMonitor.additionalLabels -- Additional labels that can be used so PodMonitor will be discovered by Prometheus.
   additionalLabels: {}
+
+webhook:
+  # webhook.caBundle -- Specify the certificate to be used for AdmissionWebhook.
+  caBundle:  # Base64-encoded, PEM-encoded CA certificate that signs the server certificate.
+  # webhook.existingCertManagerIssuer -- Specify the cert-manager issuer to be used for AdmissionWebhook.
+  existingCertManagerIssuer: {}
+    # group: cert-manager.io
+    # kind: Issuer
+    # name: webhook-issuer
+  pvcMutatingWebhook:
+    # webhook.pvcMutatingWebhook.enabled -- Enable PVC MutatingWebhook.
+    enabled: true
+
+cert-manager:
+  # cert-manager.enabled -- Install cert-manager together.
+  ## ref: https://cert-manager.io/docs/installation/helm/#installing-with-helm
+  enabled: false

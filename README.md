@@ -112,6 +112,83 @@ spec:
   <snip>
 ```
 
+#### Initial resize
+
+PVC request size can also be changed at the creation time based on the largest PVC size in the same group. PVCs are grouped by labels, and the label key for grouping is specified by `resize.topolvm.io/initial-resize-group-by` annotation.
+
+For example, suppose there are following three PVCs.
+
+```yaml
+### existing PVCs (excerpted)
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-x-1
+  labels:
+    label-foobar: group-x
+  annotations:
+    resize.topolvm.io/initial-resize-group-by: label-foobar
+spec:
+  resources:
+    requests:
+      storage: 20Gi
+
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-x-2
+  labels:
+    label-foobar: group-x
+  annotations:
+    resize.topolvm.io/initial-resize-group-by: label-foobar
+spec:
+  resources:
+    requests:
+      storage: 16Gi
+
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-y-1
+  labels:
+    label-foobar: group-y
+  annotations:
+    resize.topolvm.io/initial-resize-group-by: label-foobar
+spec:
+  resources:
+    requests:
+      storage: 30Gi
+```
+
+When creating the following new PVC, `pvc-x-1` and `pvc-x-2` with `label-foobar: group-x` are considered to be in the same group, and `pvc-y-1` is not. Therefore, the PVC is created with **20Gi** based on `pvc-x-1`, which has the largest capacity in the group.
+
+```yaml
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-x-3
+  labels:
+    label-foobar: group-x
+  annotations:
+    resize.topolvm.io/initial-resize-group-by: label-foobar
+spec:
+  resources:
+    requests:
+      storage: 10Gi
+```
+
+When creating the following new PVC, `pvc-y-1` with `label-foobar: group-y` is in the same group. However, since the new PVC's size(50Gi) is larger than the existing one(30Gi), the PVC is created with **50Gi**.
+
+```yaml
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-y-2
+  labels:
+    label-foobar: group-y
+  annotations:
+    resize.topolvm.io/initial-resize-group-by: label-foobar
+spec:
+  resources:
+    requests:
+      storage: 50Gi
+```
+
 ### Prometheus metrics
 
 ####  `pvcautoresizer_kubernetes_client_fail_total`

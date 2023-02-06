@@ -31,3 +31,9 @@ annotations:
     - name: pvc-autoresizer
       image: ghcr.io/topolvm/pvc-autoresizer:0.6.1
   artifacthub.io/license: Apache-2.0
+
+dependencies:
+  - name: cert-manager
+    repository: https://charts.jetstack.io
+    version: 1.7.0
+    condition: cert-manager.enabled
