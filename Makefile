@@ -13,6 +13,7 @@ GOARCH := $(shell go env GOARCH)
 
 CRD_OPTIONS = "crd:crdVersions=v1"
 
+SUDO := sudo
 BINDIR := $(shell pwd)/bin
 CONTROLLER_GEN := $(BINDIR)/controller-gen
 KUBEBUILDER_ASSETS := $(BINDIR)
@@ -20,11 +21,6 @@ export KUBEBUILDER_ASSETS
 
 IMAGE_TAG ?= latest
 IMAGE_PREFIX ?= ghcr.io/topolvm/
-
-CT_INSTALL_KUBECONFIG := /home/$(shell whoami)/.kube/config
-ifeq ($(shell whoami),root)
-CT_INSTALL_KUBECONFIG := /$(shell whoami)/.kube/config
-endif
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
@@ -118,7 +114,7 @@ push: ## Push docker image.
 
 .PHONY: ct-lint
 ct-lint: ## Lint and validate a chart.
-	docker run \
+	$(SUDO) docker run \
 		--rm \
 		--user $(shell id -u $(USER)) \
 		--workdir=/data \
@@ -127,13 +123,14 @@ ct-lint: ## Lint and validate a chart.
 		ct lint --config ct.yaml
 
 .PHONY: ct-install
-ct-install: ##  Install and test a chart.
-	docker run \
+ct-install: ## Install and test a chart.
+	$(SUDO) docker run \
 		--rm \
 		--user $(shell id -u $(USER)) \
 		--network host \
 		--workdir=/data \
-		--volume ~/.kube/config:$(CT_INSTALL_KUBECONFIG):ro \
+		--env KUBECONFIG=/kubeconfig \
+		--volume ~/.kube/config:/kubeconfig:ro \
 		--volume $(shell pwd):/data \
 		quay.io/helmpack/chart-testing:v$(CHART_TESTING_VERSION) \
 		ct install --config ct.yaml
