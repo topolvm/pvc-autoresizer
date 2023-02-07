@@ -14,7 +14,6 @@ GOARCH := $(shell go env GOARCH)
 
 CRD_OPTIONS = "crd:crdVersions=v1"
 
-SUDO := sudo
 BINDIR := $(shell pwd)/bin
 STATICCHECK := $(BINDIR)/staticcheck
 CONTROLLER_GEN := $(BINDIR)/controller-gen
@@ -116,7 +115,7 @@ push: ## Push docker image.
 
 .PHONY: ct-lint
 ct-lint: ## Lint and validate a chart.
-	$(SUDO) docker run \
+	docker run \
 		--rm \
 		--user $(shell id -u $(USER)) \
 		--workdir=/data \
@@ -126,7 +125,7 @@ ct-lint: ## Lint and validate a chart.
 
 .PHONY: ct-install
 ct-install: ## Install and test a chart.
-	$(SUDO) docker run \
+	docker run \
 		--rm \
 		--user $(shell id -u $(USER)) \
 		--network host \
