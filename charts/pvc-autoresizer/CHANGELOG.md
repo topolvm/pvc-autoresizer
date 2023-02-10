@@ -7,9 +7,25 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.7.0] - 2023-02-10
+
+### Added
+
+- Helm chart | Added controller.podAnnotations to helm chart ([#170](https://github.com/topolvm/pvc-autoresizer/pull/170))
+
+### Changed
+
+- Bump helm/chart-releaser-action from 1.4.1 to 1.5.0 ([#175](https://github.com/topolvm/pvc-autoresizer/pull/175))
+- appVersion was changed to 0.6.1.
+
+### Contributors
+
+- @jcortejoso
+
 ## [0.6.1] - 2023-01-12
 
 ### Changed
+
 - appVersion was changed to 0.6.0.
 
 ## [0.6.0] - 2022-12-07
@@ -83,7 +99,8 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 ## [0.2.0] - 2021-08-10
 - First release.
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.1...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.7.0...HEAD
+[0.7.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.1...pvc-autoresizer-chart-v0.7.0
 [0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.0...pvc-autoresizer-chart-v0.6.1
 [0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.5.0...pvc-autoresizer-chart-v0.6.0
 [0.5.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.4.0...pvc-autoresizer-chart-v0.5.0
