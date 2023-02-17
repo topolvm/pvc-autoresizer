@@ -6,10 +6,20 @@ Expand the PVC's initial capacity based on the largest capacity in specified PVC
 
 ### Motivation
 
-One use case for pvc-autoresizer is automatically expanding a PV/PVC for multiple Pod/PV pairs, such as a MySQL cluster.
+One use case for pvc-autoresizer is automatically expanding a PV/PVC for multiple Pod/PV pairs, such as the following example.
 In such a cluster, if a Pod/PV fails and a PV/PVC is rebuilt by the restore process, a PV is created based on the PVC template. Even if a PV of the same size as the others is actually needed, a PV of the template's capacity is created. As a result, the restore process stops due to insufficient capacity.
 
 To solve this problem, we are planning to add a new feature to create a PV/PVC with sufficient capacity when PVCs of the same group already exist.
+
+#### Example of the behavior we want to resolve
+
+The following is a behavior of actual restore failures of [MOCO](https://github.com/cybozu-go/moco).
+
+1. MOCO creates a StatefulSet to manage a MySQL cluster. In addition, a PVC is consumed per one instance(pod). Let assume the initial volume size, which is written in VolumeClaimTemplate, is 100GiB.
+1. These PVCs have expanded to 200GiB according to the growth of DB using pvc-autoresizer.
+1. One instance dies. Then a new pod and the corresponding instance is created to fill a vacancy.
+1. The new PVC, which is consumed by the new instance is created. In this case, the size of the new PVC is not 200GiB, but 100GiB.
+1. The data clone to the existing instances to the new instance might fail due to the lack of volume size.
 
 ### Goals
 
@@ -124,4 +134,4 @@ Cons:
 
 ### Decision outcome
 
-We adopt Option A. We have already found out that [MOCO](https://github.com/cybozu-go/moco) checks the free space of PVCs before restore process. Therefore, the restore does not work well with Option B. Other programs may behave in the same way.
+We adopt Option A. We have already found out that MOCO checks the free space of PVCs before restore process. Therefore, the restore does not work well with Option B. Other programs may behave in the same way.
