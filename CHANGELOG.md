@@ -7,6 +7,23 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.6.1] - 2023-02-10
+
+### Changed
+- update a note descibing how to maintain go version ([#167](https://github.com/topolvm/pvc-autoresizer/pull/167))
+- Update go directive and use the version for setup-go ([#161](https://github.com/topolvm/pvc-autoresizer/pull/161))
+- Use mermaid to draw diagram ([#164](https://github.com/topolvm/pvc-autoresizer/pull/164))
+- Replace quay.io/cybozu/ubuntu with official ubuntu ([#163](https://github.com/topolvm/pvc-autoresizer/pull/163))
+- Add CONTRIBUTING.md and update README.md according to CNCF template. ([#172](https://github.com/topolvm/pvc-autoresizer/pull/172))
+- update go 1.19 to fix ci ([#177](https://github.com/topolvm/pvc-autoresizer/pull/177))
+- Add Signed-off-by on the bump commit ([#178](https://github.com/topolvm/pvc-autoresizer/pull/178))
+
+### Contributors
+- @peng225
+- @toshipp
+- @llamerada-jp
+- @cupnes
+
 ## [0.6.0] - 2023-01-10
 
 ### Changed
@@ -204,7 +221,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.3.1...v0.4.0

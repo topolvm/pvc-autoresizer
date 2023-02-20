@@ -1,5 +1,5 @@
 # Stage1: Build the pvc-autoresizer binary
-FROM golang:1.18 as builder
+FROM golang:1.19 as builder
 
 WORKDIR /workspace
 
