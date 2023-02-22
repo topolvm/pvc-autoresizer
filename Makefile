@@ -6,7 +6,6 @@ CONTROLLER_TOOLS_VERSION = 0.10.0
 HELM_VERSION = 3.10.3
 HELM_DOCS_VERSION = 1.11.0
 CHART_TESTING_VERSION = 3.7.1
-STATICCHECK_VERSION = 0.3.3
 
 ## DON'T EDIT BELOW THIS LINE
 GOOS := $(shell go env GOOS)
@@ -15,7 +14,6 @@ GOARCH := $(shell go env GOARCH)
 CRD_OPTIONS = "crd:crdVersions=v1"
 
 BINDIR := $(shell pwd)/bin
-STATICCHECK := $(BINDIR)/staticcheck
 CONTROLLER_GEN := $(BINDIR)/controller-gen
 KUBEBUILDER_ASSETS := $(BINDIR)
 export KUBEBUILDER_ASSETS
@@ -79,7 +77,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 test: manifests generate tools fmt vet ## Run tests.
-	$(STATICCHECK) ./...
+	$(shell go env GOPATH)/bin/staticcheck ./...
 	go install ./...
 	source <($(SETUP_ENVTEST) use -p env $(ENVTEST_K8S_VERSION)); \
 		go test -race -v -count 1 ./... --timeout=60s
@@ -143,8 +141,8 @@ tools: staticcheck setup-envtest
 
 .PHONY: staticcheck
 staticcheck: ## Install staticcheck
-	if [ ! -e $(STATICCHECK) ] || [ "$$($(STATICCHECK) --version | awk '{print $$3}')" != "(v$(STATICCHECK_VERSION))" ]; then \
-		GOBIN=$(BINDIR) go install honnef.co/go/tools/cmd/staticcheck@v$(STATICCHECK_VERSION); \
+	if ! which staticcheck >/dev/null; then \
+		env GOFLAGS= go install honnef.co/go/tools/cmd/staticcheck@latest; \
 	fi
 
 SETUP_ENVTEST := $(BINDIR)/setup-envtest
