@@ -29,5 +29,5 @@ appVersion: 0.6.1
 annotations:
   artifacthub.io/images: |
     - name: pvc-autoresizer
-      image: ghcr.io/topolvm/pvc-autoresizer:0.6.0
+      image: ghcr.io/topolvm/pvc-autoresizer:0.6.1
   artifacthub.io/license: Apache-2.0
