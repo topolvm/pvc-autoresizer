@@ -2,3 +2,6 @@
 /.vscode
 /.idea
 /vendor
+
+# ignore dependency charts
+charts/*/charts
