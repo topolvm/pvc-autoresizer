@@ -5,6 +5,7 @@ ENVTEST_K8S_VERSION = $(shell echo $(K8S_VERSION) | cut -d "." -f 1-2)
 CONTROLLER_TOOLS_VERSION = 0.10.0
 HELM_VERSION = 3.10.3
 HELM_DOCS_VERSION = 1.11.0
+CHART_TESTING_VERSION = 3.7.1
 
 ## DON'T EDIT BELOW THIS LINE
 GOOS := $(shell go env GOOS)
@@ -107,6 +108,31 @@ tag: ## Set a docker tag to the image.
 .PHONY: push
 push: ## Push docker image.
 	docker push $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
+
+##@ Chart Testing
+
+.PHONY: ct-lint
+ct-lint: ## Lint and validate a chart.
+	docker run \
+		--rm \
+		--user $(shell id -u $(USER)) \
+		--workdir=/data \
+		--volume $(shell pwd):/data \
+		quay.io/helmpack/chart-testing:v$(CHART_TESTING_VERSION) \
+		ct lint --config ct.yaml
+
+.PHONY: ct-install
+ct-install: ## Install and test a chart.
+	docker run \
+		--rm \
+		--user $(shell id -u $(USER)) \
+		--network host \
+		--workdir=/data \
+		--env KUBECONFIG=/kubeconfig \
+		--volume ~/.kube/config:/kubeconfig:ro \
+		--volume $(shell pwd):/data \
+		quay.io/helmpack/chart-testing:v$(CHART_TESTING_VERSION) \
+		ct install --config ct.yaml
 
 ##@ Tools
 
