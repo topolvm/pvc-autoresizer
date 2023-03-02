@@ -101,7 +101,7 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 [Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.7.0...HEAD
 [0.7.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.1...pvc-autoresizer-chart-v0.7.0
-[0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.0...pvc-autoresizer-chart-v0.6.1
+[0.6.1]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.0...pvc-autoresizer-chart-v0.6.1
 [0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.5.0...pvc-autoresizer-chart-v0.6.0
 [0.5.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.4.0...pvc-autoresizer-chart-v0.5.0
 [0.4.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.3.6...pvc-autoresizer-chart-v0.4.0
