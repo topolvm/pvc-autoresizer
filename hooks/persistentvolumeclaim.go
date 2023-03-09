@@ -20,9 +20,9 @@ import (
 //+kubebuilder:webhook:path=/pvc/mutate,mutating=true,failurePolicy=fail,sideEffects=None,groups="",resources=persistentvolumeclaims,verbs=create,versions=v1,name=mpersistentvolumeclaim.topolvm.io,admissionReviewVersions={v1}
 
 type persistentVolumeClaimMutator struct {
-	client client.Client
-	dec    *admission.Decoder
-	log    logr.Logger
+	apiReader client.Reader
+	dec       *admission.Decoder
+	log       logr.Logger
 }
 
 var _ admission.Handler = &persistentVolumeClaimMutator{}
@@ -45,7 +45,7 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 	}
 
 	pvcList := &corev1.PersistentVolumeClaimList{}
-	err := m.client.List(ctx, pvcList, &client.ListOptions{
+	err := m.apiReader.List(ctx, pvcList, &client.ListOptions{
 		Namespace:     pvc.Namespace,
 		LabelSelector: labels.SelectorFromSet(map[string]string{groupLabelKey: group}),
 	})
@@ -73,8 +73,7 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 		return admission.Allowed("ignore the PVC because it has no storage limit annotation")
 	}
 	if pvc.Spec.Resources.Requests.Storage().Cmp(storageLimit) > 0 {
-		return admission.Errored(http.StatusBadRequest, fmt.Errorf("resized capacity %d is larger than the storage limit %d",
-			pvc.Spec.Resources.Requests.Storage().Value(), storageLimit.Value()))
+		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = storageLimit
 	}
 
 	m.log.Info("need mutate the PVC size",
@@ -94,9 +93,9 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 func SetupPersistentVolumeClaimWebhook(mgr manager.Manager, dec *admission.Decoder, log logr.Logger) error {
 	serv := mgr.GetWebhookServer()
 	m := &persistentVolumeClaimMutator{
-		client: mgr.GetClient(),
-		dec:    dec,
-		log:    log,
+		apiReader: mgr.GetAPIReader(),
+		dec:       dec,
+		log:       log,
 	}
 	serv.Register("/pvc/mutate", &webhook.Admission{Handler: m})
 	return nil
