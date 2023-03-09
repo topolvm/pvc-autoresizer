@@ -28,7 +28,6 @@ spec:
           command:
             - /pvc-autoresizer
           args:
-            - --cert-dir=/certs
             - --prometheus-url={{ .Values.controller.args.prometheusURL }}
             - --interval={{ .Values.controller.args.interval }}
           {{- if .Values.controller.args.namespaces }}
