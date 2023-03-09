@@ -22,7 +22,7 @@ webhooks:
       namespace: '{{ .Release.Namespace }}'
       path: /pvc/mutate
   failurePolicy: Fail
-  name: mpersistentvolumeclaim.kb.io
+  name: mpersistentvolumeclaim.topolvm.io
   rules:
   - apiGroups:
     - ""

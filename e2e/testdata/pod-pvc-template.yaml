@@ -3,7 +3,7 @@ apiVersion: v1
 metadata:
   name: {{ .pvcName }}
   namespace: {{ .namespace }}
-{{ if eq .useLabel "true" }}
+{{ if eq .useLabel }}
   labels:
     {{ range $key, $value := .labels }}
     {{ $key }}: {{ $value }}

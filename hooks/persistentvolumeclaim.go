@@ -52,16 +52,17 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
-	requestedSize := pvc.Spec.Resources.Requests.Storage().Value()
+	requestedSize := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
+	newSize := requestedSize
 	for _, item := range pvcList.Items {
-		if item.Spec.Resources.Requests.Storage().Value() > pvc.Spec.Resources.Requests.Storage().Value() {
-			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = item.Spec.Resources.Requests[corev1.ResourceStorage]
+		if item.Spec.Resources.Requests.Storage().Cmp(newSize) > 0 {
+			newSize = item.Spec.Resources.Requests[corev1.ResourceStorage]
 		}
 	}
-	if pvc.Spec.Resources.Requests.Storage().Value() == requestedSize {
-		// return the allowed response if the request size did not change
+	if requestedSize.Cmp(newSize) == 0 {
 		return admission.Allowed("PVC request storage size unchanged")
 	}
+	pvc.Spec.Resources.Requests[corev1.ResourceStorage] = newSize
 
 	// Check if the resized capacity is less than or equal to the storage limit
 	storageLimit, err := runners.PvcStorageLimit(pvc)
@@ -71,7 +72,7 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 	if storageLimit.IsZero() {
 		return admission.Allowed("ignore the PVC because it has no storage limit annotation")
 	}
-	if pvc.Spec.Resources.Requests.Storage().Cmp(storageLimit) >= 0 {
+	if pvc.Spec.Resources.Requests.Storage().Cmp(storageLimit) > 0 {
 		return admission.Errored(http.StatusBadRequest, fmt.Errorf("resized capacity %d is larger than the storage limit %d",
 			pvc.Spec.Resources.Requests.Storage().Value(), storageLimit.Value()))
 	}
@@ -79,7 +80,7 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 	m.log.Info("need mutate the PVC size",
 		"name", pvc.Name,
 		"namespace", pvc.Namespace,
-		"from-request", requestedSize,
+		"from-request", requestedSize.Value(),
 		"to-request", pvc.Spec.Resources.Requests.Storage().Value(),
 	)
 	data, err := json.Marshal(pvc)
