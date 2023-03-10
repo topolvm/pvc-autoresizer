@@ -44,27 +44,6 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 		return admission.Errored(http.StatusBadRequest, fmt.Errorf("no value is set to the label key %s", groupLabelKey))
 	}
 
-	pvcList := &corev1.PersistentVolumeClaimList{}
-	err := m.apiReader.List(ctx, pvcList, &client.ListOptions{
-		Namespace:     pvc.Namespace,
-		LabelSelector: labels.SelectorFromSet(map[string]string{groupLabelKey: group}),
-	})
-	if err != nil {
-		return admission.Errored(http.StatusInternalServerError, err)
-	}
-	requestedSize := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
-	newSize := requestedSize
-	for _, item := range pvcList.Items {
-		if item.Spec.Resources.Requests.Storage().Cmp(newSize) > 0 {
-			newSize = item.Spec.Resources.Requests[corev1.ResourceStorage]
-		}
-	}
-	if requestedSize.Cmp(newSize) == 0 {
-		return admission.Allowed("PVC request storage size unchanged")
-	}
-	pvc.Spec.Resources.Requests[corev1.ResourceStorage] = newSize
-
-	// Check if the resized capacity is less than or equal to the storage limit
 	storageLimit, err := runners.PvcStorageLimit(pvc)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
@@ -72,9 +51,30 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 	if storageLimit.IsZero() {
 		return admission.Allowed("ignore the PVC because it has no storage limit annotation")
 	}
-	if pvc.Spec.Resources.Requests.Storage().Cmp(storageLimit) > 0 {
-		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = storageLimit
+
+	pvcList := &corev1.PersistentVolumeClaimList{}
+	err = m.apiReader.List(ctx, pvcList, &client.ListOptions{
+		Namespace:     pvc.Namespace,
+		LabelSelector: labels.SelectorFromSet(map[string]string{groupLabelKey: group}),
+	})
+	if err != nil {
+		return admission.Errored(http.StatusInternalServerError, err)
 	}
+
+	requestedSize := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
+	newSize := requestedSize
+	for _, item := range pvcList.Items {
+		if item.Spec.Resources.Requests.Storage().Cmp(newSize) > 0 {
+			newSize = item.Spec.Resources.Requests[corev1.ResourceStorage]
+		}
+	}
+	if newSize.Cmp(storageLimit) > 0 {
+		newSize = storageLimit
+	}
+	if requestedSize.Cmp(newSize) == 0 {
+		return admission.Allowed("PVC request storage size unchanged")
+	}
+	pvc.Spec.Resources.Requests[corev1.ResourceStorage] = newSize
 
 	m.log.Info("need mutate the PVC size",
 		"name", pvc.Name,
