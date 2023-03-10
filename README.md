@@ -189,6 +189,9 @@ spec:
       storage: 50Gi
 ```
 
+When the size of the largest PVC in the same group is larger than the value set to `resize.topolvm.io/storage_limit` annotation,
+the PVC is resized up to this limit.
+
 ### Prometheus metrics
 
 ####  `pvcautoresizer_kubernetes_client_fail_total`
