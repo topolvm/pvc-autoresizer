@@ -329,11 +329,11 @@ var _ = Describe("pvc-autoresizer", func() {
 	})
 
 	It("should mutate the PVC size based on the same initial-resize-group-by PVC spec in the same namespace", func() {
-		// small size PVC
+		// large size PVC
 		pvcName := "resize-group-pvc1"
 		sc := "topolvm-provisioner-annotated"
 		mode := string(corev1.PersistentVolumeFilesystem)
-		request := "2Gi"
+		request := "3Gi"
 		limit := "10Gi"
 		threshold := "50%"
 		increase := "1Gi"
@@ -345,22 +345,15 @@ var _ = Describe("pvc-autoresizer", func() {
 		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
 			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
 
-		// large size PVC
-		pvcName = "resize-group-pvc2"
-		request = "3Gi"
-		limit = "10Gi"
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
-			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
-
 		// large size PVC but other namespace
-		pvcName = "resize-group-pvc3"
+		pvcName = "resize-group-pvc2"
 		request = "4Gi"
 		limit = "10Gi"
 		resources2 = createPodPVC2(resources2, pvcName, sc, mode, pvcName,
 			request, limit, threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
 
 		// large size PVC but other group
-		pvcName = "resize-group-pvc4"
+		pvcName = "resize-group-pvc3"
 		request = "4Gi"
 		limit = "10Gi"
 		groupYLabel := map[string]string{
@@ -370,7 +363,7 @@ var _ = Describe("pvc-autoresizer", func() {
 			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupYLabel)
 
 		// Newly created small PVC
-		pvcName = "resize-group-pvc5"
+		pvcName = "resize-group-pvc4"
 		request = "1Gi"
 		limit = "10Gi"
 		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
@@ -379,6 +372,15 @@ var _ = Describe("pvc-autoresizer", func() {
 		By("checking the PVC size is mutated")
 		checkDiskResize(pvcName, "3Gi", true)
 
+		// Newly created small PVC but the storage limit is 2GiB
+		pvcName = "resize-group-pvc5"
+		request = "1Gi"
+		limit = "2Gi"
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
+			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
+
+		By("checking the PVC size is mutated up to the storage limit")
+		checkDiskResize(pvcName, "2Gi", true)
 	})
 
 	It("should not mutate the PVC size when the condition is not met", func() {
