@@ -61,11 +61,11 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
 
-	requestedSize := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
+	requestedSize := *pvc.Spec.Resources.Requests.Storage()
 	newSize := requestedSize
 	for _, item := range pvcList.Items {
-		if item.Spec.Resources.Requests.Storage().Cmp(newSize) > 0 {
-			newSize = item.Spec.Resources.Requests[corev1.ResourceStorage]
+		if itemSize := item.Spec.Resources.Requests.Storage(); itemSize.Cmp(newSize) > 0 {
+			newSize = *itemSize
 		}
 	}
 	if newSize.Cmp(storageLimit) > 0 {
