@@ -45,6 +45,9 @@ init-cluster: launch-kind autoresizer.img kube-prometheus
 	sleep 10
 	# setup autoresizer
 	$(KIND) load image-archive --name=$(KIND_CLUSTER_NAME) autoresizer.img
+	$(HELM) repo add jetstack https://charts.jetstack.io
+	$(HELM) repo update
+	$(HELM) dependency build ../charts/pvc-autoresizer/
 	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../charts/pvc-autoresizer/ -f manifests/values/values.yaml
 	# storageclass for test
 	$(KUBECTL) apply -f manifests/common/storageclass.yaml
@@ -64,7 +67,6 @@ launch-kind: $(TMPDIR)/topolvm
 	$(KUBECTL) delete pvc topolvm-pvc-thin
 	$(KUBECTL) delete sc topolvm-provisioner-thin
 	sudo lvremove -f myvg1/thinpool
-
 
 .PHONY: shutdown-kind
 shutdown-kind:

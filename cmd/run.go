@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"net"
 	"time"
 
+	"github.com/topolvm/pvc-autoresizer/hooks"
 	"github.com/topolvm/pvc-autoresizer/runners"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -11,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -34,10 +37,23 @@ func subMain() error {
 		cacheFunc = cache.MultiNamespacedCacheBuilder(config.namespaces)
 	}
 
+	hookHost, portStr, err := net.SplitHostPort(config.webhookAddr)
+	if err != nil {
+		setupLog.Error(err, "invalid webhook addr")
+		return err
+	}
+	hookPort, err := net.LookupPort("tcp", portStr)
+	if err != nil {
+		setupLog.Error(err, "invalid webhook port")
+		return err
+	}
+
 	graceTimeout := 10 * time.Second
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                  scheme,
-		Port:                    9443,
+		Host:                    hookHost,
+		Port:                    hookPort,
+		CertDir:                 config.certDir,
 		MetricsBindAddress:      config.metricsAddr,
 		NewCache:                cacheFunc,
 		HealthProbeBindAddress:  config.healthAddr,
@@ -54,6 +70,9 @@ func subMain() error {
 		return err
 	}
 	if err := mgr.AddReadyzCheck("ping", healthz.Ping); err != nil {
+		return err
+	}
+	if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
 		return err
 	}
 
@@ -73,6 +92,16 @@ func subMain() error {
 		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
 	if err := mgr.Add(pvcAutoresizer); err != nil {
 		setupLog.Error(err, "unable to add autoresier to manager")
+		return err
+	}
+
+	dec, err := admission.NewDecoder(scheme)
+	if err != nil {
+		setupLog.Error(err, "unable to create admission decoder")
+		return err
+	}
+	if err = hooks.SetupPersistentVolumeClaimWebhook(mgr, dec, ctrl.Log.WithName("hooks")); err != nil {
+		setupLog.Error(err, "unable to create PersistentVolumeClaim webhook")
 		return err
 	}
 

@@ -9,6 +9,8 @@ import (
 )
 
 var config struct {
+	certDir        string
+	webhookAddr    string
 	metricsAddr    string
 	healthAddr     string
 	namespaces     []string
@@ -40,6 +42,8 @@ func Execute() {
 
 func init() {
 	fs := rootCmd.Flags()
+	fs.StringVar(&config.certDir, "cert-dir", "/certs", "webhook certificate directory")
+	fs.StringVar(&config.webhookAddr, "webhook-addr", ":9443", "Listen address for the webhook endpoint")
 	fs.StringVar(&config.metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	fs.StringVar(&config.healthAddr, "health-addr", ":8081", "The address of health/readiness probes.")
 	fs.StringSliceVar(&config.namespaces, "namespaces", []string{}, "Namespaces to resize PersistentVolumeClaims within. Empty for all namespaces.")

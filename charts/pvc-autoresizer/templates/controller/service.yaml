@@ -1,0 +1,13 @@
+{{- if .Values.webhook.pvcMutatingWebhook.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "pvc-autoresizer.fullname" . }}-controller
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - port: 443
+      targetPort: 9443
+  selector:
+    app.kubernetes.io/name: pvc-autoresizer
+{{- end }}

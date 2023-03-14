@@ -44,6 +44,9 @@ spec:
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}
           ports:
+            - containerPort: 9443
+              name: webhook
+              protocol: TCP
             - name: metrics
               containerPort: 8080
               protocol: TCP
@@ -58,6 +61,9 @@ spec:
             httpGet:
               path: /healthz
               port: health
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
     {{- with .Values.controller.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -66,3 +72,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
+      volumes:
+        - name: certs
+          secret:
+            secretName: {{ template "pvc-autoresizer.fullname" . }}-controller

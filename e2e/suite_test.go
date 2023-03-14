@@ -35,7 +35,8 @@ var (
 	podPVCTemplateOnce sync.Once
 	podPVCTmpl         *template.Template
 
-	testNamespace string = "autoresizer-test"
+	testNamespace  string = "autoresizer-test"
+	testNamespace2 string = "autoresizer-test2"
 
 	consistentlyTimeout time.Duration = 20 * time.Second
 )
@@ -121,12 +122,15 @@ var _ = BeforeSuite(func() {
 
 	By("[BeforeSuite] Creating namespace for test")
 	createNamespace(testNamespace)
+	createNamespace(testNamespace2)
 })
 
 var _ = AfterSuite(func() {
 	if !failedTest {
 		By("[AfterSuite] Delete namespace for autoresizer tests")
 		stdout, stderr, err := kubectl("delete", "namespace", testNamespace)
+		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
+		stdout, stderr, err = kubectl("delete", "namespace", testNamespace2)
 		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 	}
 })
@@ -138,6 +142,7 @@ type resource struct {
 
 var _ = Describe("pvc-autoresizer", func() {
 	var resources []resource
+	var resources2 []resource
 
 	var _ = AfterEach(func() {
 		if CurrentSpecReport().Failed() {
@@ -145,11 +150,16 @@ var _ = Describe("pvc-autoresizer", func() {
 		} else {
 			By("[AfterEach] cleanup resources")
 			for _, r := range resources {
-				stdout, stderr, err := kubectl("-n", testNamespace, "delete", r.resource, r.name)
+				stdout, stderr, err := kubectl("-n", testNamespace, "delete", "--ignore-not-found", r.resource, r.name)
+				Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
+			}
+			for _, r := range resources2 {
+				stdout, stderr, err := kubectl("-n", testNamespace2, "delete", "--ignore-not-found", r.resource, r.name)
 				Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 			}
 		}
 		resources = []resource{}
+		resources2 = []resource{}
 	})
 
 	It("should resize PVC based on PVC spec and annotations", func() {
@@ -162,7 +172,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := ""
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit, "", nil)
 
 		By("create a file with a size that does not exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "fallocate", "-l", "400M", "/test1/test1.txt")
@@ -196,7 +206,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := ""
 		storageLimit := ""
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit, "", nil)
 
 		By("create a file with a size that does not exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "fallocate", "-l", "9G", "/test1/test1.txt")
@@ -216,7 +226,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := "2Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit, "", nil)
 
 		By("create a file with a size that exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "fallocate", "-l", "600M", "/test1/test1.txt")
@@ -243,7 +253,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := ""
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit, "", nil)
 
 		By("write data with a size that exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "dd", "if=/dev/zero", "of=/dev/e2etest", "count=600M", "iflag=count_bytes")
@@ -263,7 +273,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := ""
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, "", increase, storageLimit, "", nil)
 
 		By("create a file with a size that exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "fallocate", "-l", "600M", "/test1/test1.txt")
@@ -287,7 +297,7 @@ var _ = Describe("pvc-autoresizer", func() {
 		var capacityInode int64
 		var availableInode int64
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, inodesThreshold, increase, storageLimit)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit, threshold, inodesThreshold, increase, storageLimit, "", nil)
 
 		By("getting available inode size and capacity inode size")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", "-it", pvcName, "--", "df", "/test1", "--output=target,itotal,iavail")
@@ -317,15 +327,124 @@ var _ = Describe("pvc-autoresizer", func() {
 		By("checking the disk resizing")
 		checkDiskResize(pvcName, "2Gi", true)
 	})
+
+	It("should mutate the PVC size based on the same initial-resize-group-by PVC spec in the same namespace", func() {
+		// large size PVC
+		pvcName := "resize-group-pvc1"
+		sc := "topolvm-provisioner-annotated"
+		mode := string(corev1.PersistentVolumeFilesystem)
+		request := "3Gi"
+		limit := "10Gi"
+		threshold := "50%"
+		increase := "1Gi"
+		storageLimit := ""
+		initialResizeGroupByAnnotation := "test-group"
+		groupXLabel := map[string]string{
+			initialResizeGroupByAnnotation: "group-x",
+		}
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
+			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
+
+		// large size PVC but other namespace
+		pvcName = "resize-group-pvc2"
+		request = "4Gi"
+		limit = "10Gi"
+		resources2 = createPodPVC2(resources2, pvcName, sc, mode, pvcName,
+			request, limit, threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
+
+		// large size PVC but other group
+		pvcName = "resize-group-pvc3"
+		request = "4Gi"
+		limit = "10Gi"
+		groupYLabel := map[string]string{
+			initialResizeGroupByAnnotation: "group-y",
+		}
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
+			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupYLabel)
+
+		// Newly created small PVC
+		pvcName = "resize-group-pvc4"
+		request = "1Gi"
+		limit = "10Gi"
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
+			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
+
+		By("checking the PVC size is mutated")
+		checkDiskResize(pvcName, "3Gi", true)
+
+		// Newly created small PVC but the storage limit is 2GiB
+		pvcName = "resize-group-pvc5"
+		request = "1Gi"
+		limit = "2Gi"
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
+			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
+
+		By("checking the PVC size is mutated up to the storage limit")
+		checkDiskResize(pvcName, "2Gi", true)
+	})
+
+	It("should not mutate the PVC size when the condition is not met", func() {
+		// large size PVC
+		pvcName := "non-resize-group-pvc1"
+		sc := "topolvm-provisioner-annotated"
+		mode := string(corev1.PersistentVolumeFilesystem)
+		request := "3Gi"
+		limit := "10Gi"
+		threshold := "50%"
+		increase := "1Gi"
+		storageLimit := ""
+		initialResizeGroupByAnnotation := "test-group"
+		groupXLabel := map[string]string{
+			initialResizeGroupByAnnotation: "group-x",
+		}
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
+			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
+
+		// Newly created small PVC but different label key
+		pvcName = "non-resize-group-pvc2"
+		request = "1Gi"
+		limit = "10Gi"
+		initialResizeGroupByAnnotation = "test-group2"
+		groupXLabel2 := map[string]string{
+			initialResizeGroupByAnnotation: "group-x",
+		}
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
+			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel2)
+
+		By("checking the PVC size is not mutated")
+		checkDoesNotResize(pvcName, "1Gi")
+
+		// The annotation is not set
+		pvcName = "empty-string-resize-group-pvc1"
+		request = "2Gi"
+		limit = "10Gi"
+		initialResizeGroupByAnnotation = ""
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
+			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
+
+		pvcName = "empty-string-resize-group-pvc2"
+		request = "1Gi"
+		limit = "10Gi"
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, limit,
+			threshold, "", increase, storageLimit, initialResizeGroupByAnnotation, groupXLabel)
+
+		By("checking the PVC size is not mutated")
+		checkDoesNotResize(pvcName, "1Gi")
+	})
 })
 
-func buildPodPVCTemplateYAML(pvcName, storageClassName, volumeMode, podName, request, limit, threshold, inodesThreshold, increase, storageLimit string) ([]byte, error) {
+func buildPodPVCTemplateYAML(ns, pvcName, storageClassName, volumeMode, podName, request, limit, threshold,
+	inodesThreshold, increase, storageLimit, initialResizeGroupByAnnotation string, labels map[string]string) ([]byte, error) {
 	var b bytes.Buffer
 	var err error
 
 	useAnnotation := "false"
 	if threshold != "" || increase != "" || storageLimit != "" {
 		useAnnotation = "true"
+	}
+	useLabel := false
+	if len(labels) != 0 {
+		useLabel = true
 	}
 
 	podPVCTemplateOnce.Do(func() {
@@ -335,27 +454,50 @@ func buildPodPVCTemplateYAML(pvcName, storageClassName, volumeMode, podName, req
 		return b.Bytes(), err
 	}
 
-	params := map[string]string{
-		"pvcName":                   pvcName,
-		"storageClassName":          storageClassName,
-		"volumeMode":                volumeMode,
-		"podName":                   podName,
-		"namespace":                 testNamespace,
-		"useAnnotation":             useAnnotation,
-		"thresholdAnnotation":       threshold,
-		"increaseAnnotation":        increase,
-		"inodesThresholdAnnotation": inodesThreshold,
-		"storageLimitAnnotation":    storageLimit,
-		"resourceRequest":           request,
-		"resourceLimit":             limit,
+	params := map[string]any{
+		"pvcName":                        pvcName,
+		"storageClassName":               storageClassName,
+		"volumeMode":                     volumeMode,
+		"podName":                        podName,
+		"namespace":                      ns,
+		"useAnnotation":                  useAnnotation,
+		"thresholdAnnotation":            threshold,
+		"increaseAnnotation":             increase,
+		"inodesThresholdAnnotation":      inodesThreshold,
+		"storageLimitAnnotation":         storageLimit,
+		"resourceRequest":                request,
+		"resourceLimit":                  limit,
+		"initialResizeGroupByAnnotation": initialResizeGroupByAnnotation,
+		"useLabel":                       useLabel,
+		"labels":                         labels,
 	}
 	err = podPVCTmpl.Execute(&b, params)
 	return b.Bytes(), err
 }
 
-func createPodPVC(resources []resource, pvcName, storageClassName, volumeMode, podName, request, limit, threshold, inodesThreshold, increase, storageLimit string) []resource {
+func createPodPVC(resources []resource, pvcName, storageClassName, volumeMode, podName,
+	request, limit, threshold, inodesThreshold, increase, storageLimit,
+	initialResizeGroupByAnnotation string, labels map[string]string) []resource {
+	return createPodPVCWithNamespace(testNamespace, resources, pvcName, storageClassName,
+		volumeMode, podName, request, limit, threshold, inodesThreshold, increase, storageLimit,
+		initialResizeGroupByAnnotation, labels)
+}
+
+func createPodPVC2(resources []resource, pvcName, storageClassName, volumeMode, podName,
+	request, limit, threshold, inodesThreshold, increase, storageLimit,
+	initialResizeGroupByAnnotation string, labels map[string]string) []resource {
+	return createPodPVCWithNamespace(testNamespace2, resources, pvcName, storageClassName,
+		volumeMode, podName, request, limit, threshold, inodesThreshold, increase, storageLimit,
+		initialResizeGroupByAnnotation, labels)
+}
+
+func createPodPVCWithNamespace(ns string, resources []resource, pvcName, storageClassName,
+	volumeMode, podName, request, limit, threshold, inodesThreshold, increase, storageLimit,
+	initialResizeGroupByAnnotation string, labels map[string]string) []resource {
 	By("create a PVC and a pod for test")
-	podPVCYAML, err := buildPodPVCTemplateYAML(pvcName, storageClassName, volumeMode, pvcName, request, limit, threshold, inodesThreshold, increase, storageLimit)
+	podPVCYAML, err := buildPodPVCTemplateYAML(ns, pvcName, storageClassName, volumeMode, pvcName,
+		request, limit, threshold, inodesThreshold, increase, storageLimit,
+		initialResizeGroupByAnnotation, labels)
 	Expect(err).ShouldNot(HaveOccurred())
 	stdout, stderr, err := kubectlWithInput(podPVCYAML, "apply", "-f", "-")
 	Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s yaml=\n%s", stdout, stderr, podPVCYAML)
@@ -364,9 +506,9 @@ func createPodPVC(resources []resource, pvcName, storageClassName, volumeMode, p
 
 	By("waiting for creating the volume and running the pod")
 	Eventually(func() error {
-		stdout, stderr, err := kubectl("get", "-n", testNamespace, "pod", pvcName, "-o", "yaml")
+		stdout, stderr, err := kubectl("get", "-n", ns, "pod", pvcName, "-o", "yaml")
 		if err != nil {
-			return fmt.Errorf("failed to get pod name of %s/%s. stdout: %s, stderr: %s, err: %v", testNamespace, pvcName, stdout, stderr, err)
+			return fmt.Errorf("failed to get pod name of %s/%s. stdout: %s, stderr: %s, err: %v", ns, pvcName, stdout, stderr, err)
 		}
 
 		var pod corev1.Pod
