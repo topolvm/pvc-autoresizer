@@ -21,7 +21,7 @@ jobs:
           echo "prerelease=${PRERELEASE}" >> ${GITHUB_OUTPUT}
       - run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version-file: "go.mod"
       - run: make setup
