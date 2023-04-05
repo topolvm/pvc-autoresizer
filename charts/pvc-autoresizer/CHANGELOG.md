@@ -7,6 +7,24 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.8.0] - 2023-04-05
+
+### Added
+- artifacthub ([#181](https://github.com/topolvm/pvc-autoresizer/pull/181))
+- Implement initial-resize-group-by feature ([#176](https://github.com/topolvm/pvc-autoresizer/pull/176))
+  - **BREAKING**: Added a mutating webhook, required pvc-autoresizer 0.7.0 or higher.
+
+### Changed
+- Bump helm/chart-testing-action from 2.3.1 to 2.4.0 ([#186](https://github.com/topolvm/pvc-autoresizer/pull/186))
+- appVersion was changed to 0.7.0.
+
+### Fixed
+- charts/pvc-autoresizer/CHANGELOG.md: fix the broken link ([#182](https://github.com/topolvm/pvc-autoresizer/pull/182))
+
+### Contributors
+- @bells17
+- @toshipp
+
 ## [0.7.0] - 2023-02-10
 
 ### Added
@@ -99,7 +117,8 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 ## [0.2.0] - 2021-08-10
 - First release.
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.7.0...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.8.0...HEAD
+[0.8.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.7.0...pvc-autoresizer-chart-v0.8.0
 [0.7.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.1...pvc-autoresizer-chart-v0.7.0
 [0.6.1]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.0...pvc-autoresizer-chart-v0.6.1
 [0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.5.0...pvc-autoresizer-chart-v0.6.0
