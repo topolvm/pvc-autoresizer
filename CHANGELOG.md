@@ -7,6 +7,22 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.7.0] - 2023-04-05
+
+### Added
+- proposal: Expand the PVC's initial capacity based on the largest capacity in specified PVCs. ([#174](https://github.com/topolvm/pvc-autoresizer/pull/174))
+- Implement initial-resize-group-by feature ([#176](https://github.com/topolvm/pvc-autoresizer/pull/176))
+- add a workflow job to check the do-not-merge label ([#183](https://github.com/topolvm/pvc-autoresizer/pull/183))
+
+### Changed
+- Bump actions/stale from 7 to 8 ([#184](https://github.com/topolvm/pvc-autoresizer/pull/184))
+- Bump actions/setup-go from 3 to 4 ([#185](https://github.com/topolvm/pvc-autoresizer/pull/185))
+
+### Contributors
+- @llamerada-jp
+- @bells17
+- @peng225
+
 ## [0.6.1] - 2023-02-10
 
 ### Changed
@@ -221,7 +237,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.4.0...v0.5.0
