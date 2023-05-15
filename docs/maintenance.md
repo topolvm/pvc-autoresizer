@@ -86,6 +86,13 @@ Then, please tidy up the dependencies.
 $ go mod tidy
 ```
 
+Regenerate manifests using new controller-tools.
+
+```bash
+$ make setup
+$ make generate
+```
+
 #### Final check
 
 `git grep <the kubernetes version which support will be dropped>`, `git grep image:`, and `git grep -i VERSION` might help to avoid overlooking necessary changes.
