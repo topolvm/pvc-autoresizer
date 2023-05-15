@@ -23,7 +23,7 @@ jobs:
       - name: "Setup Helm"
         uses: azure/setup-helm@v3
         with:
-          version: "v3.10.3"
+          version: "v3.12.0"
 
       - name: "Setup helm-docs"
         run: |
