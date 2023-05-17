@@ -40,3 +40,18 @@ rules:
   - watch
   - patch
   - update
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - "nodes/metrics"
+  verbs:
+  - get
+  - list
+

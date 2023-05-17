@@ -16,6 +16,7 @@ var config struct {
 	namespaces     []string
 	watchInterval  time.Duration
 	prometheusURL  string
+	useKubelet     bool
 	skipAnnotation bool
 	development    bool
 }
@@ -49,7 +50,7 @@ func init() {
 	fs.StringSliceVar(&config.namespaces, "namespaces", []string{}, "Namespaces to resize PersistentVolumeClaims within. Empty for all namespaces.")
 	fs.DurationVar(&config.watchInterval, "interval", 1*time.Minute, "Interval to monitor pvc capacity.")
 	fs.StringVar(&config.prometheusURL, "prometheus-url", "", "Prometheus URL to query volume stats.")
+	fs.BoolVar(&config.useKubelet, "use-kubelet", true, "Use Kubelet to get volume data instead of prometheus")
 	fs.BoolVar(&config.skipAnnotation, "no-annotation-check", false, "Skip annotation check for StorageClass")
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")
-	_ = rootCmd.MarkFlagRequired("prometheus-url")
 }

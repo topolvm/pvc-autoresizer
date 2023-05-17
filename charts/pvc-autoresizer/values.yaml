@@ -4,16 +4,20 @@ image:
 
   # image.tag -- pvc-autoresizer image tag to use.
   # @default -- `{{ .Chart.AppVersion }}`
-  tag:  # 0.7.0
+  tag: # 0.7.0
 
   # image.pullPolicy -- pvc-autoresizer image pullPolicy.
-  pullPolicy:  # Always
+  pullPolicy: # Always
 
 controller:
   # controller.replicas -- Specify the number of replicas of the controller Pod.
   replicas: 1
 
   args:
+    useKubelet: true
+    # controller.args.use-kubelet -- Use kubelet to query volume stats. PrometheusUrl will be ignored
+    # Used as "--use-kubelet" option
+
     # controller.args.prometheusURL -- Specify Prometheus URL to query volume stats.
     # Used as "--prometheus-url" option
     prometheusURL: http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090
@@ -39,7 +43,7 @@ controller:
   podAnnotations: {}
 
   # controller.terminationGracePeriodSeconds -- Specify terminationGracePeriodSeconds.
-  terminationGracePeriodSeconds:  # 10
+  terminationGracePeriodSeconds: # 10
 
   # controller.tolerations -- Ensure pods are not scheduled on inappropriate nodes.
   tolerations: {}
@@ -80,9 +84,10 @@ podMonitor:
 
 webhook:
   # webhook.caBundle -- Specify the certificate to be used for AdmissionWebhook.
-  caBundle:  # Base64-encoded, PEM-encoded CA certificate that signs the server certificate.
+  caBundle: # Base64-encoded, PEM-encoded CA certificate that signs the server certificate.
   # webhook.existingCertManagerIssuer -- Specify the cert-manager issuer to be used for AdmissionWebhook.
-  existingCertManagerIssuer: {}
+  existingCertManagerIssuer:
+    {}
     # group: cert-manager.io
     # kind: Issuer
     # name: webhook-issuer

@@ -75,10 +75,19 @@ func subMain() error {
 	if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
 		return err
 	}
+	var pvcMetricsClient runners.MetricsClient
+	if !config.useKubelet {
+		pvcMetricsClient, err = runners.NewKubeletClient()
+	} else if config.prometheusURL != "" {
+		pvcMetricsClient, err = runners.NewPrometheusClient(config.prometheusURL)
 
-	promClient, err := runners.NewPrometheusClient(config.prometheusURL)
+	} else {
+		setupLog.Error(err, "enable use-kubelet or provide prometheus url")
+		return err
+	}
+
 	if err != nil {
-		setupLog.Error(err, "unable to initialize prometheus client")
+		setupLog.Error(err, "unable to initialize metrics client")
 		return err
 	}
 
@@ -87,7 +96,7 @@ func subMain() error {
 		return err
 	}
 
-	pvcAutoresizer := runners.NewPVCAutoresizer(promClient, mgr.GetClient(),
+	pvcAutoresizer := runners.NewPVCAutoresizer(pvcMetricsClient, mgr.GetClient(),
 		ctrl.Log.WithName("pvc-autoresizer"),
 		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
 	if err := mgr.Add(pvcAutoresizer); err != nil {

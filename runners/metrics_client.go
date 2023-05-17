@@ -34,6 +34,11 @@ func NewPrometheusClient(url string) (MetricsClient, error) {
 	}, nil
 }
 
+// NewKubeletClient returns a new kubelet client
+func NewKubeletClient() (MetricsClient, error) {
+	return &kubeletClient{}, nil
+}
+
 // MetricsClient is an interface for getting metrics
 type MetricsClient interface {
 	// GetMetrics returns volume stats metrics of PVCs

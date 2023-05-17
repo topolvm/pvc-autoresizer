@@ -28,6 +28,9 @@ spec:
           command:
             - /pvc-autoresizer
           args:
+          {{- if not .Values.controller.args.useKubelet }}
+            - --use-kubelet=false
+          {{- end }}
             - --prometheus-url={{ .Values.controller.args.prometheusURL }}
             - --interval={{ .Values.controller.args.interval }}
           {{- if .Values.controller.args.namespaces }}
