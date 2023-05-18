@@ -7,6 +7,16 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.8.0] - 2023-05-22
+
+### Changed
+
+- support Kubernetes v1.26 ([#194](https://github.com/topolvm/pvc-autoresizer/pull/194))
+
+### Contributors
+
+- @peng225
+
 ## [0.7.0] - 2023-04-05
 
 ### Added
@@ -237,7 +247,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.5.0...v0.6.0
