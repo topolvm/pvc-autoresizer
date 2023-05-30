@@ -14,9 +14,9 @@ controller:
   replicas: 1
 
   args:
-    useKubelet: true
-    # controller.args.use-kubelet -- Use kubelet to query volume stats. PrometheusUrl will be ignored
-    # Used as "--use-kubelet" option
+    useK8sMetricsApi: false
+    # controller.args.useK8sMetricsApii -- Use K8s metrics API to query volume stats.
+    # Used as "--use-k8s-metrics-api" option
 
     # controller.args.prometheusURL -- Specify Prometheus URL to query volume stats.
     # Used as "--prometheus-url" option

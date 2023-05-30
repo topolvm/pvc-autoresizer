@@ -76,7 +76,7 @@ func subMain() error {
 		return err
 	}
 	var pvcMetricsClient runners.MetricsClient
-	if !config.useKubelet {
+	if config.useK8sMetricsApi {
 		pvcMetricsClient, err = runners.NewKubeletClient()
 	} else if config.prometheusURL != "" {
 		pvcMetricsClient, err = runners.NewPrometheusClient(config.prometheusURL)

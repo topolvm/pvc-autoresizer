@@ -3,8 +3,6 @@ package runners
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"net/url"
 
 	"github.com/pkg/errors"
 	dto "github.com/prometheus/client_model/go"
@@ -62,68 +60,57 @@ func (c *kubeletClient) GetMetrics(ctx context.Context) (map[types.NamespacedNam
 }
 
 func getPVCUsage(clientset *kubernetes.Clientset, nodeName string, pvcUsage map[types.NamespacedName]*VolumeStats, ctx context.Context) error {
-	proxyURL := fmt.Sprintf("/api/v1/nodes/%s/proxy/metrics", nodeName)
-	reqURL, err := url.Parse(proxyURL)
-	if err != nil {
-		return errors.Wrap(err, "failed to create HTTP request")
-	}
-	req := clientset.CoreV1().RESTClient().Get().
-		Namespace("").
+	// make the request to the api /metrics endpoint and handle the response
+	req := clientset.
+		CoreV1().
+		RESTClient().
+		Get().
 		Resource("nodes").
 		Name(nodeName).
-		SubResource(reqURL.String()).
-		Param("timeout", "5s")
-
-	// make the request to the kubelet and handle the response
-	resp := req.Do(ctx)
-
-	if resp.Error() != nil {
-		return errors.Errorf("failed to get stats from kubelet on node %s: HTTP status code %d", nodeName, resp.StatusCode)
-	} else {
-		parser := expfmt.TextParser{}
-		respBody, err := resp.Raw()
-		if err != nil {
-			return errors.Wrapf(err, "failed to get kubelet response on node %s", nodeName)
-		}
-		metricFamilies, err := parser.TextToMetricFamilies(bytes.NewReader(respBody))
-		if err != nil {
-			return errors.Wrapf(err, "failed to read response body from kubelet on node %s", nodeName)
-		}
-
-		//volumeAvailableQuery
-		if gauge, ok := metricFamilies[volumeAvailableQuery]; ok {
-			for _, m := range gauge.Metric {
-				pvcName, value := parseMetric(m)
-				pvcUsage[pvcName] = new(VolumeStats)
-				pvcUsage[pvcName].AvailableBytes = int64(value)
-			}
-		}
-		//volumeCapacityQuery
-		if gauge, ok := metricFamilies[volumeCapacityQuery]; ok {
-			for _, m := range gauge.Metric {
-				pvcName, value := parseMetric(m)
-				pvcUsage[pvcName].CapacityBytes = int64(value)
-			}
-		}
-
-		// inodesAvailableQuery
-		if gauge, ok := metricFamilies[inodesAvailableQuery]; ok {
-			for _, m := range gauge.Metric {
-				pvcName, value := parseMetric(m)
-				pvcUsage[pvcName].AvailableInodeSize = int64(value)
-			}
-		}
-
-		// inodesCapacityQuery
-		if gauge, ok := metricFamilies[inodesCapacityQuery]; ok {
-			for _, m := range gauge.Metric {
-				pvcName, value := parseMetric(m)
-				pvcUsage[pvcName].CapacityInodeSize = int64(value)
-			}
-		}
-
-		return nil
+		SubResource("proxy").
+		Suffix("metrics")
+	respBody, err := req.DoRaw(ctx)
+	if err != nil {
+		return errors.Errorf("failed to get stats from kubelet on node %s: with error %s", nodeName, err)
 	}
+	parser := expfmt.TextParser{}
+	metricFamilies, err := parser.TextToMetricFamilies(bytes.NewReader(respBody))
+	if err != nil {
+		return errors.Wrapf(err, "failed to read response body from kubelet on node %s", nodeName)
+	}
+
+	//volumeAvailableQuery
+	if gauge, ok := metricFamilies[volumeAvailableQuery]; ok {
+		for _, m := range gauge.Metric {
+			pvcName, value := parseMetric(m)
+			pvcUsage[pvcName] = new(VolumeStats)
+			pvcUsage[pvcName].AvailableBytes = int64(value)
+		}
+	}
+	//volumeCapacityQuery
+	if gauge, ok := metricFamilies[volumeCapacityQuery]; ok {
+		for _, m := range gauge.Metric {
+			pvcName, value := parseMetric(m)
+			pvcUsage[pvcName].CapacityBytes = int64(value)
+		}
+	}
+
+	// inodesAvailableQuery
+	if gauge, ok := metricFamilies[inodesAvailableQuery]; ok {
+		for _, m := range gauge.Metric {
+			pvcName, value := parseMetric(m)
+			pvcUsage[pvcName].AvailableInodeSize = int64(value)
+		}
+	}
+
+	// inodesCapacityQuery
+	if gauge, ok := metricFamilies[inodesCapacityQuery]; ok {
+		for _, m := range gauge.Metric {
+			pvcName, value := parseMetric(m)
+			pvcUsage[pvcName].CapacityInodeSize = int64(value)
+		}
+	}
+	return nil
 }
 
 func parseMetric(m *dto.Metric) (pvcName types.NamespacedName, value uint64) {
