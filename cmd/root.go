@@ -50,7 +50,7 @@ func init() {
 	fs.StringSliceVar(&config.namespaces, "namespaces", []string{}, "Namespaces to resize PersistentVolumeClaims within. Empty for all namespaces.")
 	fs.DurationVar(&config.watchInterval, "interval", 1*time.Minute, "Interval to monitor pvc capacity.")
 	fs.StringVar(&config.prometheusURL, "prometheus-url", "", "Prometheus URL to query volume stats.")
-	fs.BoolVar(&config.useK8sMetricsApi, "use-k8s-metrics-api", true, "Use Kubelet to get volume data instead of prometheus")
+	fs.BoolVar(&config.useK8sMetricsApi, "use-k8s-metrics-api", false, "Use Kubernetes metrics API to get volume data instead of prometheus")
 	fs.BoolVar(&config.skipAnnotation, "no-annotation-check", false, "Skip annotation check for StorageClass")
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")
 }
