@@ -13,7 +13,7 @@ assignees: ''
 
 ## Before Check List
 
-There is a check list to confirm depending libraries or tools are released.
+There is a check list to confirm depending libraries or tools are released. The release notes for Kubernetes should also be checked.
 
 ### Must Update Dependencies
 
@@ -34,6 +34,10 @@ Must update Kubernetes with each new version of Kubernetes.
   - https://github.com/kubernetes-sigs/controller-tools/releases
 - [ ] topolvm
   - https://github.com/topolvm/topolvm/blob/main/CHANGELOG.md
+
+### Release notes check
+
+- [ ] Read the necessary release notes for Kubernetes.
 
 ## Checklist
 
