@@ -65,9 +65,12 @@ provisioner: topolvm.io
 allowVolumeExpansion: true
 ```
 
-To allow auto volume expansion, the PVC to be resized need to specify the upper limit of
-volume size with the annotation `resize.topolvm.io/storage_limit`. The PVC must have `volumeMode: Filesystem` too.
-You can also set the upper limit of volume size with `.spec.resources.limits.storage`, but it is deprecated. If both are present, the annotation takes precedence.
+To allow auto volume expansion, the PVC to be resized needs to specify the upper limit of
+volume size with the annotation `resize.topolvm.io/storage_limit`.
+The value of `resize.topolvm.io/storage_limit` should not be zero,
+or the annotation will be ignored.
+
+The PVC must have `volumeMode: Filesystem`, too.
 
 ```yaml
 kind: PersistentVolumeClaim

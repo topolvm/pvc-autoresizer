@@ -329,6 +329,5 @@ func PvcStorageLimit(pvc *corev1.PersistentVolumeClaim) (resource.Quantity, erro
 		return resource.ParseQuantity(annotation)
 	}
 
-	// Storage() returns 0 valued Quantity if Limits does not set
-	return *pvc.Spec.Resources.Limits.Storage(), nil
+	return *resource.NewQuantity(0, resource.BinarySI), nil
 }

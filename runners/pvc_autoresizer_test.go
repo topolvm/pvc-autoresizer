@@ -3,6 +3,7 @@ package runners
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -453,9 +454,7 @@ func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold
 	}
 
 	if limit != 0 {
-		pvc.Spec.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceStorage: *resource.NewQuantity(limit, resource.BinarySI),
-		}
+		pvc.Annotations[StorageLimitAnnotation] = strconv.FormatInt(limit, 10)
 	}
 
 	err := k8sClient.Create(ctx, &pvc)

@@ -120,7 +120,6 @@ spec:
 
 - `spec.storageClassName` should be put above StorageClass (in this case "topolvm-provisioner").
 - To allow automatic resizing, PVC must have `resize.topolvm.io/storage_limit` annotation.
-  We could have configured with `spec.resources.limits.storage`, but it is deprecated.
 - pvc-autoresizer increases PVC's `spec.resources.requests.storage` up to the given limits.
 - The threshold of free space is given by `resize.topolvm.io/threshold` annotation.
 - The threshold of free inodes is given by `resize.topolvm.io/inodes-threshold` annotation.
