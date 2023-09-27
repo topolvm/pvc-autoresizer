@@ -21,8 +21,6 @@ spec:
   resources:
     requests:
       storage: {{ .resourceRequest }}
-    limits:
-      storage: {{ .resourceLimit }}
   storageClassName: {{ .storageClassName }}
   volumeMode: {{ .volumeMode }}
 ---
