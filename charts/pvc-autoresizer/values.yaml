@@ -35,6 +35,9 @@ controller:
       cpu: 100m
       memory: 20Mi
 
+  # controller.podLabels -- Pod labels to be added to controller pods.
+  podLabels: {}
+
   # controller.podAnnotations -- Annotations to be added to controller pods.
   podAnnotations: {}
 

@@ -14,6 +14,9 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: pvc-autoresizer
+        {{- with .Values.controller.podLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- if .Values.controller.podAnnotations}}
       annotations:
         {{- toYaml .Values.controller.podAnnotations | nindent 8 }}
