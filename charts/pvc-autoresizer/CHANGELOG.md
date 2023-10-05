@@ -7,6 +7,20 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.9.0] - 2023-10-05
+
+### Added
+
+- feat(pvc-autoresizer): add support to add new extraPodLabels ([#208](https://github.com/topolvm/pvc-autoresizer/pull/208))
+
+### Changed
+
+- appVersion was changed to 0.9.0.
+
+### Contributors
+
+- @tejlopes
+
 ## [0.8.1] - 2023-05-23
 
 ### Changed
@@ -123,7 +137,8 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 ## [0.2.0] - 2021-08-10
 - First release.
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.8.1...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.9.0...HEAD
+[0.9.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.8.1...pvc-autoresizer-chart-v0.9.0
 [0.8.1]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.8.0...pvc-autoresizer-chart-v0.8.1
 [0.8.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.7.0...pvc-autoresizer-chart-v0.8.0
 [0.7.0]: https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-v0.6.1...pvc-autoresizer-chart-v0.7.0
