@@ -7,6 +7,26 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.9.0] - 2023-10-04
+
+### Changed
+
+- Add an item to the check list for Kubernetes upgrade to ensure that t… ([#197](https://github.com/topolvm/pvc-autoresizer/pull/197))
+- prevent e2e test workflow from running when only updating documents ([#198](https://github.com/topolvm/pvc-autoresizer/pull/198))
+- add Ryotaro Banno to owners ([#201](https://github.com/topolvm/pvc-autoresizer/pull/201))
+- Use dependabot grouping feature ([#202](https://github.com/topolvm/pvc-autoresizer/pull/202))
+- drop `resources.limits.storage` support ([#204](https://github.com/topolvm/pvc-autoresizer/pull/204))
+  - **BREAKING**: The support of specifying the storage limit by `resources.limits.storage` field of PVCs has been dropped. Please use `resize.topolvm.io/storage_limit` annotation instead.
+- Refine exempt-issue-labels to ignore update kubernetes ([#205](https://github.com/topolvm/pvc-autoresizer/pull/205))
+- Replace cybozu/octoken-action with actions/create-github-app-token ([#206](https://github.com/topolvm/pvc-autoresizer/pull/206))
+- Bump the github-actions-update group with 1 update ([#209](https://github.com/topolvm/pvc-autoresizer/pull/209))
+
+### Contributors
+
+- @peng225
+- @llamerada-jp
+- @toshipp
+
 ## [0.8.0] - 2023-05-22
 
 ### Changed
@@ -247,7 +267,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.0...v0.6.1
