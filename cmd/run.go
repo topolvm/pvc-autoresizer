@@ -32,11 +32,6 @@ func init() {
 func subMain() error {
 	ctrl.SetLogger(zap.New(zap.UseDevMode(config.development)))
 
-	var cacheFunc cache.NewCacheFunc
-	if len(config.namespaces) > 0 {
-		cacheFunc = cache.MultiNamespacedCacheBuilder(config.namespaces)
-	}
-
 	hookHost, portStr, err := net.SplitHostPort(config.webhookAddr)
 	if err != nil {
 		setupLog.Error(err, "invalid webhook addr")
@@ -55,7 +50,7 @@ func subMain() error {
 		Port:                    hookPort,
 		CertDir:                 config.certDir,
 		MetricsBindAddress:      config.metricsAddr,
-		NewCache:                cacheFunc,
+		Cache:                   cache.Options{Namespaces: config.namespaces},
 		HealthProbeBindAddress:  config.healthAddr,
 		LeaderElection:          true,
 		LeaderElectionID:        "49e22f61.topolvm.io",
@@ -95,11 +90,7 @@ func subMain() error {
 		return err
 	}
 
-	dec, err := admission.NewDecoder(scheme)
-	if err != nil {
-		setupLog.Error(err, "unable to create admission decoder")
-		return err
-	}
+	dec := admission.NewDecoder(scheme)
 	if err = hooks.SetupPersistentVolumeClaimWebhook(mgr, dec, ctrl.Log.WithName("hooks")); err != nil {
 		setupLog.Error(err, "unable to create PersistentVolumeClaim webhook")
 		return err

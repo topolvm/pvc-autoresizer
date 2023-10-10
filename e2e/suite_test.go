@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -68,7 +67,6 @@ func TestMtest(t *testing.T) {
 		t.Skip("Run under e2e/")
 		return
 	}
-	rand.Seed(time.Now().UnixNano())
 
 	RegisterFailHandler(Fail)
 
