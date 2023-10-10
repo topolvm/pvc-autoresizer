@@ -68,19 +68,14 @@ The following tools do not depend on other software, use latest versions.
   - To change the version, edit the following files.
   - `.github/workflows/helm.yaml`
   - `Makefile`
+- [chart-testing](https://github.com/helm/chart-testing/releases)
+  - To change the version, edit `Makefile`.
 - [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/releases)
   - To change the version, edit `e2e/Makefile`.
 
 #### Depending modules
 
-Read `kubernetes' go.mod`(https://github.com/kubernetes/kubernetes/blob/\<upgrading Kubernetes release version\>/go.mod), and update the `prometheus/*` modules. Here is the example to update `prometheus/client_golang`.
-
-```
-$ VERSION=v1.12.1
-$ go get github.com/prometheus/client_golang@$VERSION
-```
-
-Then, please tidy up the dependencies.
+Please tidy up the dependencies.
 
 ```bash
 $ go mod tidy
