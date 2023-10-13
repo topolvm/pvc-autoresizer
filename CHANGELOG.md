@@ -7,6 +7,18 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+## [0.10.0] - 2023-10-13
+
+### Changed
+
+- Support kubernetes 1.27 ([#214](https://github.com/topolvm/pvc-autoresizer/pull/214))
+- let output metrics before the first event when PVC exists ([#212](https://github.com/topolvm/pvc-autoresizer/pull/212))
+
+### Contributors
+
+- @llamerada-jp
+- @toshipp
+
 ## [0.9.0] - 2023-10-04
 
 ### Changed
@@ -267,7 +279,8 @@ This is the first release.
 - @moricho
 - @chez-shanpu
 
-[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/topolvm/pvc-autoresizer/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/topolvm/pvc-autoresizer/compare/v0.6.1...v0.7.0
