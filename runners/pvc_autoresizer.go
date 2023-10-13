@@ -127,6 +127,12 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			} else if !isTarget {
 				continue
 			}
+
+			// To output the metric even if some events do not occur, we call SpecifyLabels() here.
+			metrics.ResizerSuccessResizeTotal.SpecifyLabels(pvc.Name, pvc.Namespace)
+			metrics.ResizerFailedResizeTotal.SpecifyLabels(pvc.Name, pvc.Namespace)
+			metrics.ResizerLimitReachedTotal.SpecifyLabels(pvc.Name, pvc.Namespace)
+
 			namespacedName := types.NamespacedName{
 				Namespace: pvc.Namespace,
 				Name:      pvc.Name,
@@ -144,6 +150,7 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 				log.Info("failed to get volume stats")
 				continue
 			}
+
 			err = w.resize(ctx, &pvc, vsMap[namespacedName])
 			if err != nil {
 				metrics.ResizerFailedResizeTotal.Increment(pvc.Name, pvc.Namespace)
