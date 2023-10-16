@@ -27,7 +27,7 @@ jobs:
 
       - name: "Setup helm-docs"
         run: |
-          HELM_DOCS_VERSION="1.11.2"
+          HELM_DOCS_VERSION="1.11.3"
           OS=$(uname)
           curl -sSfL https://github.com/norwoodj/helm-docs/releases/download/v"${HELM_DOCS_VERSION}"/helm-docs_"${HELM_DOCS_VERSION}"_${OS}_x86_64.tar.gz \
             | tar zx -C /tmp
