@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.3.0/).
 
+**Note: See the [release notes](https://github.com/topolvm/pvc-autoresizer/releases) for changes after v0.10.0.**
+
 ## [Unreleased]
 
 ## [0.10.0] - 2023-10-16
