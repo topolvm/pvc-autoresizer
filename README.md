@@ -19,7 +19,6 @@ Our supported platforms are:
   - [NodeGetVolumeStats](https://github.com/container-storage-interface/spec/blob/master/spec.md#nodegetvolumestats)
 
 Container images are available on [ghcr.io](https://github.com/topolvm/pvc-autoresizer/pkgs/container/pvc-autoresizer).  
-**Please note that [the images on quay.io](https://quay.io/repository/topolvm/pvc-autoresizer) are currently deprecated and will no longer be available in the future.**
 
 ## Getting Started
 
