@@ -16,9 +16,9 @@ jobs:
     runs-on: "ubuntu-20.04"
     strategy:
       matrix:
-        test_kubernetes_target: ["current", "prev", "prev2"]
+        kubernetes_versions: ["1.27.3", "1.26.6", "1.25.11"]
     env:
-      TEST_KUBERNETES_TARGET: "${{ matrix.test_kubernetes_target }}"
+      KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
