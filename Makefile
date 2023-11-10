@@ -11,6 +11,9 @@ CRD_OPTIONS = "crd:crdVersions=v1"
 
 BINDIR := $(shell pwd)/bin
 CONTROLLER_GEN := $(BINDIR)/controller-gen
+KUBECTL := $(BINDIR)/kubectl
+KUSTOMIZE := $(BINDIR)/kustomize
+
 KUBEBUILDER_ASSETS := $(BINDIR)
 export KUBEBUILDER_ASSETS
 
@@ -90,8 +93,8 @@ run: manifests generate ## Run a controller from your host.
 
 .PHONY: deploy
 deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd $(shell pwd)/config/default && $(BINDIR)/kustomize edit set image pvc-autoresizer=$(IMAGE_PREFIX)pvc-autoresizer:devel
-	$(BINDIR)/kustomize build $(shell pwd)/config/default | kubectl apply -f -
+	cd $(shell pwd)/config/default && $(KUSTOMIZE) edit set image pvc-autoresizer=$(IMAGE_PREFIX)pvc-autoresizer:devel
+	$(KUSTOMIZE) build $(shell pwd)/config/default | $(KUBECTL) apply -f -
 
 .PHONY: image
 image: ## Build docker image.
@@ -152,8 +155,8 @@ $(SETUP_ENVTEST):
 setup: # Setup tools
 	mkdir -p bin
 	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CONTROLLER_TOOLS_VERSION)
-	curl -o $(BINDIR)/kubectl -sSfL https://storage.googleapis.com/kubernetes-release/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
-	chmod a+x $(BINDIR)/kubectl
+	curl -o $(KUBECTL) -sSfL https://storage.googleapis.com/kubernetes-release/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
+	chmod a+x $(KUBECTL)
 	GOBIN=$(BINDIR) go install github.com/norwoodj/helm-docs/cmd/helm-docs@v$(HELM_DOCS_VERSION)
 	curl -sSfL https://get.helm.sh/helm-v$(HELM_VERSION)-linux-amd64.tar.gz \
 	  | tar xvz -C $(BINDIR) --strip-components 1 linux-amd64/helm
