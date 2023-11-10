@@ -20,7 +20,7 @@ Basically, we should pay attention to breaking changes and security fixes first.
 
 Choose the [TopoLVM](https://github.com/topolvm/topolvm/releases) version that supports target Kubernetes version.
 
-To change the version, edit `e2e/Makefile`. If TopoLVM which supports the target Kubernetes version has not released yet, you can specify the commit hash instead of the tag.
+To change the version, edit `versions.mk`. If TopoLVM which supports the target Kubernetes version has not released yet, you can specify the commit hash instead of the tag.
 
 #### Kubernetes
 
@@ -28,9 +28,9 @@ Choose the next version and check the [release note](https://kubernetes.io/docs/
 
 To change the version, edit the following files.
 
-- `Makefile`
+- `.github/workflows/e2e.yaml`
 - `README.md`
-- `e2e/Makefile`
+- `versions.mk`
 
 We should also update go.mod by the following commands. Please note that Kubernetes v1 corresponds with v0 for the release tags. For example, v1.17.2 corresponds with the v0.17.2 tag.
 
@@ -46,7 +46,7 @@ $ VERSION=<upgrading controller-runtime version>
 $ go get sigs.k8s.io/controller-runtime@v${VERSION}
 ```
 
-Read the [`controller-tools`'s release note](https://github.com/kubernetes-sigs/controller-tools/releases), and update to the newest version that is compatible with all supported kubernetes versions. If there are breaking changes, we should decide how to manage these changes. To change the version, edit `Makefile`. 
+Read the [`controller-tools`'s release note](https://github.com/kubernetes-sigs/controller-tools/releases), and update to the newest version that is compatible with all supported kubernetes versions. If there are breaking changes, we should decide how to manage these changes. To change the version, edit `versions.mk`. 
 
 #### Go
 
@@ -54,24 +54,17 @@ Choose the same version of Go [used by the latest Kubernetes](https://github.com
 
 Edit the following files.
 
-- go.mod
-- Dockerfile
+- `go.mod`
+- `Dockerfile`
 
 #### Depending tools
 
 The following tools do not depend on other software, use latest versions.
+To change their versions, edit `versions.mk`.
 - [helm](https://github.com/helm/helm/releases)
-  - To change the version, edit the following files.
-    - `.github/workflows/helm.yaml`
-    - `Makefile`   
 - [helm-docs](https://github.com/norwoodj/helm-docs/releases)
-  - To change the version, edit the following files.
-  - `.github/workflows/helm.yaml`
-  - `Makefile`
 - [chart-testing](https://github.com/helm/chart-testing/releases)
-  - To change the version, edit `Makefile`.
 - [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/releases)
-  - To change the version, edit `e2e/Makefile`.
 
 #### Depending modules
 
@@ -90,4 +83,4 @@ $ make generate
 
 #### Final check
 
-`git grep <the kubernetes version which support will be dropped>`, `git grep image:`, and `git grep -i VERSION` might help to avoid overlooking necessary changes.
+`git grep <the kubernetes version which support will be dropped>`, `git grep image:`, `git grep -i VERSION` and looking `versions.mk` might help to avoid overlooking necessary changes.
