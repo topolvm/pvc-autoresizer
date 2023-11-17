@@ -4,8 +4,6 @@ KIND_CLUSTER_NAME := autoresizer-e2e
 
 export KUBERNETES_VERSION
 
-GINKGO_VERSION := $(shell awk '/github.com\/onsi\/ginkgo\/v2/ {print substr($$2, 2)}' ../go.mod)
-
 SUDO := sudo
 BINDIR := $(shell pwd)/../bin
 TMPDIR := /tmp/autoresizer
