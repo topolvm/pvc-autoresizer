@@ -1,0 +1,13 @@
+image:
+  repository: pvc-autoresizer
+  tag: devel
+  pullPolicy: Never
+
+controller:
+  args:
+    prometheusURL: http://prometheus-k8s.monitoring.svc:9090
+    interval: 1s
+
+webhook:
+  certificate:
+    generate: true

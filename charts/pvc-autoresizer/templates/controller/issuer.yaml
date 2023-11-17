@@ -1,5 +1,6 @@
 {{- if not .Values.webhook.caBundle }}
 {{- if not .Values.webhook.existingCertManagerIssuer }}
+{{- if not .Values.webhook.certificate.generate }}
 # Create a selfsigned Issuer, in order to create a root CA certificate for
 # signing webhook serving certificates
 apiVersion: cert-manager.io/v1
@@ -23,5 +24,6 @@ metadata:
 spec:
   ca:
     secretName: {{ template "pvc-autoresizer.fullname" . }}-webhook-ca
+{{- end }}
 {{- end }}
 {{- end }}

@@ -33,9 +33,16 @@ init-cluster: launch-kind autoresizer.img kube-prometheus
 	$(HELM) repo add jetstack https://charts.jetstack.io
 	$(HELM) repo update
 	$(HELM) dependency build ../charts/pvc-autoresizer/
-	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../charts/pvc-autoresizer/ -f manifests/values/values.yaml
 	# storageclass for test
 	$(KUBECTL) apply -f manifests/common/storageclass.yaml
+
+.PHONY: init-app-with-cert-manager
+init-app-with-cert-manager: init-cluster
+	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../charts/pvc-autoresizer/ -f manifests/values/values.yaml
+
+.PHONY: init-app-without-cert-manager
+init-app-without-cert-manager: init-cluster
+	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../charts/pvc-autoresizer/ -f manifests/values/values-without-cert-manager.yaml
 
 .PHONY: test
 test:

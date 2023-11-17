@@ -82,6 +82,11 @@ podMonitor:
   additionalLabels: {}
 
 webhook:
+  certificate:
+    # webhook.certificate.generate --  Creates a self-signed certificate for 10 years. Once the validity period has expired, simply delete the controller secret and execute helm upgrade.
+    generate: false
+    # webhook.certificate.dnsDomain --  Cluster DNS domain (required for requesting TLS certificates).
+    dnsDomain: cluster.local
   # webhook.caBundle -- Specify the certificate to be used for AdmissionWebhook.
   caBundle:  # Base64-encoded, PEM-encoded CA certificate that signs the server certificate.
   # webhook.existingCertManagerIssuer -- Specify the cert-manager issuer to be used for AdmissionWebhook.

@@ -78,4 +78,5 @@ spec:
       volumes:
         - name: certs
           secret:
+            defaultMode: 420
             secretName: {{ template "pvc-autoresizer.fullname" . }}-controller
