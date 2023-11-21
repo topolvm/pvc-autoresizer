@@ -7,6 +7,12 @@ KUBE_PROMETHEUS_VERSION := 0.13.0
 KUBERNETES_VERSION ?= 1.27.3
 TOPOLVM_VERSION := topolvm-chart-v12.0.0
 
+ENVTEST_K8S_VERSION := $(shell echo $(KUBERNETES_VERSION) | cut -d "." -f 1-2)
+
+# Tools versions which are defined in go.mod
+SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+GINKGO_VERSION := $(shell awk '/github.com\/onsi\/ginkgo\/v2/ {print substr($$2, 2)}' $(SELF_DIR)/go.mod)
+
 ifeq ($(KUBERNETES_VERSION),1.27.3)
 KIND_NODE_IMAGE=kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72
 else ifeq ($(KUBERNETES_VERSION),1.26.6)

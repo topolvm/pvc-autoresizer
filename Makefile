@@ -1,8 +1,6 @@
 # Makefile for pvc-autoresizer
 include versions.mk
 
-ENVTEST_K8S_VERSION := $(shell echo $(KUBERNETES_VERSION) | cut -d "." -f 1-2)
-
 ## DON'T EDIT BELOW THIS LINE
 GOOS := $(shell go env GOOS)
 GOARCH := $(shell go env GOARCH)
