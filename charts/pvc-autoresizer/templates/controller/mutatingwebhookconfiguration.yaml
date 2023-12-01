@@ -1,12 +1,13 @@
 {{- if .Values.webhook.pvcMutatingWebhook.enabled }}
+{{- $tls := fromYaml ( include "pvc-autoresizer.webhookCerts" . ) }}
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
+  {{- if and (not .Values.webhook.caBundle) (not .Values.webhook.certificate.generate) }}
   annotations:
-    {{- if not .Values.webhook.caBundle }}
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ template "pvc-autoresizer.fullname" . }}-controller
-    {{- end }}
+  {{- end }}
   labels:
     {{- include "pvc-autoresizer.labels" . | nindent 4 }}
   name: '{{ template "pvc-autoresizer.fullname" . }}-mutating-webhook-configuration'
@@ -14,8 +15,10 @@ webhooks:
 - admissionReviewVersions:
   - v1
   clientConfig:
-    {{- with .Values.webhook.caBundle }}
-    caBundle: {{ . }}
+    {{- if .Values.webhook.caBundle }}
+    caBundle: {{ .Values.webhook.caBundle }}
+    {{- else if .Values.webhook.certificate.generate }}
+    caBundle: {{ $tls.caCert }}
     {{- end }}
     service:
       name: '{{ template "pvc-autoresizer.fullname" . }}-controller'
@@ -33,4 +36,20 @@ webhooks:
     resources:
     - persistentvolumeclaims
   sideEffects: None
+
+{{- if .Values.webhook.certificate.generate }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ template "pvc-autoresizer.fullname" . }}-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "pvc-autoresizer.labels" . | nindent 4 }}
+type: kubernetes.io/tls
+data:
+  ca.crt: {{ $tls.caCert }}
+  tls.crt: {{ $tls.clientCert }}
+  tls.key: {{ $tls.clientKey }}
+{{- end }}
 {{- end }}
