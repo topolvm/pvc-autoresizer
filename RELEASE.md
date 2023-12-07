@@ -59,7 +59,7 @@ Bump version
     $ sed -i -s "s/newTag:.*/newTag: ${VERSION}/" config/default/kustomization.yaml
     ```
 
-4. Change `TOPOLVM_VERSION` in `e2e/Makefile` to the latest topolvm chart release tag. (e.g. topolvm-chart-vX.Y.Z)
+4. Change `TOPOLVM_VERSION` in `versions.mk` to the latest topolvm chart release tag. (e.g. topolvm-chart-vX.Y.Z)
 5. Commit the change and create a pull request:
 
     ```console
