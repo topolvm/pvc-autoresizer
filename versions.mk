@@ -5,7 +5,7 @@ HELM_VERSION := 3.13.0
 KUBE_PROMETHEUS_VERSION := 0.13.0
 # It is set by CI using the environment variable, use conditional assignment.
 KUBERNETES_VERSION ?= 1.27.3
-TOPOLVM_VERSION := topolvm-chart-v12.0.0
+TOPOLVM_VERSION := topolvm-chart-v13.0.0
 
 ENVTEST_K8S_VERSION := $(shell echo $(KUBERNETES_VERSION) | cut -d "." -f 1-2)
 

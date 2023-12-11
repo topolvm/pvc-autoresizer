@@ -10,14 +10,6 @@ kubeadmConfigPatches:
   kubernetesVersion: "v@KUBERNETES_VERSION@"
   networking:
     serviceSubnet: 10.0.0.0/16
-  scheduler:
-    extraVolumes:
-      - name: "config"
-        hostPath: /mnt/host/scheduler
-        mountPath: /var/lib/scheduler
-        readOnly: true
-    extraArgs:
-      config: /var/lib/scheduler/scheduler-config.yaml
 - |
   apiVersion: "kubeadm.k8s.io/v1beta3"
   kind: JoinConfiguration
@@ -29,8 +21,6 @@ kubeadmConfigPatches:
 nodes:
 - role: control-plane
   extraMounts:
-    - containerPath: /mnt/host/scheduler
-      hostPath: /tmp/autoresizer/scheduler
     - containerPath: /var/lib/kubelet
       hostPath: /tmp/autoresizer/controller
       propagation: Bidirectional
