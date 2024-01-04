@@ -21,7 +21,7 @@ jobs:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
       - run: make -C e2e setup
@@ -38,7 +38,7 @@ jobs:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
       - run: make -C e2e setup
