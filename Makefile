@@ -19,7 +19,6 @@ IMAGE_TAG ?= latest
 IMAGE_PREFIX ?= ghcr.io/topolvm/
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
-# This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
@@ -79,15 +78,31 @@ test: manifests generate tools fmt vet ## Run tests.
 	source <($(SETUP_ENVTEST) use -p env $(ENVTEST_K8S_VERSION)); \
 		go test -race -v -count 1 ./... --timeout=60s
 
+GOLANGCI_LINT = $(shell pwd)/bin/golangci-lint
+GOLANGCI_LINT_VERSION ?= v1.54.2
+golangci-lint:
+	@[ -f $(GOLANGCI_LINT) ] || { \
+	set -e ;\
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell dirname $(GOLANGCI_LINT)) $(GOLANGCI_LINT_VERSION) ;\
+	}
+
+.PHONY: lint
+lint: golangci-lint ## Run golangci-lint linter & yamllint
+	$(GOLANGCI_LINT) run
+
+.PHONY: lint-fix
+lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
+	$(GOLANGCI_LINT) run --fix
+
 ##@ Build
 
 .PHONY: build
 build: generate-api ## Build manager binary.
-	go build -o $(BINDIR)/manager main.go
+	go build -o $(BINDIR)/manager ./cmd/*
 
 .PHONY: run
 run: manifests generate ## Run a controller from your host.
-	go run ./main.go
+	go run ./cmd/main.go
 
 .PHONY: deploy
 deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
