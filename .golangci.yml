@@ -16,6 +16,10 @@ issues:
       linters:
         - dupl
         - lll
+    # add custom rules to allow the same string to be used multiple times to simplify writing the test
+    - path: "test/*"
+      linters:
+        - goconst
 linters:
   disable-all: true
   enable:

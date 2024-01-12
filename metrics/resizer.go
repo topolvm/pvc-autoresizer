@@ -92,10 +92,18 @@ var (
 		Help:      "counter that indicates how many storage limits were reached.",
 	}, []string{"persistentvolumeclaim", "namespace"})
 
-	ResizerSuccessResizeTotal *resizerSuccessResizeTotalAdapter = &resizerSuccessResizeTotalAdapter{metric: *resizerSuccessResizeTotal}
-	ResizerFailedResizeTotal  *resizerFailedResizeTotalAdapter  = &resizerFailedResizeTotalAdapter{metric: *resizerFailedResizeTotal}
-	ResizerLoopSecondsTotal   *resizerLoopSecondsTotalAdapter   = &resizerLoopSecondsTotalAdapter{metric: resizerLoopSecondsTotal}
-	ResizerLimitReachedTotal  *resizerLimitReachedTotalAdapter  = &resizerLimitReachedTotalAdapter{metric: *resizerLimitReachedTotal}
+	ResizerSuccessResizeTotal *resizerSuccessResizeTotalAdapter = &resizerSuccessResizeTotalAdapter{
+		metric: *resizerSuccessResizeTotal,
+	}
+	ResizerFailedResizeTotal *resizerFailedResizeTotalAdapter = &resizerFailedResizeTotalAdapter{
+		metric: *resizerFailedResizeTotal,
+	}
+	ResizerLoopSecondsTotal *resizerLoopSecondsTotalAdapter = &resizerLoopSecondsTotalAdapter{
+		metric: resizerLoopSecondsTotal,
+	}
+	ResizerLimitReachedTotal *resizerLimitReachedTotalAdapter = &resizerLimitReachedTotalAdapter{
+		metric: *resizerLimitReachedTotal,
+	}
 )
 
 func registerResizerMetrics() {

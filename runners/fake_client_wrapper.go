@@ -18,5 +18,5 @@ func NewFakeClientWrapper(c client.Client) client.Client {
 }
 
 func (c *fakeClientWrapper) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
-	return errors.New("occured fake error")
+	return errors.New("occurred fake error")
 }

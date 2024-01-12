@@ -136,7 +136,11 @@ func getMetricsFamily() (map[string]*dto.MetricFamily, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logf.Log.Error(err, "failed to close response body")
+		}
+	}()
 
 	var parser expfmt.TextParser
 	return parser.TextToMetricFamilies(resp.Body)

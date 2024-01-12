@@ -26,7 +26,8 @@ var config struct {
 var rootCmd = &cobra.Command{
 	Use:   "pvc-autoresizer",
 	Short: "PVC Autoresizer",
-	Long:  `pvc-autoresizer is an automatic volume resizer that edits PVCs if they have less than the specified amount of free filesystem capacity.`,
+	Long: `pvc-autoresizer is an automatic volume resizer that edits PVCs if they have less than the specified ` +
+		`amount of free filesystem capacity.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		return subMain()
@@ -46,7 +47,8 @@ func init() {
 	fs.StringVar(&config.webhookAddr, "webhook-addr", ":9443", "Listen address for the webhook endpoint")
 	fs.StringVar(&config.metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	fs.StringVar(&config.healthAddr, "health-addr", ":8081", "The address of health/readiness probes.")
-	fs.StringSliceVar(&config.namespaces, "namespaces", []string{}, "Namespaces to resize PersistentVolumeClaims within. Empty for all namespaces.")
+	fs.StringSliceVar(&config.namespaces, "namespaces", []string{},
+		"Namespaces to resize PersistentVolumeClaims within. Empty for all namespaces.")
 	fs.DurationVar(&config.watchInterval, "interval", 1*time.Minute, "Interval to monitor pvc capacity.")
 	fs.StringVar(&config.prometheusURL, "prometheus-url", "", "Prometheus URL to query volume stats.")
 	fs.BoolVar(&config.skipAnnotation, "no-annotation-check", false, "Skip annotation check for StorageClass")

@@ -297,7 +297,8 @@ var _ = Describe("test resizer", func() {
 				inodesThreshold := tc.inodesThreshold
 
 				description := fmt.Sprintf(
-					"%s: pvcSizeGi=%d expectSizeGi=%d threshold=%q availableByte=%d availableInodeSize=%d capacityInodeSize=%d inodesThreshold=%q",
+					"%s: pvcSizeGi=%d expectSizeGi=%d threshold=%q availableByte=%d availableInodeSize=%d "+
+						"capacityInodeSize=%d inodesThreshold=%q",
 					tc.description,
 					tc.pvcSizeGi,
 					tc.expectSizeGi,
@@ -308,7 +309,8 @@ var _ = Describe("test resizer", func() {
 					inodesThreshold)
 
 				It(description, func() {
-					createPVC(ctx, pvcNS, pvcName, scName, threshold, inodesThreshold, increase, pvcSizeGi<<30, limit, pvcCapSizeGi<<30, volumeMode)
+					createPVC(ctx, pvcNS, pvcName, scName, threshold, inodesThreshold, increase, pvcSizeGi<<30, limit,
+						pvcCapSizeGi<<30, volumeMode)
 					setMetrics(pvcNS, pvcName, availableByte, pvcSizeGi<<30, availableInodeSize, capacityInodeSize)
 					testFunc := func() error {
 						var pvc corev1.PersistentVolumeClaim
@@ -339,7 +341,8 @@ var _ = Describe("test resizer", func() {
 				ctx := context.Background()
 				pvcNS := "default"
 				pvcName := "test-resize-metrics"
-				createPVC(ctx, pvcNS, pvcName, scName, "50%", "", "20Gi", 10<<30, 100<<30, 10<<30, corev1.PersistentVolumeFilesystem)
+				createPVC(ctx, pvcNS, pvcName, scName, "50%", "", "20Gi", 10<<30, 100<<30, 10<<30,
+					corev1.PersistentVolumeFilesystem)
 				By("running resize", func() {
 					setMetrics(pvcNS, pvcName, 3<<30, 7<<30, 2050246, 2050246)
 					Eventually(func() error {
@@ -388,7 +391,7 @@ var _ = Describe("test resizer", func() {
 					}
 					Expect(val2).NotTo(Equal(0))
 
-					// This metrics ouput from the pvcAutoresizer with FakeClientWrapper
+					// This metrics output from the pvcAutoresizer with FakeClientWrapper
 					mf, ok = mfs["pvcautoresizer_failed_resize_total"]
 					Expect(ok).To(BeTrue())
 					var val3 int
@@ -403,7 +406,7 @@ var _ = Describe("test resizer", func() {
 					}
 					Expect(val3).NotTo(Equal(0))
 
-					// This metrics ouput from the pvcAutoresizer with FakeClientWrapper
+					// This metrics output from the pvcAutoresizer with FakeClientWrapper
 					mf, ok = mfs["pvcautoresizer_kubernetes_client_fail_total"]
 					Expect(ok).To(BeTrue())
 					var val4 int
@@ -423,7 +426,8 @@ var _ = Describe("test resizer", func() {
 	})
 })
 
-func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold, increase string, request, limit, capacity int64, mode corev1.PersistentVolumeMode) {
+func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold, increase string,
+	request, limit, capacity int64, mode corev1.PersistentVolumeMode) {
 	pvc := corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,

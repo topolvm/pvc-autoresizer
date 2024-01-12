@@ -31,7 +31,9 @@ var (
 		Help:      "counter that indicates how many API requests to kube-api server are failed.",
 	})
 
-	KubernetesClientFailTotal *KubernetesClientFailTotalAdapter = &KubernetesClientFailTotalAdapter{metric: kubernetesClientFailTotal}
+	KubernetesClientFailTotal *KubernetesClientFailTotalAdapter = &KubernetesClientFailTotalAdapter{
+		metric: kubernetesClientFailTotal,
+	}
 )
 
 func registerKubernetesClientMetrics() {

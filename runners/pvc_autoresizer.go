@@ -29,7 +29,8 @@ const storageClassNameIndexKey = ".spec.storageClassName"
 const logLevelWarn = 3
 
 // NewPVCAutoresizer returns a new pvcAutoresizer struct
-func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, interval time.Duration, recorder record.EventRecorder) manager.Runnable {
+func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, interval time.Duration,
+	recorder record.EventRecorder) manager.Runnable {
 
 	return &pvcAutoresizer{
 		metricsClient: mc,
@@ -172,7 +173,8 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		return nil
 	}
 
-	inodesThreshold, err := convertSize(pvc.Annotations[ResizeInodesThresholdAnnotation], vs.CapacityInodeSize, DefaultInodesThreshold)
+	annotation := pvc.Annotations[ResizeInodesThresholdAnnotation]
+	inodesThreshold, err := convertSize(annotation, vs.CapacityInodeSize, DefaultInodesThreshold)
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert threshold annotation", "error", err.Error())
 		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
@@ -280,7 +282,8 @@ func SetupIndexer(mgr ctrl.Manager, skipAnnotationCheck bool) error {
 		return err
 	}
 
-	err = mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.PersistentVolumeClaim{}, storageClassNameIndexKey, indexByStorageClassName)
+	err = mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.PersistentVolumeClaim{}, storageClassNameIndexKey,
+		indexByStorageClassName)
 	if err != nil {
 		return err
 	}

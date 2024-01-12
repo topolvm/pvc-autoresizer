@@ -169,24 +169,28 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := "2Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, storageLimit, "", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, storageLimit,
+			"", nil)
 
 		By("create a file with a size that does not exceed threshold disk usage")
-		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--", "fallocate", "-l", "400M", "/test1/test1.txt")
+		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
+			"fallocate", "-l", "400M", "/test1/test1.txt")
 		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 
 		By("checking the disk does not resize")
 		checkDoesNotResize(pvcName, request)
 
 		By("add a file with a size that exceed threshold disk usage")
-		stdout, stderr, err = kubectl("-n", testNamespace, "exec", pvcName, "--", "fallocate", "-l", "200M", "/test1/test2.txt")
+		stdout, stderr, err = kubectl("-n", testNamespace, "exec", pvcName, "--",
+			"fallocate", "-l", "200M", "/test1/test2.txt")
 		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 
 		By("checking the disk resizing")
 		checkDiskResize(pvcName, "2Gi", true)
 
 		By("add a file with a size that exceed threshold disk usage too")
-		stdout, stderr, err = kubectl("-n", testNamespace, "exec", pvcName, "--", "fallocate", "-l", "1G", "/test1/test3.txt")
+		stdout, stderr, err = kubectl("-n", testNamespace, "exec", pvcName, "--",
+			"fallocate", "-l", "1G", "/test1/test3.txt")
 		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 
 		By("checking the disk is not resized when the PVC size reaches the limit")
@@ -202,10 +206,12 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := ""
 		storageLimit := "11Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, storageLimit, "", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, storageLimit,
+			"", nil)
 
 		By("create a file with a size that does not exceed threshold disk usage")
-		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--", "fallocate", "-l", "9G", "/test1/test1.txt")
+		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
+			"fallocate", "-l", "9G", "/test1/test1.txt")
 		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 
 		By("checking the disk resizing")
@@ -221,10 +227,12 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := "2Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, storageLimit, "", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, storageLimit,
+			"", nil)
 
 		By("write data with a size that exceed threshold disk usage")
-		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--", "dd", "if=/dev/zero", "of=/dev/e2etest", "count=600M", "iflag=count_bytes")
+		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
+			"dd", "if=/dev/zero", "of=/dev/e2etest", "count=600M", "iflag=count_bytes")
 		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 
 		By("checking the disk does not resize")
@@ -240,10 +248,12 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := "2Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, storageLimit, "", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, storageLimit,
+			"", nil)
 
 		By("create a file with a size that exceed threshold disk usage")
-		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--", "fallocate", "-l", "600M", "/test1/test1.txt")
+		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
+			"fallocate", "-l", "600M", "/test1/test1.txt")
 		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 
 		By("checking the disk does not resize")
@@ -263,15 +273,17 @@ var _ = Describe("pvc-autoresizer", func() {
 		var capacityInode int64
 		var availableInode int64
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, inodesThreshold, increase, storageLimit, "", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, inodesThreshold, increase,
+			storageLimit, "", nil)
 
 		By("getting available inode size and capacity inode size")
-		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--", "df", "/test1", "--output=target,itotal,iavail")
+		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
+			"df", "/test1", "--output=target,itotal,iavail")
 		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 		lines := regexp.MustCompile(`\n`).Split(string(stdout), -1)
 		Expect(len(lines)).Should(Equal(3))
 
-		cs := regexp.MustCompile(`\s+`).Split(string(lines[1]), -1)
+		cs := regexp.MustCompile(`\s+`).Split(lines[1], -1)
 		capacityInode, err = strconv.ParseInt(cs[1], 10, 64)
 		Expect(err).ShouldNot(HaveOccurred())
 		availableInode, err = strconv.ParseInt(cs[2], 10, 64)
@@ -287,7 +299,8 @@ var _ = Describe("pvc-autoresizer", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 		th := int64(float64(capacityInode) * rate / 100.0)
 		num := capacityInode - th
-		stdout, stderr, err = kubectl("-n", testNamespace, "exec", pvcName, "--", "bash", "-c", fmt.Sprintf("touch /test1/testfile_{0..%d}.txt", num))
+		stdout, stderr, err = kubectl("-n", testNamespace, "exec", pvcName, "--",
+			"bash", "-c", fmt.Sprintf("touch /test1/testfile_{0..%d}.txt", num))
 		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 
 		By("checking the disk resizing")
@@ -303,10 +316,12 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := "0Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, storageLimit, "", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, storageLimit,
+			"", nil)
 
 		By("create a file with a size that does not exceed threshold disk usage")
-		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--", "fallocate", "-l", "2G", "/test1/test1.txt")
+		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
+			"fallocate", "-l", "2G", "/test1/test1.txt")
 		Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 
 		By("checking the disk does not resize")
@@ -416,8 +431,8 @@ var _ = Describe("pvc-autoresizer", func() {
 	})
 })
 
-func buildPodPVCTemplateYAML(ns, pvcName, storageClassName, volumeMode, podName, request, threshold,
-	inodesThreshold, increase, storageLimit, initialResizeGroupByAnnotation string, labels map[string]string) ([]byte, error) {
+func buildPodPVCTemplateYAML(ns, pvcName, storageClassName, volumeMode, podName, request, threshold, inodesThreshold,
+	increase, storageLimit, initialResizeGroupByAnnotation string, labels map[string]string) ([]byte, error) {
 	var b bytes.Buffer
 	var err error
 
@@ -477,7 +492,7 @@ func createPodPVCWithNamespace(ns string, resources []resource, pvcName, storage
 	volumeMode, podName, request, threshold, inodesThreshold, increase, storageLimit,
 	initialResizeGroupByAnnotation string, labels map[string]string) []resource {
 	By("create a PVC and a pod for test")
-	podPVCYAML, err := buildPodPVCTemplateYAML(ns, pvcName, storageClassName, volumeMode, pvcName,
+	podPVCYAML, err := buildPodPVCTemplateYAML(ns, pvcName, storageClassName, volumeMode, podName,
 		request, threshold, inodesThreshold, increase, storageLimit,
 		initialResizeGroupByAnnotation, labels)
 	Expect(err).ShouldNot(HaveOccurred())
@@ -490,7 +505,8 @@ func createPodPVCWithNamespace(ns string, resources []resource, pvcName, storage
 	Eventually(func() error {
 		stdout, stderr, err := kubectl("get", "-n", ns, "pod", pvcName, "-o", "yaml")
 		if err != nil {
-			return fmt.Errorf("failed to get pod name of %s/%s. stdout: %s, stderr: %s, err: %v", ns, pvcName, stdout, stderr, err)
+			return fmt.Errorf("failed to get pod name of %s/%s. stdout: %s, stderr: %s, err: %v",
+				ns, pvcName, stdout, stderr, err)
 		}
 
 		var pod corev1.Pod
