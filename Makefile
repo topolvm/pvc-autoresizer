@@ -101,11 +101,6 @@ build: ## Build manager binary.
 run: manifests generate ## Run a controller from your host.
 	go run ./cmd/main.go
 
-.PHONY: deploy
-deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd $(shell pwd)/config/default && $(KUSTOMIZE) edit set image pvc-autoresizer=$(IMAGE_PREFIX)pvc-autoresizer:devel
-	$(KUSTOMIZE) build $(shell pwd)/config/default | $(KUBECTL) apply -f -
-
 .PHONY: image
 image: ## Build docker image.
 	docker build . -t $(IMAGE_PREFIX)pvc-autoresizer:devel
