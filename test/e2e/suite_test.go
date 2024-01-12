@@ -64,7 +64,7 @@ func kubectlWithInput(input []byte, args ...string) ([]byte, []byte, error) {
 
 func TestMtest(t *testing.T) {
 	if os.Getenv("E2ETEST") == "" {
-		t.Skip("Run under e2e/")
+		t.Skip("Run under test/e2e/")
 		return
 	}
 

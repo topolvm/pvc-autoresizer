@@ -100,7 +100,7 @@ we suggest preparing a dedicated physical or virtual machine.
     make test
 
     # for end-to-end test
-    cd e2e
+    cd test/e2e
     make setup
     make init-cluster
     make test

@@ -1,11 +1,11 @@
-include ../versions.mk
+include ../../versions.mk
 
 KIND_CLUSTER_NAME := autoresizer-e2e
 
 export KUBERNETES_VERSION
 
 SUDO := sudo
-BINDIR := $(shell pwd)/../bin
+BINDIR := $(shell pwd)/../../bin
 TMPDIR := /tmp/autoresizer
 KUBECTL := $(BINDIR)/kubectl
 HELM := $(BINDIR)/helm
@@ -14,7 +14,7 @@ KIND := $(TMPDIR)/topolvm/bin/kind
 
 .PHONY: setup
 setup:
-	$(MAKE) -C ../ setup
+	$(MAKE) -C ../../ setup
 	mkdir -p $(BINDIR)
 	GOBIN=$(BINDIR) go install github.com/onsi/ginkgo/v2/ginkgo@v$(GINKGO_VERSION)
 
@@ -32,17 +32,17 @@ init-cluster: launch-kind autoresizer.img kube-prometheus
 	$(KIND) load image-archive --name=$(KIND_CLUSTER_NAME) autoresizer.img
 	$(HELM) repo add jetstack https://charts.jetstack.io
 	$(HELM) repo update
-	$(HELM) dependency build ../charts/pvc-autoresizer/
+	$(HELM) dependency build ../../charts/pvc-autoresizer/
 	# storageclass for test
 	$(KUBECTL) apply -f manifests/common/storageclass.yaml
 
 .PHONY: init-app-with-cert-manager
 init-app-with-cert-manager: init-cluster
-	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../charts/pvc-autoresizer/ -f manifests/values/values.yaml
+	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../../charts/pvc-autoresizer/ -f manifests/values/values.yaml
 
 .PHONY: init-app-without-cert-manager
 init-app-without-cert-manager: init-cluster
-	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../charts/pvc-autoresizer/ -f manifests/values/values-without-cert-manager.yaml
+	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../../charts/pvc-autoresizer/ -f manifests/values/values-without-cert-manager.yaml
 
 .PHONY: test
 test:
@@ -78,7 +78,7 @@ $(TMPDIR)/topolvm:
 	make -C $(TMPDIR)/topolvm/example setup
 
 autoresizer.img:
-	IMAGE_PREFIX="" $(MAKE) -C ../ image
+	IMAGE_PREFIX="" $(MAKE) -C ../../ image
 	docker save -o $@ pvc-autoresizer:devel
 
 kube-prometheus:

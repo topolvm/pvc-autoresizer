@@ -35,8 +35,8 @@ jobs:
 
       - name: "Setup kind"
         run: |
-          make -C e2e setup
-          make -C e2e init-cluster
+          make -C test/e2e setup
+          make -C test/e2e init-cluster
 
       - name: "Run chart-testing (install)"
         run: ct install --config ct.yaml
