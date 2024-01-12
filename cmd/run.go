@@ -19,7 +19,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	// +kubebuilder:scaffold:imports
+	//+kubebuilder:scaffold:imports
 )
 
 var (
@@ -31,7 +31,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(corev1.AddToScheme(scheme))
-	// +kubebuilder:scaffold:scheme
+	//+kubebuilder:scaffold:scheme
 }
 
 func subMain() error {
@@ -127,7 +127,7 @@ func subMain() error {
 		return err
 	}
 
-	// +kubebuilder:scaffold:builder
+	//+kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

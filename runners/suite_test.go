@@ -64,7 +64,7 @@ var _ = BeforeSuite(func() {
 	err = storagev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	// +kubebuilder:scaffold:scheme
+	//+kubebuilder:scaffold:scheme
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: scheme,
