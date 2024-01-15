@@ -7,7 +7,8 @@ import (
 	"net/http"
 
 	"github.com/go-logr/logr"
-	"github.com/topolvm/pvc-autoresizer/runners"
+	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
+	"github.com/topolvm/pvc-autoresizer/internal/runners"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -35,7 +36,7 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 	if err := m.dec.Decode(req, pvc); err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
 	}
-	groupLabelKey, ok := pvc.Annotations[runners.InitialResizeGroupByAnnotation]
+	groupLabelKey, ok := pvc.Annotations[pvcautoresizer.InitialResizeGroupByAnnotation]
 	if !ok || groupLabelKey == "" {
 		return admission.Allowed("annotation not set")
 	}

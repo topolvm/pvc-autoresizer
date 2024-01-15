@@ -4,8 +4,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/topolvm/pvc-autoresizer/hooks"
-	"github.com/topolvm/pvc-autoresizer/runners"
+	"github.com/topolvm/pvc-autoresizer/internal/hooks"
+	"github.com/topolvm/pvc-autoresizer/internal/runners"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/runtime"

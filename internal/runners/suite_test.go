@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -121,7 +122,7 @@ func createStorageClass(ctx context.Context, name, provisioner string) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 			Annotations: map[string]string{
-				AutoResizeEnabledKey: "true",
+				pvcautoresizer.AutoResizeEnabledKey: "true",
 			},
 		},
 		Provisioner:          provisioner,

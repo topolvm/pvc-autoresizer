@@ -6,10 +6,9 @@ WORKDIR /workspace
 COPY go.mod go.mod
 COPY go.sum go.sum
 # Copy the go source
+COPY constants.go constants.go
 COPY cmd/ cmd/
-COPY hooks/ hooks/
-COPY metrics/ metrics/
-COPY runners/ runners/
+COPY internal/ internal/
 
 # Build
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -a -o pvc-autoresizer cmd/*.go

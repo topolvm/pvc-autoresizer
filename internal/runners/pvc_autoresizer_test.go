@@ -8,6 +8,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -447,18 +448,18 @@ func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold
 	}
 
 	if len(threshold) != 0 {
-		pvc.Annotations[ResizeThresholdAnnotation] = threshold
+		pvc.Annotations[pvcautoresizer.ResizeThresholdAnnotation] = threshold
 	}
 	if len(inodesThreshold) != 0 {
-		pvc.Annotations[ResizeInodesThresholdAnnotation] = inodesThreshold
+		pvc.Annotations[pvcautoresizer.ResizeInodesThresholdAnnotation] = inodesThreshold
 	}
 
 	if len(increase) != 0 {
-		pvc.Annotations[ResizeIncreaseAnnotation] = increase
+		pvc.Annotations[pvcautoresizer.ResizeIncreaseAnnotation] = increase
 	}
 
 	if limit != 0 {
-		pvc.Annotations[StorageLimitAnnotation] = strconv.FormatInt(limit, 10)
+		pvc.Annotations[pvcautoresizer.StorageLimitAnnotation] = strconv.FormatInt(limit, 10)
 	}
 
 	err := k8sClient.Create(ctx, &pvc)

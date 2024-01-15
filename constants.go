@@ -1,4 +1,4 @@
-package runners
+package pvcautoresizer
 
 // AutoResizeEnabledKey is the key of flag that enables pvc-autoresizer.
 const AutoResizeEnabledKey = "resize.topolvm.io/enabled"

@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/client_golang/api"
 	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
-	"github.com/topolvm/pvc-autoresizer/metrics"
+	"github.com/topolvm/pvc-autoresizer/internal/metrics"
 	"k8s.io/apimachinery/pkg/types"
 )
 

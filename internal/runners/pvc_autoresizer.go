@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/topolvm/pvc-autoresizer/metrics"
+	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
+	"github.com/topolvm/pvc-autoresizer/internal/metrics"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -166,15 +167,15 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeStats) error {
 	log := w.log.WithName("resize").WithValues("namespace", pvc.Namespace, "name", pvc.Name)
 
-	threshold, err := convertSizeInBytes(pvc.Annotations[ResizeThresholdAnnotation], vs.CapacityBytes, DefaultThreshold)
+	threshold, err := convertSizeInBytes(pvc.Annotations[pvcautoresizer.ResizeThresholdAnnotation], vs.CapacityBytes, pvcautoresizer.DefaultThreshold)
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert threshold annotation", "error", err.Error())
 		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
 		return nil
 	}
 
-	annotation := pvc.Annotations[ResizeInodesThresholdAnnotation]
-	inodesThreshold, err := convertSize(annotation, vs.CapacityInodeSize, DefaultInodesThreshold)
+	annotation := pvc.Annotations[pvcautoresizer.ResizeInodesThresholdAnnotation]
+	inodesThreshold, err := convertSize(annotation, vs.CapacityInodeSize, pvcautoresizer.DefaultInodesThreshold)
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert threshold annotation", "error", err.Error())
 		// lint:ignore nilerr ignores this because invalid annotations should be allowed.
@@ -191,13 +192,13 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		return nil
 	}
 
-	increase, err := convertSizeInBytes(pvc.Annotations[ResizeIncreaseAnnotation], cap.Value(), DefaultIncrease)
+	increase, err := convertSizeInBytes(pvc.Annotations[pvcautoresizer.ResizeIncreaseAnnotation], cap.Value(), pvcautoresizer.DefaultIncrease)
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert increase annotation", "error", err.Error())
 		return nil
 	}
 
-	preCap, exist := pvc.Annotations[PreviousCapacityBytesAnnotation]
+	preCap, exist := pvc.Annotations[pvcautoresizer.PreviousCapacityBytesAnnotation]
 	if exist {
 		preCapInt64, err := strconv.ParseInt(preCap, 10, 64)
 		if err != nil {
@@ -232,7 +233,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		}
 
 		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = *newReq
-		pvc.Annotations[PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
+		pvc.Annotations[pvcautoresizer.PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
 		err = w.client.Update(ctx, pvc)
 		if err != nil {
 			metrics.KubernetesClientFailTotal.Increment()
@@ -255,7 +256,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 
 func indexByResizeEnableAnnotation(obj client.Object) []string {
 	sc := obj.(*storagev1.StorageClass)
-	if val, ok := sc.Annotations[AutoResizeEnabledKey]; ok {
+	if val, ok := sc.Annotations[pvcautoresizer.AutoResizeEnabledKey]; ok {
 		return []string{val}
 	}
 
@@ -335,7 +336,7 @@ func calcSize(valStr string, capacity int64) (int64, error) {
 
 func PvcStorageLimit(pvc *corev1.PersistentVolumeClaim) (resource.Quantity, error) {
 	// storage limit on the annotation has precedence
-	if annotation, ok := pvc.Annotations[StorageLimitAnnotation]; ok && annotation != "" {
+	if annotation, ok := pvc.Annotations[pvcautoresizer.StorageLimitAnnotation]; ok && annotation != "" {
 		return resource.ParseQuantity(annotation)
 	}
 
