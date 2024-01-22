@@ -53,22 +53,16 @@ Bump version
     git switch -c bump-$VERSION
     ```
 
-3. Edit `config/default/kustomization.yaml` and update `newTag` value for the new version.
-
-    ```console
-    $ sed -i -s "s/newTag:.*/newTag: ${VERSION}/" config/default/kustomization.yaml
-    ```
-
-4. Change `TOPOLVM_VERSION` in `versions.mk` to the latest topolvm chart release tag. (e.g. topolvm-chart-vX.Y.Z)
-5. Commit the change and create a pull request:
+3. Change `TOPOLVM_VERSION` in `versions.mk` to the latest topolvm chart release tag. (e.g. topolvm-chart-vX.Y.Z)
+4. Commit the change and create a pull request:
 
     ```console
     git commit -a -s -m "Bump version to $VERSION"
     git push -u origin bump-$VERSION
     ```
 
-6. Merge the new pull request.
-7. Add a new tag and push it as follows:
+5. Merge the new pull request.
+6. Add a new tag and push it as follows:
 
     ```console
     git switch main
@@ -77,7 +71,7 @@ Bump version
     git push origin v$VERSION
     ```
 
-8. Once a new tag is pushed, [GitHub Actions][] automatically
+7. Once a new tag is pushed, [GitHub Actions][] automatically
    creates a draft release note for the tagged version,
    builds a tar archive for the new release,
    and attaches it to the release note.
@@ -85,7 +79,7 @@ Bump version
    Visit https://github.com/topolvm/pvc-autoresizer/releases to check
    the result. 
 
-9. Edit the auto-generated release note
+8. Edit the auto-generated release note
    and remove PRs which contain changes only to the helm chart.
    Then, publish it.
 

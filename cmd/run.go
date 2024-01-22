@@ -1,20 +1,25 @@
-package cmd
+package main
 
 import (
 	"net"
 	"time"
 
-	"github.com/topolvm/pvc-autoresizer/hooks"
-	"github.com/topolvm/pvc-autoresizer/runners"
+	"github.com/topolvm/pvc-autoresizer/internal/hooks"
+	"github.com/topolvm/pvc-autoresizer/internal/runners"
 	corev1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	// +kubebuilder:scaffold:imports
+	//+kubebuilder:scaffold:imports
 )
 
 var (
@@ -23,10 +28,10 @@ var (
 )
 
 func init() {
-	_ = clientgoscheme.AddToScheme(scheme)
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	_ = corev1.AddToScheme(scheme)
-	// +kubebuilder:scaffold:scheme
+	utilruntime.Must(corev1.AddToScheme(scheme))
+	//+kubebuilder:scaffold:scheme
 }
 
 func subMain() error {
@@ -44,13 +49,39 @@ func subMain() error {
 	}
 
 	graceTimeout := 10 * time.Second
+
+	var pvcCacheTarget cache.ByObject
+	if len(config.namespaces) == 0 {
+		pvcCacheTarget = cache.ByObject{
+			Namespaces: map[string]cache.Config{
+				cache.AllNamespaces: {},
+			},
+		}
+	} else {
+		pvcCacheTarget = cache.ByObject{
+			Namespaces: map[string]cache.Config{},
+		}
+		for _, ns := range config.namespaces {
+			pvcCacheTarget.Namespaces[ns] = cache.Config{}
+		}
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                  scheme,
-		Host:                    hookHost,
-		Port:                    hookPort,
-		CertDir:                 config.certDir,
-		MetricsBindAddress:      config.metricsAddr,
-		Cache:                   cache.Options{Namespaces: config.namespaces},
+		Scheme: scheme,
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Host:    hookHost,
+			Port:    hookPort,
+			CertDir: config.certDir,
+		}),
+		Metrics: metricsserver.Options{
+			BindAddress: config.metricsAddr,
+		},
+		Cache: cache.Options{
+			ByObject: map[client.Object]cache.ByObject{
+				&corev1.PersistentVolumeClaim{}: pvcCacheTarget,
+				&storagev1.StorageClass{}:       {},
+			},
+		},
 		HealthProbeBindAddress:  config.healthAddr,
 		LeaderElection:          true,
 		LeaderElectionID:        "49e22f61.topolvm.io",
@@ -96,7 +127,7 @@ func subMain() error {
 		return err
 	}
 
-	// +kubebuilder:scaffold:builder
+	//+kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

@@ -15,6 +15,7 @@ jobs:
           go-version-file: "go.mod"
       - run: make setup
       - run: make check-uncommitted
+      - run: make lint
       - run: make
       - run: make test
       - run: env NO_ANNOTATION_CHECK=true make test

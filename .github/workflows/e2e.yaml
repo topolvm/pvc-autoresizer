@@ -24,9 +24,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
-      - run: make -C e2e setup
-      - run: make -C e2e init-app-with-cert-manager
-      - run: make -C e2e test
+      - run: make -C test/e2e setup
+      - run: make -C test/e2e init-app-with-cert-manager
+      - run: make -C test/e2e test
 
   e2e-k8s-without-cert-manager:
     name: "e2e-k8s-without-cert-manager"
@@ -41,6 +41,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
-      - run: make -C e2e setup
-      - run: make -C e2e init-app-without-cert-manager
-      - run: make -C e2e test
+      - run: make -C test/e2e setup
+      - run: make -C test/e2e init-app-without-cert-manager
+      - run: make -C test/e2e test
