@@ -436,7 +436,7 @@ func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold
 			Annotations: map[string]string{},
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
-			Resources: corev1.VolumeResourceRequirements{
+			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceStorage: *resource.NewQuantity(request, resource.BinarySI),
 				},

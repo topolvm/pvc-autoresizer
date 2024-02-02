@@ -61,9 +61,10 @@ Edit the following files.
 
 The following tools do not depend on other software, use latest versions.
 To change their versions, edit `versions.mk`.
-- [helm](https://github.com/helm/helm/releases)
-- [helm-docs](https://github.com/norwoodj/helm-docs/releases)
 - [chart-testing](https://github.com/helm/chart-testing/releases)
+- [golangci-lint](https://github.com/golangci/golangci-lint/releases)
+- [helm-docs](https://github.com/norwoodj/helm-docs/releases)
+- [helm](https://github.com/helm/helm/releases)
 - [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/releases)
 
 #### Depending modules
