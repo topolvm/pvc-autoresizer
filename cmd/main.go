@@ -11,15 +11,16 @@ import (
 )
 
 var config struct {
-	certDir        string
-	webhookAddr    string
-	metricsAddr    string
-	healthAddr     string
-	namespaces     []string
-	watchInterval  time.Duration
-	prometheusURL  string
-	skipAnnotation bool
-	development    bool
+	certDir          string
+	webhookAddr      string
+	metricsAddr      string
+	healthAddr       string
+	namespaces       []string
+	watchInterval    time.Duration
+	prometheusURL    string
+	useK8sMetricsApi bool
+	skipAnnotation   bool
+	development      bool
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -51,7 +52,7 @@ func init() {
 		"Namespaces to resize PersistentVolumeClaims within. Empty for all namespaces.")
 	fs.DurationVar(&config.watchInterval, "interval", 1*time.Minute, "Interval to monitor pvc capacity.")
 	fs.StringVar(&config.prometheusURL, "prometheus-url", "", "Prometheus URL to query volume stats.")
+	fs.BoolVar(&config.useK8sMetricsApi, "use-k8s-metrics-api", false, "Use Kubernetes metrics API instead of Prometheus")
 	fs.BoolVar(&config.skipAnnotation, "no-annotation-check", false, "Skip annotation check for StorageClass")
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")
-	_ = rootCmd.MarkFlagRequired("prometheus-url")
 }

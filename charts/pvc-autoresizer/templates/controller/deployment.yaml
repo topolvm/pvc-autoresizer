@@ -33,6 +33,9 @@ spec:
           args:
             - --prometheus-url={{ .Values.controller.args.prometheusURL }}
             - --interval={{ .Values.controller.args.interval }}
+          {{- if .Values.controller.args.useK8sMetricsApi }}
+            - --use-k8s-metrics-api={{ .Values.controller.args.useK8sMetricsApi }}
+          {{- end }}
           {{- if .Values.controller.args.namespaces }}
             - --namespaces={{ join "," .Values.controller.args.namespaces }}
           {{- end }}
