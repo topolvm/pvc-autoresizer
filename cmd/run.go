@@ -102,9 +102,18 @@ func subMain() error {
 		return err
 	}
 
-	promClient, err := runners.NewPrometheusClient(config.prometheusURL)
+	var metricsClient runners.MetricsClient
+	if config.useK8sMetricsApi {
+		metricsClient, err = runners.NewK8sMetricsApiClient()
+	} else if config.prometheusURL != "" {
+		metricsClient, err = runners.NewPrometheusClient(config.prometheusURL)
+	} else {
+		setupLog.Error(err, "enable use-k8s-metrics-api or provide prometheus-url")
+		return err
+	}
+
 	if err != nil {
-		setupLog.Error(err, "unable to initialize prometheus client")
+		setupLog.Error(err, "unable to initialize metrics client")
 		return err
 	}
 
@@ -113,7 +122,7 @@ func subMain() error {
 		return err
 	}
 
-	pvcAutoresizer := runners.NewPVCAutoresizer(promClient, mgr.GetClient(),
+	pvcAutoresizer := runners.NewPVCAutoresizer(metricsClient, mgr.GetClient(),
 		ctrl.Log.WithName("pvc-autoresizer"),
 		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
 	if err := mgr.Add(pvcAutoresizer); err != nil {

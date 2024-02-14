@@ -44,3 +44,20 @@ jobs:
       - run: make -C test/e2e setup
       - run: make -C test/e2e init-app-without-cert-manager
       - run: make -C test/e2e test
+
+  e2e-k8s-with-metrics-api:
+    name: "e2e-k8s-with-metrics-api"
+    runs-on: "ubuntu-20.04"
+    strategy:
+      matrix:
+        kubernetes_versions: ["1.28.0", "1.27.3", "1.26.6"]
+    env:
+      KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - run: make -C test/e2e setup
+      - run: make -C test/e2e init-app-with-metrics-api
+      - run: make -C test/e2e test

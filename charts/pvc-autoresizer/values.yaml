@@ -14,6 +14,10 @@ controller:
   replicas: 1
 
   args:
+    # controller.args.useK8sMetricsApi -- Use Kubernetes metrics API instead of Prometheus.
+    # Used as "--use-k8s-metrics-api" option
+    useK8sMetricsApi: false
+
     # controller.args.prometheusURL -- Specify Prometheus URL to query volume stats.
     # Used as "--prometheus-url" option
     prometheusURL: http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090

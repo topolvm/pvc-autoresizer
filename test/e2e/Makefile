@@ -44,6 +44,10 @@ init-app-with-cert-manager: init-cluster
 init-app-without-cert-manager: init-cluster
 	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../../charts/pvc-autoresizer/ -f manifests/values/values-without-cert-manager.yaml
 
+.PHONY: init-app-with-metrics-api
+init-app-with-metrics-api: init-cluster
+	$(HELM) install --create-namespace --namespace=pvc-autoresizer pvc-autoresizer ../../charts/pvc-autoresizer/ -f manifests/values/values-with-metrics-api.yaml
+
 .PHONY: test
 test:
 	E2ETEST=1 BINDIR=$(BINDIR) $(GINKGO) --fail-fast -v .
