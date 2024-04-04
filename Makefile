@@ -147,7 +147,7 @@ SETUP_ENVTEST := $(BINDIR)/setup-envtest
 setup-envtest: $(SETUP_ENVTEST) ## Download setup-envtest locally if necessary
 $(SETUP_ENVTEST):
 	# see https://github.com/kubernetes-sigs/controller-runtime/tree/master/tools/setup-envtest
-	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_VERSION)
 
 .PHONY: setup
 setup: # Setup tools
