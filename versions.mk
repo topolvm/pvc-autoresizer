@@ -14,6 +14,11 @@ KUBE_PROMETHEUS_VERSION := 0.13.0
 KUBERNETES_VERSION ?= 1.28.0
 TOPOLVM_VERSION := topolvm-chart-v14.0.0
 
+# ENVTEST_VERSION is usually latest, but might need to be pinned from time to time.
+# Version pinning is needed due to version incompatibility between controller-runtime and setup-envtest.
+# For more information: https://github.com/kubernetes-sigs/controller-runtime/issues/2744
+ENVTEST_VERSION := bf15e44028f908c790721fc8fe67c7bf2d06a611
+
 ENVTEST_K8S_VERSION := $(shell echo $(KUBERNETES_VERSION) | cut -d "." -f 1-2)
 
 # Tools versions which are defined in go.mod
