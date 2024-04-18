@@ -9,8 +9,6 @@
 
 It queries the volume usage metrics from Prometheus that collects metrics from `kubelet`.
 
-- **Project Status**: Testing for production
-
 Our supported platforms are:
 
 - Kubernetes: 1.28, 1.27, 1.26
