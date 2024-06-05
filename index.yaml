@@ -4,6 +4,29 @@ entries:
   - annotations:
       artifacthub.io/images: |
         - name: pvc-autoresizer
+          image: ghcr.io/topolvm/pvc-autoresizer:0.14.0
+      artifacthub.io/license: Apache-2.0
+    apiVersion: v2
+    appVersion: 0.14.0
+    created: "2024-06-05T02:04:06.747001823Z"
+    dependencies:
+    - condition: cert-manager.enabled
+      name: cert-manager
+      repository: https://charts.jetstack.io
+      version: 1.7.0
+    description: Auto-resize PersistentVolumeClaim objects based on Prometheus metrics.
+    digest: d126195b80ca4897e89a5a3ac2e299683854f41f2cdc6676c525a46f99eb3ae3
+    home: https://github.com/topolvm/pvc-autoresizer
+    name: pvc-autoresizer
+    sources:
+    - https://github.com/topolvm/pvc-autoresizer
+    type: application
+    urls:
+    - https://github.com/topolvm/pvc-autoresizer/releases/download/pvc-autoresizer-chart-v0.11.3/pvc-autoresizer-0.11.3.tgz
+    version: 0.11.3
+  - annotations:
+      artifacthub.io/images: |
+        - name: pvc-autoresizer
           image: ghcr.io/topolvm/pvc-autoresizer:0.13.1
       artifacthub.io/license: Apache-2.0
     apiVersion: v2
@@ -377,4 +400,4 @@ entries:
     urls:
     - https://github.com/topolvm/pvc-autoresizer/releases/download/pvc-autoresizer-chart-v0.2.0/pvc-autoresizer-0.2.0.tgz
     version: 0.2.0
-generated: "2024-05-02T06:02:11.663764275Z"
+generated: "2024-06-05T02:04:06.747134311Z"
