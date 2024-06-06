@@ -35,7 +35,10 @@ func init() {
 }
 
 func subMain() error {
-	ctrl.SetLogger(zap.New(zap.UseDevMode(config.development)))
+	if config.development {
+		config.zapOpts.Development = true
+	}
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&config.zapOpts)))
 
 	hookHost, portStr, err := net.SplitHostPort(config.webhookAddr)
 	if err != nil {
