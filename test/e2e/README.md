@@ -11,7 +11,7 @@ Setup environment
 2. [Install Docker CE](https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-using-the-repository).
 3. Add yourself to `docker` group.  e.g. `sudo adduser $USER docker`
 4. Run `make setup`.
-5. Run `make init-cluster`.
+5. Run `make init-app-with-cert-manager`.
 
 How to run tests
 ----------------
@@ -30,9 +30,6 @@ make test
 You can cleanup test environment as follows:
 
 ```
-# stop Kubernetes and lvmd
-make stop-lvmd
-
 # cleanup all test environment
 make clean
 ```
