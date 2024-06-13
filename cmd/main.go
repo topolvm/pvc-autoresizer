@@ -1,12 +1,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/spf13/cobra"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -21,6 +23,7 @@ var config struct {
 	useK8sMetricsApi bool
 	skipAnnotation   bool
 	development      bool
+	zapOpts          zap.Options
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -55,4 +58,8 @@ func init() {
 	fs.BoolVar(&config.useK8sMetricsApi, "use-k8s-metrics-api", false, "Use Kubernetes metrics API instead of Prometheus")
 	fs.BoolVar(&config.skipAnnotation, "no-annotation-check", false, "Skip annotation check for StorageClass")
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")
+
+	goflags := flag.NewFlagSet("zap", flag.ExitOnError)
+	config.zapOpts.BindFlags(goflags)
+	fs.AddGoFlagSet(goflags)
 }
