@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	"github.com/topolvm/pvc-autoresizer/internal/metrics"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -26,17 +27,20 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 	// create a Kubernetes client using in-cluster configuration
 	config, err := rest.InClusterConfig()
 	if err != nil {
+		metrics.MetricsClientFailTotal.Increment()
 		return nil, err
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
+		metrics.MetricsClientFailTotal.Increment()
 		return nil, err
 	}
 
 	// get a list of nodes and IP addresses
-	nodes, err := clientset.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
+	nodes, err := clientset.CoreV1().Nodes().List(ctx, v1.ListOptions{})
 	if err != nil {
+		metrics.MetricsClientFailTotal.Increment()
 		return nil, err
 	}
 
@@ -54,6 +58,7 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 
 	// wait for all queries to complete and handle any errors
 	if err := eg.Wait(); err != nil {
+		metrics.MetricsClientFailTotal.Increment()
 		return nil, err
 	}
 
