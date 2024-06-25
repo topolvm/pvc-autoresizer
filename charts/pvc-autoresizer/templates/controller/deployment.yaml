@@ -70,6 +70,8 @@ spec:
           volumeMounts:
             - name: certs
               mountPath: /certs
+          securityContext:
+            {{- toYaml .Values.controller.securityContext | nindent 12 }}
     {{- with .Values.controller.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -83,3 +85,5 @@ spec:
           secret:
             defaultMode: 420
             secretName: {{ template "pvc-autoresizer.fullname" . }}-controller
+      securityContext:
+        {{- toYaml .Values.controller.podSecurityContext | nindent 8 }}

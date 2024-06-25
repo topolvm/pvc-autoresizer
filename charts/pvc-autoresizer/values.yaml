@@ -45,6 +45,21 @@ controller:
   # controller.podAnnotations -- Annotations to be added to controller pods.
   podAnnotations: {}
 
+  # controller.podSecurityContext -- Security Context to be applied to the controller pods.
+  podSecurityContext: {}
+
+  # controller.securityContext -- Security Context to be applied to the controller container within controller pods.
+  securityContext: {}
+    # allowPrivilegeEscalation: false
+    # capabilities:
+    #   drop:
+    #     - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+    # seccompProfile:
+    #   type: RuntimeDefault
+
   # controller.terminationGracePeriodSeconds -- Specify terminationGracePeriodSeconds.
   terminationGracePeriodSeconds:  # 10
 
