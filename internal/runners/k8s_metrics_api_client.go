@@ -3,9 +3,9 @@ package runners
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"sync"
 
-	"github.com/pkg/errors"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/topolvm/pvc-autoresizer/internal/metrics"
@@ -90,12 +90,12 @@ func getPVCUsageFromK8sMetricsAPI(
 		Suffix("metrics")
 	respBody, err := req.DoRaw(ctx)
 	if err != nil {
-		return nil, errors.Errorf("failed to get stats from kubelet on node %s: with error %s", nodeName, err)
+		return nil, fmt.Errorf("failed to get stats from kubelet on node %s: %w", nodeName, err)
 	}
 	parser := expfmt.TextParser{}
 	metricFamilies, err := parser.TextToMetricFamilies(bytes.NewReader(respBody))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read response body from kubelet on node %s", nodeName)
+		return nil, fmt.Errorf("failed to read response body from kubelet on node %s: %w", nodeName, err)
 	}
 
 	pvcUsage := make(map[types.NamespacedName]*VolumeStats)
