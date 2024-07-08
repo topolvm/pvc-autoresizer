@@ -40,15 +40,24 @@ func subMain() error {
 	}
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&config.zapOpts)))
 
-	hookHost, portStr, err := net.SplitHostPort(config.webhookAddr)
-	if err != nil {
-		setupLog.Error(err, "invalid webhook addr")
-		return err
-	}
-	hookPort, err := net.LookupPort("tcp", portStr)
-	if err != nil {
-		setupLog.Error(err, "invalid webhook port")
-		return err
+	var webhookServer webhook.Server
+	if config.webhookEnabled {
+		hookHost, portStr, err := net.SplitHostPort(config.webhookAddr)
+		if err != nil {
+			setupLog.Error(err, "invalid webhook addr")
+			return err
+		}
+		hookPort, err := net.LookupPort("tcp", portStr)
+		if err != nil {
+			setupLog.Error(err, "invalid webhook port")
+			return err
+		}
+
+		webhookServer = webhook.NewServer(webhook.Options{
+			Host:    hookHost,
+			Port:    hookPort,
+			CertDir: config.certDir,
+		})
 	}
 
 	graceTimeout := 10 * time.Second
@@ -70,12 +79,8 @@ func subMain() error {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme: scheme,
-		WebhookServer: webhook.NewServer(webhook.Options{
-			Host:    hookHost,
-			Port:    hookPort,
-			CertDir: config.certDir,
-		}),
+		Scheme:        scheme,
+		WebhookServer: webhookServer,
 		Metrics: metricsserver.Options{
 			BindAddress: config.metricsAddr,
 		},
@@ -101,8 +106,10 @@ func subMain() error {
 	if err := mgr.AddReadyzCheck("ping", healthz.Ping); err != nil {
 		return err
 	}
-	if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
-		return err
+	if config.webhookEnabled {
+		if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
+			return err
+		}
 	}
 
 	var metricsClient runners.MetricsClient
@@ -133,10 +140,12 @@ func subMain() error {
 		return err
 	}
 
-	dec := admission.NewDecoder(scheme)
-	if err = hooks.SetupPersistentVolumeClaimWebhook(mgr, dec, ctrl.Log.WithName("hooks")); err != nil {
-		setupLog.Error(err, "unable to create PersistentVolumeClaim webhook")
-		return err
+	if config.webhookEnabled {
+		dec := admission.NewDecoder(scheme)
+		if err = hooks.SetupPersistentVolumeClaimWebhook(mgr, dec, ctrl.Log.WithName("hooks")); err != nil {
+			setupLog.Error(err, "unable to create PersistentVolumeClaim webhook")
+			return err
+		}
 	}
 
 	//+kubebuilder:scaffold:builder

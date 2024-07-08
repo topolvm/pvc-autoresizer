@@ -24,6 +24,7 @@ var config struct {
 	skipAnnotation   bool
 	development      bool
 	zapOpts          zap.Options
+	webhookEnabled   bool
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -58,6 +59,7 @@ func init() {
 	fs.BoolVar(&config.useK8sMetricsApi, "use-k8s-metrics-api", false, "Use Kubernetes metrics API instead of Prometheus")
 	fs.BoolVar(&config.skipAnnotation, "no-annotation-check", false, "Skip annotation check for StorageClass")
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")
+	fs.BoolVar(&config.webhookEnabled, "webhook-enabled", true, "Enable the webhook endpoint")
 
 	goflags := flag.NewFlagSet("zap", flag.ExitOnError)
 	config.zapOpts.BindFlags(goflags)
