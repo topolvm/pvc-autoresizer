@@ -43,7 +43,7 @@ spec:
             {{ toYaml . | nindent 12 }}
           {{- end }}
           {{- if not .Values.webhook.pvcMutatingWebhook.enabled }}
-            - --webhook-enabled=false
+            - --pvc-mutating-webhook-enabled=false
           {{- end}}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           {{- with .Values.image.pullPolicy }}

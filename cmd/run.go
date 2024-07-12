@@ -41,7 +41,7 @@ func subMain() error {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&config.zapOpts)))
 
 	var webhookServer webhook.Server
-	if config.webhookEnabled {
+	if config.pvcMutatingWebhookEnabled {
 		hookHost, portStr, err := net.SplitHostPort(config.webhookAddr)
 		if err != nil {
 			setupLog.Error(err, "invalid webhook addr")
@@ -106,7 +106,7 @@ func subMain() error {
 	if err := mgr.AddReadyzCheck("ping", healthz.Ping); err != nil {
 		return err
 	}
-	if config.webhookEnabled {
+	if config.pvcMutatingWebhookEnabled {
 		if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
 			return err
 		}
@@ -140,7 +140,7 @@ func subMain() error {
 		return err
 	}
 
-	if config.webhookEnabled {
+	if config.pvcMutatingWebhookEnabled {
 		dec := admission.NewDecoder(scheme)
 		if err = hooks.SetupPersistentVolumeClaimWebhook(mgr, dec, ctrl.Log.WithName("hooks")); err != nil {
 			setupLog.Error(err, "unable to create PersistentVolumeClaim webhook")
