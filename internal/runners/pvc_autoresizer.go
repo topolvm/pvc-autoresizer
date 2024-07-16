@@ -222,6 +222,25 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		return nil
 	}
 
+	waitingTimeDuration := 0*time.Hour
+	waitingTime, exists := pvc.Annotations[pvcautoresizer.WaitingTimeAnnotation]; if exists {
+		waitingTimeDuration, err = time.ParseDuration(waitingTime); if err != nil {
+			log.V(4).Info("failed to parse waiting-time annotation", "error", err.Error())
+		}
+	}
+
+	preResizeTime, exists := pvc.Annotations[pvcautoresizer.PreviousResizeTimestampAnnotation]; if exists {
+		timeNow := time.Now()
+		preResizeTimeParsed, _ := time.Parse(time.RFC3339, preResizeTime)
+		timeElapsed := timeNow.Sub(preResizeTimeParsed)
+
+		if timeElapsed < waitingTimeDuration {
+			nextResizeTime := waitingTimeDuration - timeElapsed
+			log.V(4).Info("not resizing because waiting time, next resize window is in", nextResizeTime)
+			return nil
+		}
+	}
+
 	if threshold > vs.AvailableBytes || inodesThreshold > vs.AvailableInodeSize {
 		if pvc.Annotations == nil {
 			pvc.Annotations = make(map[string]string)
@@ -234,6 +253,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 
 		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = *newReq
 		pvc.Annotations[pvcautoresizer.PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
+		pvc.Annotations[pvcautoresizer.PreviousResizeTimestampAnnotation] = time.Now().String()
 		err = w.client.Update(ctx, pvc)
 		if err != nil {
 			metrics.KubernetesClientFailTotal.Increment()

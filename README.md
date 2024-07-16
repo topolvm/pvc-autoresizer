@@ -192,6 +192,26 @@ spec:
 When the size of the largest PVC in the same group is larger than the value set to `resize.topolvm.io/storage_limit` annotation,
 the PVC is resized up to this limit.
 
+#### Waiting time between resizes
+
+For cloud providers that has the wait time between volume modifications, specify the `resize.topolvm.io/waiting-time` for a duration the controller should wait for until next resize attempt.
+
+```yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: topolvm-pvc
+  namespace: default
+  annotations:
+    resize.topolvm.io/waiting-time: 6h
+    resize.topolvm.io/storage_limit: 100Gi
+    resize.topolvm.io/threshold: 20%
+    resize.topolvm.io/inodes-threshold: 20%
+    resize.topolvm.io/increase: 20Gi
+spec:
+  <snip>
+```
+
 ### Prometheus metrics
 
 ####  `pvcautoresizer_kubernetes_client_fail_total`
