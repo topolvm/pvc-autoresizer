@@ -42,6 +42,9 @@ spec:
           {{- with .Values.controller.args.additionalArgs -}}
             {{ toYaml . | nindent 12 }}
           {{- end }}
+          {{- if not .Values.webhook.pvcMutatingWebhook.enabled }}
+            - --pvc-mutating-webhook-enabled=false
+          {{- end}}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           {{- with .Values.image.pullPolicy }}
           imagePullPolicy: {{ . }}
@@ -67,9 +70,11 @@ spec:
             httpGet:
               path: /healthz
               port: health
+          {{- if .Values.webhook.pvcMutatingWebhook.enabled }}
           volumeMounts:
             - name: certs
               mountPath: /certs
+          {{- end }}
           securityContext:
             {{- toYaml .Values.controller.securityContext | nindent 12 }}
     {{- with .Values.controller.nodeSelector }}
@@ -80,10 +85,12 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
+      {{- if .Values.webhook.pvcMutatingWebhook.enabled }}
       volumes:
         - name: certs
           secret:
             defaultMode: 420
             secretName: {{ template "pvc-autoresizer.fullname" . }}-controller
+      {{- end }}
       securityContext:
         {{- toYaml .Values.controller.podSecurityContext | nindent 8 }}

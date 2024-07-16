@@ -1,3 +1,4 @@
+{{- if .Values.webhook.pvcMutatingWebhook.enabled }}
 {{- if not .Values.webhook.caBundle }}
 {{- if not .Values.webhook.certificate.generate }}
 {{- if not .Values.webhook.existingCertManagerIssuer }}
@@ -52,5 +53,6 @@ spec:
     - key encipherment
     - server auth
     - client auth
+{{- end }}
 {{- end }}
 {{- end }}
