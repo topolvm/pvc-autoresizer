@@ -222,14 +222,17 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		return nil
 	}
 
-	waitingTimeDuration := 0*time.Hour
-	waitingTime, exists := pvc.Annotations[pvcautoresizer.WaitingTimeAnnotation]; if exists {
-		waitingTimeDuration, err = time.ParseDuration(waitingTime); if err != nil {
+	waitingTimeDuration := 0 * time.Hour
+	waitingTime, exists := pvc.Annotations[pvcautoresizer.WaitingTimeAnnotation]
+	if exists {
+		waitingTimeDuration, err = time.ParseDuration(waitingTime)
+		if err != nil {
 			log.V(4).Info("failed to parse waiting-time annotation", "error", err.Error())
 		}
 	}
 
-	preResizeTime, exists := pvc.Annotations[pvcautoresizer.PreviousResizeTimestampAnnotation]; if exists {
+	preResizeTime, exists := pvc.Annotations[pvcautoresizer.PreviousResizeTimestampAnnotation]
+	if exists {
 		timeNow := time.Now()
 		preResizeTimeParsed, _ := time.Parse(time.RFC3339, preResizeTime)
 		timeElapsed := timeNow.Sub(preResizeTimeParsed)
