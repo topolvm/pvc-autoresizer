@@ -22,7 +22,7 @@ import (
 
 type persistentVolumeClaimMutator struct {
 	apiReader client.Reader
-	dec       *admission.Decoder
+	dec       admission.Decoder
 	log       logr.Logger
 }
 
@@ -91,7 +91,7 @@ func (m *persistentVolumeClaimMutator) Handle(ctx context.Context, req admission
 }
 
 // SetupPersistentVolumeClaimWebhook registers the webhooks for PersistentVolumeClaim
-func SetupPersistentVolumeClaimWebhook(mgr manager.Manager, dec *admission.Decoder, log logr.Logger) error {
+func SetupPersistentVolumeClaimWebhook(mgr manager.Manager, dec admission.Decoder, log logr.Logger) error {
 	serv := mgr.GetWebhookServer()
 	m := &persistentVolumeClaimMutator{
 		apiReader: mgr.GetAPIReader(),
