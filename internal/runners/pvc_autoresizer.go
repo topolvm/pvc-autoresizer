@@ -61,12 +61,8 @@ func (w *pvcAutoresizer) Start(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			startTime := time.Now()
-			err := w.reconcile(ctx)
+			w.reconcile(ctx)
 			metrics.ResizerLoopSecondsTotal.Add(time.Since(startTime).Seconds())
-			if err != nil {
-				w.log.Error(err, "failed to reconcile")
-				return err
-			}
 		}
 	}
 }
@@ -98,17 +94,17 @@ func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.St
 	return &scs, nil
 }
 
-func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
+func (w *pvcAutoresizer) reconcile(ctx context.Context) {
 	scs, err := w.getStorageClassList(ctx)
 	if err != nil {
 		w.log.Error(err, "getStorageClassList failed")
-		return nil
+		return
 	}
 
 	vsMap, err := w.metricsClient.GetMetrics(ctx)
 	if err != nil {
 		w.log.Error(err, "metricsClient.GetMetrics failed")
-		return nil
+		return
 	}
 
 	for _, sc := range scs.Items {
@@ -117,7 +113,7 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 		if err != nil {
 			metrics.KubernetesClientFailTotal.Increment()
 			w.log.Error(err, "list pvc failed")
-			return nil
+			return
 		}
 		for _, pvc := range pvcs.Items {
 			log := w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name)
@@ -160,8 +156,6 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 			}
 		}
 	}
-
-	return nil
 }
 
 func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeStats) error {
