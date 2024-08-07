@@ -21,6 +21,12 @@ const PreviousCapacityBytesAnnotation = "resize.topolvm.io/pre_capacity_bytes"
 // InitialResizeGroupByAnnotation is the key of the initial-resize group by.
 const InitialResizeGroupByAnnotation = "resize.topolvm.io/initial-resize-group-by"
 
+// WaitingTimeAnnotation is the key of the time waiting for next resize.
+const WaitingTimeAnnotation = "resize.topolvm.io/waiting-time"
+
+// PreviousResizeTimestampAnnotation is the key of the previous resize timestamp
+const PreviousResizeTimestampAnnotation = "resize.topolvm.io/pre-resize-timestamp"
+
 // DefaultThreshold is the default value of ResizeThresholdAnnotation.
 const DefaultThreshold = "10%"
 
