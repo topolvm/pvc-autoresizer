@@ -32,6 +32,7 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | cert-manager.enabled | bool | `false` | Install cert-manager together. # ref: https://cert-manager.io/docs/installation/helm/#installing-with-helm |
+| controller.annotations | object | `{}` | Annotations to be added to controller deployment. |
 | controller.args.additionalArgs | list | `[]` | Specify additional args. |
 | controller.args.interval | string | `"10s"` | Specify interval to monitor pvc capacity. Used as "--interval" option |
 | controller.args.namespaces | list | `[]` | Specify namespaces to control the pvcs of. Empty for all namespaces. Used as "--namespaces" option |
