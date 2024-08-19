@@ -13,6 +13,10 @@ controller:
   # controller.replicas -- Specify the number of replicas of the controller Pod.
   replicas: 1
 
+  certificate:
+    # controller.certificate.duration -- The duration of the TLS certificate for the webhook
+    duration: 8760h0m0s # 1y
+
   args:
     # controller.args.useK8sMetricsApi -- Use Kubernetes metrics API instead of Prometheus.
     # Used as "--use-k8s-metrics-api" option

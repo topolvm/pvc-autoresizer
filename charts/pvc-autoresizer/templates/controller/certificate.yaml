@@ -34,7 +34,7 @@ metadata:
     {{- include "pvc-autoresizer.labels" . | nindent 4 }}
 spec:
   secretName: {{ template "pvc-autoresizer.fullname" . }}-controller
-  duration: 8760h0m0s # 1y
+  duration: {{ .Values.controller.certificate.duration | quote }}
   issuerRef:
     {{- with .Values.webhook.existingCertManagerIssuer }}
     {{- toYaml . | nindent 4 -}}
