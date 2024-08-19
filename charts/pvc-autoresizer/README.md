@@ -37,6 +37,7 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | controller.args.namespaces | list | `[]` | Specify namespaces to control the pvcs of. Empty for all namespaces. Used as "--namespaces" option |
 | controller.args.prometheusURL | string | `"http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090"` | Specify Prometheus URL to query volume stats. Used as "--prometheus-url" option |
 | controller.args.useK8sMetricsApi | bool | `false` | Use Kubernetes metrics API instead of Prometheus. Used as "--use-k8s-metrics-api" option |
+| controller.certificate.duration | string | `"8760h0m0s"` | The duration of the TLS certificate for the webhook |
 | controller.nodeSelector | object | `{}` | Map of key-value pairs for scheduling pods on specific nodes. |
 | controller.podAnnotations | object | `{}` | Annotations to be added to controller pods. |
 | controller.podLabels | object | `{}` | Pod labels to be added to controller pods. |
