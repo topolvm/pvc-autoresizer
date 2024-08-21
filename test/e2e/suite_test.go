@@ -118,6 +118,19 @@ var _ = BeforeSuite(func() {
 		return nil
 	}).Should(Succeed())
 
+	By("[BeforeSuite] Waiting for mutating webhook working")
+	podPVCYAML, err := buildPodPVCTemplateYAML(
+		"default", "tmp", "topolvm-provisioner", "Filesystem", "tmp", "1Gi", "", "", "", "", "", nil)
+	Expect(err).ShouldNot(HaveOccurred())
+	Eventually(func(g Gomega) {
+		stdout, stderr, err := kubectlWithInput(podPVCYAML, "apply", "-f", "-")
+		g.Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s yaml=\n%s", stdout, stderr, podPVCYAML)
+	}).Should(Succeed())
+	Eventually(func(g Gomega) {
+		stdout, stderr, err := kubectlWithInput(podPVCYAML, "delete", "-f", "-")
+		g.Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
+	}).Should(Succeed())
+
 	By("[BeforeSuite] Creating namespace for test")
 	createNamespace(testNamespace)
 	createNamespace(testNamespace2)
