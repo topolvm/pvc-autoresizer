@@ -5,6 +5,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "pvc-autoresizer.labels" . | nindent 4 }}
+  {{- if .Values.controller.annotations}}
+  annotations:
+    {{- toYaml .Values.controller.annotations | nindent 4 }}
+  {{- end }}
 spec:
   selector:
     matchLabels:
