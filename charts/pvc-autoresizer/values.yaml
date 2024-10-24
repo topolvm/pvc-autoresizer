@@ -72,6 +72,33 @@ controller:
   # controller.nodeSelector -- Map of key-value pairs for scheduling pods on specific nodes.
   nodeSelector: {}
 
+  # controller.affinity -- Affinity for controller deployment.
+  affinity: {}
+    # podAffinity:
+    #     requiredDuringSchedulingIgnoredDuringExecution:
+    #     - labelSelector:
+    #         matchExpressions:
+    #         - key: app.kubernetes.io/name: pvc-autoresizer
+    #           operator: In
+    #           values:
+    #           - pvc-autoresizer
+    #       topologyKey: topology.kubernetes.io/zone
+    #   podAntiAffinity:
+    #     preferredDuringSchedulingIgnoredDuringExecution:
+    #     - weight: 100
+    #       podAffinityTerm:
+    #         labelSelector:
+    #           matchExpressions:
+    #           - key: app.kubernetes.io/name: pvc-autoresizer
+    #             operator: In
+    #             values:
+    #             - pvc-autoresizer
+    #         topologyKey: topology.kubernetes.io/zone
+
+  # controller.priorityClassName -- riority class name to be applied to the controller pods.
+  priorityClassName: ""
+  # priorityClassName: system-cluster-critical
+
 # -- deploy a PodMonitor. This is not tested in CI so make sure to test it yourself.
 podMonitor:
   # podMonitor.enabled -- If true, creates a Prometheus Operator PodMonitor.
