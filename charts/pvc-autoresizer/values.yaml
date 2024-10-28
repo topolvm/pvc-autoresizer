@@ -75,27 +75,27 @@ controller:
   # controller.affinity -- Affinity for controller deployment.
   affinity: {}
     # podAffinity:
-    #     requiredDuringSchedulingIgnoredDuringExecution:
-    #     - labelSelector:
+    #   requiredDuringSchedulingIgnoredDuringExecution:
+    #   - labelSelector:
+    #       matchExpressions:
+    #       - key: app.kubernetes.io/name
+    #         operator: In
+    #         values:
+    #         - pvc-autoresizer
+    #     topologyKey: topology.kubernetes.io/zone
+    # podAntiAffinity:
+    #   preferredDuringSchedulingIgnoredDuringExecution:
+    #   - weight: 100
+    #     podAffinityTerm:
+    #       labelSelector:
     #         matchExpressions:
-    #         - key: app.kubernetes.io/name: pvc-autoresizer
+    #         - key: app.kubernetes.io/name
     #           operator: In
     #           values:
     #           - pvc-autoresizer
     #       topologyKey: topology.kubernetes.io/zone
-    #   podAntiAffinity:
-    #     preferredDuringSchedulingIgnoredDuringExecution:
-    #     - weight: 100
-    #       podAffinityTerm:
-    #         labelSelector:
-    #           matchExpressions:
-    #           - key: app.kubernetes.io/name: pvc-autoresizer
-    #             operator: In
-    #             values:
-    #             - pvc-autoresizer
-    #         topologyKey: topology.kubernetes.io/zone
 
-  # controller.priorityClassName -- riority class name to be applied to the controller pods.
+  # controller.priorityClassName -- priority class name to be applied to the controller pods.
   priorityClassName: ""
   # priorityClassName: system-cluster-critical
 
