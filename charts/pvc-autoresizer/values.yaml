@@ -95,7 +95,7 @@ controller:
     #           - pvc-autoresizer
     #       topologyKey: topology.kubernetes.io/zone
 
-  # controller.priorityClassName -- priority class name to be applied to the controller pods.
+  # controller.priorityClassName -- Priority class name to be applied to the controller pods.
   priorityClassName: ""
   # priorityClassName: system-cluster-critical
 
