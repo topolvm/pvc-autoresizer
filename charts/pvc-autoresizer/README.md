@@ -32,6 +32,7 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | cert-manager.enabled | bool | `false` | Install cert-manager together. # ref: https://cert-manager.io/docs/installation/helm/#installing-with-helm |
+| controller.affinity | object | `{}` | Affinity for controller deployment. |
 | controller.annotations | object | `{}` | Annotations to be added to controller deployment. |
 | controller.args.additionalArgs | list | `[]` | Specify additional args. |
 | controller.args.interval | string | `"10s"` | Specify interval to monitor pvc capacity. Used as "--interval" option |
@@ -42,6 +43,7 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | controller.podAnnotations | object | `{}` | Annotations to be added to controller pods. |
 | controller.podLabels | object | `{}` | Pod labels to be added to controller pods. |
 | controller.podSecurityContext | object | `{}` | Security Context to be applied to the controller pods. |
+| controller.priorityClassName | string | `""` | Priority class name to be applied to the controller pods. |
 | controller.replicas | int | `1` | Specify the number of replicas of the controller Pod. |
 | controller.resources | object | `{"requests":{"cpu":"100m","memory":"20Mi"}}` | Specify resources. |
 | controller.securityContext | object | `{}` | Security Context to be applied to the controller container within controller pods. |
