@@ -13,10 +13,10 @@ on:
 jobs:
   e2e-k8s:
     name: "e2e-k8s"
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.30.0", "1.29.4", "1.28.9"]
+        kubernetes_versions: ["1.31.0", "1.30.4", "1.29.8"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
@@ -30,10 +30,10 @@ jobs:
 
   e2e-k8s-without-cert-manager:
     name: "e2e-k8s-without-cert-manager"
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.30.0", "1.29.4", "1.28.9"]
+        kubernetes_versions: ["1.31.0", "1.30.4", "1.29.8"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
@@ -47,10 +47,10 @@ jobs:
 
   e2e-k8s-with-metrics-api:
     name: "e2e-k8s-with-metrics-api"
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.30.0", "1.29.4", "1.28.9"]
+        kubernetes_versions: ["1.31.0", "1.30.4", "1.29.8"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
