@@ -72,6 +72,7 @@ func TestMtest(t *testing.T) {
 
 	SetDefaultEventuallyPollingInterval(time.Second)
 	SetDefaultEventuallyTimeout(5 * time.Minute)
+	EnforceDefaultTimeoutsWhenUsingContexts()
 
 	RunSpecs(t, "Test on sanity")
 }
