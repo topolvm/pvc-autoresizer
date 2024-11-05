@@ -4,6 +4,7 @@ import (
 	"net"
 	"time"
 
+	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
 	"github.com/topolvm/pvc-autoresizer/internal/hooks"
 	"github.com/topolvm/pvc-autoresizer/internal/runners"
 	corev1 "k8s.io/api/core/v1"
@@ -146,6 +147,19 @@ func subMain() error {
 			setupLog.Error(err, "unable to create PersistentVolumeClaim webhook")
 			return err
 		}
+	}
+
+	if config.defaultThreshold != "" {
+		pvcautoresizer.DefaultThreshold = config.defaultThreshold
+	}
+	if config.defaultInodesThreshold != "" {
+		pvcautoresizer.DefaultInodesThreshold = config.defaultInodesThreshold
+	}
+	if config.defaultIncrease != "" {
+		pvcautoresizer.DefaultIncrease = config.defaultIncrease
+	}
+	if config.defaultLimit != "" {
+		pvcautoresizer.DefaultLimit = config.defaultLimit
 	}
 
 	//+kubebuilder:scaffold:builder

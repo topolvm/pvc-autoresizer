@@ -21,11 +21,16 @@ const PreviousCapacityBytesAnnotation = "resize.topolvm.io/pre_capacity_bytes"
 // InitialResizeGroupByAnnotation is the key of the initial-resize group by.
 const InitialResizeGroupByAnnotation = "resize.topolvm.io/initial-resize-group-by"
 
-// DefaultThreshold is the default value of ResizeThresholdAnnotation.
-const DefaultThreshold = "10%"
+var (
+	// DefaultThreshold is the default value of ResizeThresholdAnnotation.
+	DefaultThreshold = "10%"
 
-// DefaultInodesThreshold is the default value of ResizeInodesThresholdAnnotation.
-const DefaultInodesThreshold = "10%"
+	// DefaultInodesThreshold is the default value of ResizeInodesThresholdAnnotation.
+	DefaultInodesThreshold = "10%"
 
-// DefaultIncrease is the default value of ResizeIncreaseAnnotation.
-const DefaultIncrease = "10%"
+	// DefaultIncrease is the default value of ResizeIncreaseAnnotation.
+	DefaultIncrease = "10%"
+
+	// DefaultLimit is the default value of StorageLimitAnnotation.
+	DefaultLimit = "0Gi"
+)
