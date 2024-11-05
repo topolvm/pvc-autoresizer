@@ -31,3 +31,5 @@ nodes:
     - containerPath: /var/lib/kubelet
       hostPath: /tmp/autoresizer/worker
       propagation: Bidirectional
+    - containerPath: /dev
+      hostPath: /dev
