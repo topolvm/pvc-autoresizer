@@ -89,6 +89,7 @@ kube-prometheus:
 	mkdir $(shell pwd)/kube-prometheus && \
 	curl -sSfL https://github.com/prometheus-operator/kube-prometheus/archive/refs/tags/v$(KUBE_PROMETHEUS_VERSION).tar.gz \
 		| tar xfz - -C $(shell pwd)/kube-prometheus --strip-components=1 kube-prometheus-$(KUBE_PROMETHEUS_VERSION)/manifests
+	rm $(shell pwd)/kube-prometheus/manifests/*networkPolicy.yaml
 
 .PHONY: clean
 clean: stop-lvmd
