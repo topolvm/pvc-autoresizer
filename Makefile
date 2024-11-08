@@ -78,7 +78,7 @@ test: manifests generate tools fmt vet ## Run tests.
 
 .PHONY: lint
 lint: ## Run golangci-lint linter & yamllint
-	$(GOLANGCI_LINT) run
+	$(GOLANGCI_LINT) run --timeout 3m
 
 .PHONY: lint-fix
 lint-fix: ## Run golangci-lint linter and perform fixes
@@ -153,7 +153,7 @@ $(SETUP_ENVTEST):
 setup: # Setup tools
 	mkdir -p bin
 	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CONTROLLER_TOOLS_VERSION)
-	curl -o $(KUBECTL) -sSfL https://storage.googleapis.com/kubernetes-release/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
+	curl -o $(KUBECTL) -sSfL https://dl.k8s.io/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(KUBECTL)
 	GOBIN=$(BINDIR) go install github.com/norwoodj/helm-docs/cmd/helm-docs@v$(HELM_DOCS_VERSION)
 	curl -sSfL https://get.helm.sh/helm-v$(HELM_VERSION)-linux-amd64.tar.gz \
