@@ -334,5 +334,5 @@ func PvcStorageLimit(pvc *corev1.PersistentVolumeClaim) (resource.Quantity, erro
 		return resource.ParseQuantity(annotation)
 	}
 
-	return *resource.NewQuantity(0, resource.BinarySI), nil
+	return resource.ParseQuantity(pvcautoresizer.DefaultLimit)
 }
