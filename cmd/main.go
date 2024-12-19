@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	//+kubebuilder:scaffold:imports
@@ -25,6 +26,10 @@ var config struct {
 	development               bool
 	zapOpts                   zap.Options
 	pvcMutatingWebhookEnabled bool
+	defaultThreshold          string
+	defaultInodesThreshold    string
+	defaultIncrease           string
+	defaultLimit              string
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -61,6 +66,14 @@ func init() {
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")
 	fs.BoolVar(&config.pvcMutatingWebhookEnabled, "pvc-mutating-webhook-enabled", true,
 		"Enable the pvc mutating webhook endpoint")
+	fs.StringVar(&config.defaultThreshold, "default-threshold", pvcautoresizer.DefaultThreshold,
+		"Default value of ResizeThresholdAnnotation")
+	fs.StringVar(&config.defaultInodesThreshold, "default-inodes-threshold", pvcautoresizer.DefaultInodesThreshold,
+		"Default value of ResizeInodesThresholdAnnotation")
+	fs.StringVar(&config.defaultIncrease, "default-increase", pvcautoresizer.DefaultIncrease,
+		"Default value of ResizeIncreaseAnnotation")
+	fs.StringVar(&config.defaultLimit, "default-limit", pvcautoresizer.DefaultLimit,
+		"Default value of StorageLimitAnnotation")
 
 	goflags := flag.NewFlagSet("zap", flag.ExitOnError)
 	config.zapOpts.BindFlags(goflags)
