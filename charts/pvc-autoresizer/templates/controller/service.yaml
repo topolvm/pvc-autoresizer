@@ -9,5 +9,5 @@ spec:
     - port: 443
       targetPort: 9443
   selector:
-    app.kubernetes.io/name: pvc-autoresizer
+    {{- include "pvc-autoresizer.selectorLabels" . | nindent 4 }}
 {{- end }}
