@@ -156,7 +156,7 @@ var _ = Describe("pvc-autoresizer", func() {
 	var resources []resource
 	var resources2 []resource
 
-	var _ = AfterEach(func() {
+	_ = AfterEach(func() {
 		if CurrentSpecReport().Failed() {
 			failedTest = true
 		} else {
@@ -183,8 +183,8 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := "2Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, "", "", storageLimit,
-			"", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold,
+			"", increase, "", "", storageLimit, "", nil)
 
 		By("create a file with a size that does not exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
@@ -221,8 +221,8 @@ var _ = Describe("pvc-autoresizer", func() {
 		minimumIncrease := "1Gi"
 		storageLimit := "3Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, minimumIncrease, "", storageLimit,
-			"", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold,
+			"", increase, minimumIncrease, "", storageLimit, "", nil)
 
 		By("create a file that exceeds threshold of disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
@@ -243,8 +243,8 @@ var _ = Describe("pvc-autoresizer", func() {
 		minimumIncrease := "2Gi"
 		storageLimit := "3Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, minimumIncrease, "", storageLimit,
-			"", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold,
+			"", increase, minimumIncrease, "", storageLimit, "", nil)
 
 		By("create a file that exceeds threshold of disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
@@ -265,8 +265,8 @@ var _ = Describe("pvc-autoresizer", func() {
 		maximumIncrease := "1Gi"
 		storageLimit := "3Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, "", maximumIncrease, storageLimit,
-			"", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold,
+			"", increase, "", maximumIncrease, storageLimit, "", nil)
 
 		By("create a file that exceeds threshold of disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
@@ -286,8 +286,8 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := ""
 		storageLimit := "11Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, "", "", storageLimit,
-			"", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold,
+			"", increase, "", "", storageLimit, "", nil)
 
 		By("create a file with a size that does not exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
@@ -307,8 +307,8 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := "2Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, "", "", storageLimit,
-			"", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold,
+			"", increase, "", "", storageLimit, "", nil)
 
 		By("write data with a size that exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
@@ -328,8 +328,8 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := "2Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, "", "", storageLimit,
-			"", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold,
+			"", increase, "", "", storageLimit, "", nil)
 
 		By("create a file with a size that exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
@@ -396,8 +396,8 @@ var _ = Describe("pvc-autoresizer", func() {
 		increase := "1Gi"
 		storageLimit := "0Gi"
 
-		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold, "", increase, "", "", storageLimit,
-			"", nil)
+		resources = createPodPVC(resources, pvcName, sc, mode, pvcName, request, threshold,
+			"", increase, "", "", storageLimit, "", nil)
 
 		By("create a file with a size that does not exceed threshold disk usage")
 		stdout, stderr, err := kubectl("-n", testNamespace, "exec", pvcName, "--",
@@ -512,7 +512,9 @@ var _ = Describe("pvc-autoresizer", func() {
 })
 
 func buildPodPVCTemplateYAML(ns, pvcName, storageClassName, volumeMode, podName, request, threshold, inodesThreshold,
-	increase, minimumIncrease, maximumIncrease, storageLimit, initialResizeGroupByAnnotation string, labels map[string]string) ([]byte, error) {
+	increase, minimumIncrease, maximumIncrease, storageLimit, initialResizeGroupByAnnotation string,
+	labels map[string]string,
+) ([]byte, error) {
 	var b bytes.Buffer
 	var err error
 
@@ -556,7 +558,8 @@ func buildPodPVCTemplateYAML(ns, pvcName, storageClassName, volumeMode, podName,
 
 func createPodPVC(resources []resource, pvcName, storageClassName, volumeMode, podName,
 	request, threshold, inodesThreshold, increase, minimumIncrease, maximumincrease, storageLimit,
-	initialResizeGroupByAnnotation string, labels map[string]string) []resource {
+	initialResizeGroupByAnnotation string, labels map[string]string,
+) []resource {
 	return createPodPVCWithNamespace(testNamespace, resources, pvcName, storageClassName,
 		volumeMode, podName, request, threshold, inodesThreshold, increase, minimumIncrease, maximumincrease, storageLimit,
 		initialResizeGroupByAnnotation, labels)
@@ -564,7 +567,8 @@ func createPodPVC(resources []resource, pvcName, storageClassName, volumeMode, p
 
 func createPodPVC2(resources []resource, pvcName, storageClassName, volumeMode, podName,
 	request, threshold, inodesThreshold, increase, minimumIncrease, maximumincrease, storageLimit,
-	initialResizeGroupByAnnotation string, labels map[string]string) []resource {
+	initialResizeGroupByAnnotation string, labels map[string]string,
+) []resource {
 	return createPodPVCWithNamespace(testNamespace2, resources, pvcName, storageClassName,
 		volumeMode, podName, request, threshold, inodesThreshold, increase, minimumIncrease, maximumincrease, storageLimit,
 		initialResizeGroupByAnnotation, labels)
@@ -572,7 +576,8 @@ func createPodPVC2(resources []resource, pvcName, storageClassName, volumeMode, 
 
 func createPodPVCWithNamespace(ns string, resources []resource, pvcName, storageClassName,
 	volumeMode, podName, request, threshold, inodesThreshold, increase, minimumIncrease, maximumincrease, storageLimit,
-	initialResizeGroupByAnnotation string, labels map[string]string) []resource {
+	initialResizeGroupByAnnotation string, labels map[string]string,
+) []resource {
 	By("create a PVC and a pod for test")
 	podPVCYAML, err := buildPodPVCTemplateYAML(ns, pvcName, storageClassName, volumeMode, podName,
 		request, threshold, inodesThreshold, increase, minimumIncrease, maximumincrease, storageLimit,

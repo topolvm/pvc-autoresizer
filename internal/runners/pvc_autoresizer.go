@@ -25,14 +25,16 @@ import (
 //+kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create
 
-const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
-const storageClassNameIndexKey = ".spec.storageClassName"
-const logLevelWarn = 3
+const (
+	resizeEnableIndexKey     = ".metadata.annotations[resize.topolvm.io/enabled]"
+	storageClassNameIndexKey = ".spec.storageClassName"
+	logLevelWarn             = 3
+)
 
 // NewPVCAutoresizer returns a new pvcAutoresizer struct
 func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, interval time.Duration,
-	recorder record.EventRecorder) manager.Runnable {
-
+	recorder record.EventRecorder,
+) manager.Runnable {
 	return &pvcAutoresizer{
 		metricsClient: mc,
 		client:        c,

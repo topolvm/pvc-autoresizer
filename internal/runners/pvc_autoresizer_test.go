@@ -428,7 +428,8 @@ var _ = Describe("test resizer", func() {
 })
 
 func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold, increase string,
-	request, limit, capacity int64, mode corev1.PersistentVolumeMode) {
+	request, limit, capacity int64, mode corev1.PersistentVolumeMode,
+) {
 	pvc := corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
