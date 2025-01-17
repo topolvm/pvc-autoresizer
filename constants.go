@@ -9,6 +9,12 @@ const ResizeThresholdAnnotation = "resize.topolvm.io/threshold"
 // ResizeInodesThresholdAnnotation is the key of resize threshold for inodes.
 const ResizeInodesThresholdAnnotation = "resize.topolvm.io/inodes-threshold"
 
+// ResizeMaximumIncreaseAnnotation is the key of amount increased at minimum.
+const ResizeMaximumIncreaseAnnotation = "resize.topolvm.io/max-increase"
+
+// ResizeMinimumIncreaseAnnotation is the key of amount increased at minimum.
+const ResizeMinimumIncreaseAnnotation = "resize.topolvm.io/min-increase"
+
 // ResizeIncreaseAnnotation is the key of amount increased.
 const ResizeIncreaseAnnotation = "resize.topolvm.io/increase"
 

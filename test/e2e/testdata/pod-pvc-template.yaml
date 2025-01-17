@@ -12,6 +12,8 @@ metadata:
   annotations:
     resize.topolvm.io/threshold: "{{ .thresholdAnnotation }}"
     resize.topolvm.io/increase: "{{ .increaseAnnotation }}"
+    resize.topolvm.io/min-increase: "{{ .minimumIncreaseAnnotation }}"
+    resize.topolvm.io/max-increase: "{{ .maximumIncreaseAnnotation }}"
     resize.topolvm.io/inodes-threshold: "{{ .inodesThresholdAnnotation }}"
     resize.topolvm.io/storage_limit: "{{ .storageLimitAnnotation }}"
     resize.topolvm.io/initial-resize-group-by: "{{ .initialResizeGroupByAnnotation }}"

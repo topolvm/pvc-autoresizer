@@ -87,12 +87,12 @@ spec:
   storageClassName: topolvm-provisioner
 ```
 
-The PVC can optionally have `resize.topolvm.io/threshold`, `resize.topolvm.io/inodes-threshold` and `resize.topolvm.io/increase` annotations.
-(If they are not given, the default value is `10%`.)
+The PVC can optionally have `resize.topolvm.io/threshold`, `resize.topolvm.io/inodes-threshold`, `resize.topolvm.io/increase`, `resize.topolvm.io/min-increase`, and `resize.topolvm.io/max-increase` annotations.
+(If they are not given, the first three annotations default to 10% and the latter two annotations are not set.)
 
 When the amount of free space of the volume is below `resize.topolvm.io/threshold`
 or the number of free inodes is below `resize.topolvm.io/inodes-threshold`,
-`.spec.resources.requests.storage` is increased by `resize.topolvm.io/increase`.
+`.spec.resources.requests.storage` is increased by the greater of `resize.topolvm.io/min-increase` and `resize.topolvm.io/increase` and the lesser of that amount and `resize.topolvm.io/max-increase`.
 
 If `resize.topolvm.io/increase` is given as a percentage, the value is calculated as
 the current `spec.resources.requests.storage` value multiplied by the annotation value.
@@ -107,7 +107,9 @@ metadata:
     resize.topolvm.io/storage_limit: 100Gi
     resize.topolvm.io/threshold: 20%
     resize.topolvm.io/inodes-threshold: 20%
-    resize.topolvm.io/increase: 20Gi
+    resize.topolvm.io/increase: 20%
+    resize.topolvm.io/min-increase: 5Gi
+    resize.topolvm.io/max-increase: 15Gi
 spec:
   <snip>
 ```

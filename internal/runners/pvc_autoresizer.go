@@ -192,6 +192,30 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		return nil
 	}
 
+	annotation, ok := pvc.Annotations[pvcautoresizer.ResizeMinimumIncreaseAnnotation]
+	if ok && len(annotation) > 0 {
+		minIncrease, err := convertSizeInBytes(pvc.Annotations[pvcautoresizer.ResizeMinimumIncreaseAnnotation], cap.Value(), "")
+		if err != nil {
+			log.V(logLevelWarn).Info("failed to convert maximum-increase annotation", "error", err.Error())
+			return nil
+		}
+		if minIncrease > increase {
+			increase = minIncrease
+		}
+	}
+
+	annotation, ok = pvc.Annotations[pvcautoresizer.ResizeMaximumIncreaseAnnotation]
+	if ok && len(annotation) > 0 {
+		maxIncrease, err := convertSizeInBytes(pvc.Annotations[pvcautoresizer.ResizeMaximumIncreaseAnnotation], cap.Value(), "")
+		if err != nil {
+			log.V(logLevelWarn).Info("failed to convert maximum-increase annotation", "error", err.Error())
+			return nil
+		}
+		if maxIncrease < increase {
+			increase = maxIncrease
+		}
+	}
+
 	preCap, exist := pvc.Annotations[pvcautoresizer.PreviousCapacityBytesAnnotation]
 	if exist {
 		preCapInt64, err := strconv.ParseInt(preCap, 10, 64)
