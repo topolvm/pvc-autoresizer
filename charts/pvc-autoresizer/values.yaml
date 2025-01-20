@@ -151,3 +151,9 @@ cert-manager:
   # cert-manager.enabled -- Install cert-manager together.
   ## ref: https://cert-manager.io/docs/installation/helm/#installing-with-helm
   enabled: false
+
+serviceAccount:
+  # serviceAccount.enabled -- Creates a ServiceAccount for the controller deployment.
+  enabled: true
+  # serviceAccount.automountServiceAccountToken -- Controls the automatic mounting of ServiceAccount API credentials.
+  automountServiceAccountToken: true
