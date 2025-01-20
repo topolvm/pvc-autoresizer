@@ -196,25 +196,25 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 
 	annotation, ok := pvc.Annotations[pvcautoresizer.ResizeMinimumIncreaseAnnotation]
 	if ok && len(annotation) > 0 {
-		minIncrease, err := convertSizeInBytes(pvc.Annotations[pvcautoresizer.ResizeMinimumIncreaseAnnotation], cap.Value(), "")
+		minimumIncrease, err := convertSizeInBytes(pvc.Annotations[pvcautoresizer.ResizeMinimumIncreaseAnnotation], cap.Value(), "")
 		if err != nil {
 			log.V(logLevelWarn).Info("failed to convert maximum-increase annotation", "error", err.Error())
 			return nil
 		}
-		if minIncrease > increase {
-			increase = minIncrease
+		if minimumIncrease > increase {
+			increase = minimumIncrease
 		}
 	}
 
 	annotation, ok = pvc.Annotations[pvcautoresizer.ResizeMaximumIncreaseAnnotation]
 	if ok && len(annotation) > 0 {
-		maxIncrease, err := convertSizeInBytes(pvc.Annotations[pvcautoresizer.ResizeMaximumIncreaseAnnotation], cap.Value(), "")
+		maximumIncrease, err := convertSizeInBytes(pvc.Annotations[pvcautoresizer.ResizeMaximumIncreaseAnnotation], cap.Value(), "")
 		if err != nil {
 			log.V(logLevelWarn).Info("failed to convert maximum-increase annotation", "error", err.Error())
 			return nil
 		}
-		if maxIncrease < increase {
-			increase = maxIncrease
+		if maximumIncrease < increase {
+			increase = maximumIncrease
 		}
 	}
 
