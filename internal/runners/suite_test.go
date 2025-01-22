@@ -30,14 +30,18 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
-var cfg *rest.Config
-var k8sClient client.Client
-var testEnv *envtest.Environment
-var cancelMgr func()
-var promClient = prometheusClientMock{}
+var (
+	cfg        *rest.Config
+	k8sClient  client.Client
+	testEnv    *envtest.Environment
+	cancelMgr  func()
+	promClient = prometheusClientMock{}
+)
 
-var scName string = "test-storageclass"
-var provName string = "test-provisioner"
+var (
+	scName   string = "test-storageclass"
+	provName string = "test-provisioner"
+)
 
 func TestRunners(t *testing.T) {
 	RegisterFailHandler(Fail)

@@ -25,14 +25,16 @@ import (
 //+kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create
 
-const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
-const storageClassNameIndexKey = ".spec.storageClassName"
-const logLevelWarn = 3
+const (
+	resizeEnableIndexKey     = ".metadata.annotations[resize.topolvm.io/enabled]"
+	storageClassNameIndexKey = ".spec.storageClassName"
+	logLevelWarn             = 3
+)
 
 // NewPVCAutoresizer returns a new pvcAutoresizer struct
 func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, interval time.Duration,
-	recorder record.EventRecorder) manager.Runnable {
-
+	recorder record.EventRecorder,
+) manager.Runnable {
 	return &pvcAutoresizer{
 		metricsClient: mc,
 		client:        c,
@@ -190,6 +192,30 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert increase annotation", "error", err.Error())
 		return nil
+	}
+
+	annotation, ok := pvc.Annotations[pvcautoresizer.ResizeMinimumIncreaseAnnotation]
+	if ok && len(annotation) > 0 {
+		minimumIncrease, err := convertSizeInBytes(annotation, cap.Value(), "")
+		if err != nil {
+			log.V(logLevelWarn).Info("failed to convert minimum-increase annotation", "error", err.Error())
+			return nil
+		}
+		if minimumIncrease > increase {
+			increase = minimumIncrease
+		}
+	}
+
+	annotation, ok = pvc.Annotations[pvcautoresizer.ResizeMaximumIncreaseAnnotation]
+	if ok && len(annotation) > 0 {
+		maximumIncrease, err := convertSizeInBytes(annotation, cap.Value(), "")
+		if err != nil {
+			log.V(logLevelWarn).Info("failed to convert maximum-increase annotation", "error", err.Error())
+			return nil
+		}
+		if maximumIncrease < increase {
+			increase = maximumIncrease
+		}
 	}
 
 	preCap, exist := pvc.Annotations[pvcautoresizer.PreviousCapacityBytesAnnotation]

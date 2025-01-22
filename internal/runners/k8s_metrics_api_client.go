@@ -21,8 +21,7 @@ func NewK8sMetricsApiClient() (MetricsClient, error) {
 	return &k8sMetricsApiClient{}, nil
 }
 
-type k8sMetricsApiClient struct {
-}
+type k8sMetricsApiClient struct{}
 
 func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
 	// create a Kubernetes client using in-cluster configuration
