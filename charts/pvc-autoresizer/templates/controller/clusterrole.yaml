@@ -58,3 +58,12 @@ rules:
   - list
   - watch
 {{- end }}
+{{- if .Values.controller.args.annotationPatchingEnabled }}
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  verbs:
+  - get
+  - watch
+{{- end }}

@@ -25,6 +25,7 @@ var config struct {
 	development               bool
 	zapOpts                   zap.Options
 	pvcMutatingWebhookEnabled bool
+	annotationPatchingEnabled bool
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -61,6 +62,8 @@ func init() {
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")
 	fs.BoolVar(&config.pvcMutatingWebhookEnabled, "pvc-mutating-webhook-enabled", true,
 		"Enable the pvc mutating webhook endpoint")
+	fs.BoolVar(&config.annotationPatchingEnabled, "annotation-patching-enabled", false,
+		"For STS provisioned PVCs, patch annotations in the STS volumeClaimTemplate onto PVCs.")
 
 	goflags := flag.NewFlagSet("zap", flag.ExitOnError)
 	config.zapOpts.BindFlags(goflags)

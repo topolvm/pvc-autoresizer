@@ -12,8 +12,9 @@ CONTROLLER_GEN := $(BINDIR)/controller-gen
 GOLANGCI_LINT = $(BINDIR)/golangci-lint
 KUBECTL := $(BINDIR)/kubectl
 KUSTOMIZE := $(BINDIR)/kustomize
+SETUP_ENVTEST := $(BINDIR)/setup-envtest
 
-KUBEBUILDER_ASSETS := $(BINDIR)
+KUBEBUILDER_ASSETS := $(shell $(SETUP_ENVTEST) use -p path $(ENVTEST_K8S_VERSION))
 export KUBEBUILDER_ASSETS
 
 IMAGE_TAG ?= latest
@@ -142,7 +143,6 @@ staticcheck: ## Install staticcheck
 		env GOFLAGS= go install honnef.co/go/tools/cmd/staticcheck@latest; \
 	fi
 
-SETUP_ENVTEST := $(BINDIR)/setup-envtest
 .PHONY: setup-envtest
 setup-envtest: $(SETUP_ENVTEST) ## Download setup-envtest locally if necessary
 $(SETUP_ENVTEST):

@@ -192,6 +192,35 @@ spec:
 When the size of the largest PVC in the same group is larger than the value set to `resize.topolvm.io/storage_limit` annotation,
 the PVC is resized up to this limit.
 
+#### StatefulSet provisioned PersistentVolumeClaims
+
+PVCs provisioned through a StatefulSet's `volumeClaimTemplates` cannot have their annotations updated automatically. `pvc-autoresizer` can be configured to automatically reconcile PVC annotations to match those found in the owning STS `volumeClaimTemplate` using the `--annotation-patching-enabled` flag. Additionally, this behavior is only enabled if the owning STS has the `resize.topolvm.io/annotation-patching-enabled: "true"` annotation. This reconciliation is only done for the following annotations: `resize.topolvm.io/threshold`, `resize.topolvm.io/inodes-threshold`, `resize.topolvm.io/increase`, `resize.topolvm.io/storage_limit`, and `resize.topolvm.io/initial-resize-group-by`.
+
+For example, for the following existing STS and provisioned PVC:
+
+```yaml
+kind: StatefulSet
+metadata:
+  name: sts
+  annotations:
+    resize.topolvm.io/annotation-patching-enabled: "true"
+spec:
+  volumeClaimTemplates:
+  - kind: PersistentVolumeClaim
+    metadata:
+      annotations:
+        resize.topolvm.io/storage_limit: 20Gi
+# ...
+---
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    resize.topolvm.io/storage_limit: 10Gi
+#...
+```
+
+When `pvc-autoresizer` attempts to resize the PVC, it will first update the storage limit annotation value to `20Gi` to match the STS template.
+
 ### Prometheus metrics
 
 ####  `pvcautoresizer_kubernetes_client_fail_total`

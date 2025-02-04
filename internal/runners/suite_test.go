@@ -13,6 +13,8 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
+	"go.uber.org/zap/zapcore"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,6 +37,7 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 var cancelMgr func()
 var promClient = prometheusClientMock{}
+var logVLevel = -1
 
 var scName string = "test-storageclass"
 var provName string = "test-provisioner"
@@ -46,7 +49,8 @@ func TestRunners(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter)))
+	logLevel := zapcore.Level(logVLevel)
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true), zap.Level(logLevel)))
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -65,6 +69,9 @@ var _ = BeforeSuite(func() {
 	err = storagev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = appsv1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
 	//+kubebuilder:scaffold:scheme
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
@@ -81,14 +88,14 @@ var _ = BeforeSuite(func() {
 
 	pvcAutoresizer := NewPVCAutoresizer(&promClient, mgr.GetClient(),
 		logf.Log.WithName("pvc-autoresizer"),
-		1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer"))
+		1*time.Second, true, mgr.GetEventRecorderFor("pvc-autoresizer"))
 	err = mgr.Add(pvcAutoresizer)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Add pvcAutoresizer with FakeClientWrapper for metrics tests
 	pvcAutoresizer2 := NewPVCAutoresizer(&promClient, NewFakeClientWrapper(mgr.GetClient()),
 		logf.Log.WithName("pvc-autoresizer2"),
-		1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer2"))
+		1*time.Second, true, mgr.GetEventRecorderFor("pvc-autoresizer2"))
 	err = mgr.Add(pvcAutoresizer2)
 	Expect(err).ToNot(HaveOccurred())
 

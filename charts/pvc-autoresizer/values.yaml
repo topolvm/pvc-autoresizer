@@ -4,7 +4,7 @@ image:
 
   # image.tag -- pvc-autoresizer image tag to use.
   # @default -- `{{ .Chart.AppVersion }}`
-  tag:  # 0.17.0
+  tag:  # 0.18.0
 
   # image.pullPolicy -- pvc-autoresizer image pullPolicy.
   pullPolicy:  # Always
@@ -29,6 +29,10 @@ controller:
     # controller.args.interval -- Specify interval to monitor pvc capacity.
     # Used as "--interval" option
     interval: 10s
+
+    # controller.args.annotationPatchingEnabled -- Automatically patch annotations of STS provisioned PVCs to match volumeClaimTemplates.
+    # Used as "--annotation-patching-enabled" option
+    annotationPatchingEnabled: false
 
     # controller.args.additionalArgs -- Specify additional args.
     additionalArgs: []

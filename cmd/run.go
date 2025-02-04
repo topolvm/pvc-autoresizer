@@ -6,6 +6,7 @@ import (
 
 	"github.com/topolvm/pvc-autoresizer/internal/hooks"
 	"github.com/topolvm/pvc-autoresizer/internal/runners"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -78,6 +79,29 @@ func subMain() error {
 		}
 	}
 
+	byObjectCache := map[client.Object]cache.ByObject{
+		&corev1.PersistentVolumeClaim{}: pvcCacheTarget,
+		&storagev1.StorageClass{}:       {},
+	}
+	if config.annotationPatchingEnabled {
+		var stsCacheTarget cache.ByObject
+		if len(config.namespaces) == 0 {
+			stsCacheTarget = cache.ByObject{
+				Namespaces: map[string]cache.Config{
+					cache.AllNamespaces: {},
+				},
+			}
+		} else {
+			stsCacheTarget = cache.ByObject{
+				Namespaces: map[string]cache.Config{},
+			}
+			for _, ns := range config.namespaces {
+				stsCacheTarget.Namespaces[ns] = cache.Config{}
+			}
+		}
+		byObjectCache[&appsv1.StatefulSet{}] = stsCacheTarget
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:        scheme,
 		WebhookServer: webhookServer,
@@ -85,10 +109,7 @@ func subMain() error {
 			BindAddress: config.metricsAddr,
 		},
 		Cache: cache.Options{
-			ByObject: map[client.Object]cache.ByObject{
-				&corev1.PersistentVolumeClaim{}: pvcCacheTarget,
-				&storagev1.StorageClass{}:       {},
-			},
+			ByObject: byObjectCache,
 		},
 		HealthProbeBindAddress:  config.healthAddr,
 		LeaderElection:          true,
@@ -134,7 +155,7 @@ func subMain() error {
 
 	pvcAutoresizer := runners.NewPVCAutoresizer(metricsClient, mgr.GetClient(),
 		ctrl.Log.WithName("pvc-autoresizer"),
-		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
+		config.watchInterval, config.annotationPatchingEnabled, mgr.GetEventRecorderFor("pvc-autoresizer"))
 	if err := mgr.Add(pvcAutoresizer); err != nil {
 		setupLog.Error(err, "unable to add autoresier to manager")
 		return err

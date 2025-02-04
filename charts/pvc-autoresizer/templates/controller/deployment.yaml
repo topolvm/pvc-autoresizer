@@ -43,6 +43,9 @@ spec:
           {{- if .Values.controller.args.namespaces }}
             - --namespaces={{ join "," .Values.controller.args.namespaces }}
           {{- end }}
+          {{- if .Values.controller.args.annotationPatchingEnabled }}
+            - --annotation-patching-enabled={{ .Values.controller.args.annotationPatchingEnabled }}
+          {{- end }}
           {{- with .Values.controller.args.additionalArgs -}}
             {{ toYaml . | nindent 12 }}
           {{- end }}
