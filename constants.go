@@ -1,25 +1,30 @@
 package pvcautoresizer
 
+const AutoResizerAnnotationPrefix = "resize.topolvm.io/"
+
 // AutoResizeEnabledKey is the key of flag that enables pvc-autoresizer.
-const AutoResizeEnabledKey = "resize.topolvm.io/enabled"
+const AutoResizeEnabledKey = AutoResizerAnnotationPrefix + "enabled"
 
 // ResizeThresholdAnnotation is the key of resize threshold.
-const ResizeThresholdAnnotation = "resize.topolvm.io/threshold"
+const ResizeThresholdAnnotation = AutoResizerAnnotationPrefix + "threshold"
 
 // ResizeInodesThresholdAnnotation is the key of resize threshold for inodes.
-const ResizeInodesThresholdAnnotation = "resize.topolvm.io/inodes-threshold"
+const ResizeInodesThresholdAnnotation = AutoResizerAnnotationPrefix + "inodes-threshold"
 
 // ResizeIncreaseAnnotation is the key of amount increased.
-const ResizeIncreaseAnnotation = "resize.topolvm.io/increase"
+const ResizeIncreaseAnnotation = AutoResizerAnnotationPrefix + "increase"
 
 // StorageLimitAnnotation is the key of storage limit value
-const StorageLimitAnnotation = "resize.topolvm.io/storage_limit"
+const StorageLimitAnnotation = AutoResizerAnnotationPrefix + "storage_limit"
 
 // PreviousCapacityBytesAnnotation is the key of previous volume capacity.
-const PreviousCapacityBytesAnnotation = "resize.topolvm.io/pre_capacity_bytes"
+const PreviousCapacityBytesAnnotation = AutoResizerAnnotationPrefix + "pre_capacity_bytes"
 
 // InitialResizeGroupByAnnotation is the key of the initial-resize group by.
-const InitialResizeGroupByAnnotation = "resize.topolvm.io/initial-resize-group-by"
+const InitialResizeGroupByAnnotation = AutoResizerAnnotationPrefix + "initial-resize-group-by"
+
+// AnnotationPatchingEnabled is the key of flag that enables patching of annotations for STS provisioned PVCs.
+const AnnotationPatchingEnabled = AutoResizerAnnotationPrefix + "annotation-patching-enabled"
 
 // DefaultThreshold is the default value of ResizeThresholdAnnotation.
 const DefaultThreshold = "10%"

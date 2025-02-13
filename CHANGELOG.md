@@ -9,6 +9,9 @@ This file itself is based on [Keep a CHANGELOG](https://keepachangelog.com/en/0.
 
 ## [Unreleased]
 
+### Added
+- Add option allowing PVC autoresizer to update annotations of STS provisioned PVCs to match the volumeClaimTemplate ([#306](https://github.com/topolvm/pvc-autoresizer/pull/306))
+
 ## [0.10.0] - 2023-10-13
 
 ### Changed

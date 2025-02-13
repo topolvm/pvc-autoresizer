@@ -3,7 +3,10 @@ package runners
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math"
+	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -11,9 +14,11 @@ import (
 	"github.com/go-logr/logr"
 	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
 	"github.com/topolvm/pvc-autoresizer/internal/metrics"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -24,30 +29,34 @@ import (
 //+kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=get;list;watch;update;patch
 //+kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create
+//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;watch
 
 const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
 const storageClassNameIndexKey = ".spec.storageClassName"
+const logLevelDebug = 1
 const logLevelWarn = 3
 
 // NewPVCAutoresizer returns a new pvcAutoresizer struct
 func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, interval time.Duration,
-	recorder record.EventRecorder) manager.Runnable {
+	annotationPatchingEnabled bool, recorder record.EventRecorder) manager.Runnable {
 
 	return &pvcAutoresizer{
-		metricsClient: mc,
-		client:        c,
-		log:           log,
-		interval:      interval,
-		recorder:      recorder,
+		metricsClient:    mc,
+		client:           c,
+		log:              log,
+		interval:         interval,
+		patchAnnotations: annotationPatchingEnabled,
+		recorder:         recorder,
 	}
 }
 
 type pvcAutoresizer struct {
-	client        client.Client
-	metricsClient MetricsClient
-	interval      time.Duration
-	log           logr.Logger
-	recorder      record.EventRecorder
+	client           client.Client
+	metricsClient    MetricsClient
+	interval         time.Duration
+	patchAnnotations bool
+	log              logr.Logger
+	recorder         record.EventRecorder
 }
 
 // Start implements manager.Runnable
@@ -84,6 +93,134 @@ func isTargetPVC(pvc *corev1.PersistentVolumeClaim) (bool, error) {
 	return true, nil
 }
 
+func (w *pvcAutoresizer) getPVCOwnerSTS(ctx context.Context, pvc *corev1.PersistentVolumeClaim) (*appsv1.StatefulSet, error) {
+	log := w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name)
+	log.V(logLevelDebug).Info("checking for owner statefulset")
+
+	owner := metav1.GetControllerOf(pvc)
+	if owner == nil {
+		log.V(logLevelDebug).Info("no controller reference")
+		return nil, nil
+	}
+
+	if owner.Kind != "StatefulSet" {
+		log.V(logLevelDebug).Info("controller kind not 'StatefulSet'", "kind", owner.Kind)
+		return nil, nil
+	}
+
+	key := client.ObjectKey{
+		Namespace: pvc.Namespace,
+		Name:      owner.Name,
+	}
+
+	var sts appsv1.StatefulSet
+	err := w.client.Get(ctx, key, &sts)
+	if err != nil {
+		metrics.KubernetesClientFailTotal.Increment()
+		return nil, err
+	}
+
+	return &sts, nil
+}
+
+func (w *pvcAutoresizer) reconcileAnnotations(ctx context.Context, pvc *corev1.PersistentVolumeClaim, sts *appsv1.StatefulSet) error {
+	log := w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name)
+	log.V(logLevelDebug).Info("reconciling annotations")
+
+	if enabledAnnotation, ok := sts.Annotations[pvcautoresizer.AnnotationPatchingEnabled]; !ok || enabledAnnotation != "true" {
+		if !ok {
+			log.V(logLevelDebug).Info("owner StatefulSet does not have annotation patching enabled")
+		} else {
+			log.V(logLevelDebug).Info("owner StatefulSet disables annotation patching", "enabled", enabledAnnotation)
+		}
+		return nil
+	}
+
+	autoresizerAnnotationRegex, err := regexp.Compile("^(" + pvcautoresizer.ResizeThresholdAnnotation + "|" + pvcautoresizer.ResizeInodesThresholdAnnotation + "|" + pvcautoresizer.ResizeIncreaseAnnotation + "|" + pvcautoresizer.StorageLimitAnnotation + "|" + pvcautoresizer.InitialResizeGroupByAnnotation + ")$")
+	if err != nil {
+		log.Error(err, "failed to compile annotation regex")
+		return nil
+	}
+
+	for _, pvcTemplate := range sts.Spec.VolumeClaimTemplates {
+		// Should check pvcTemplate.Kind == "PersistentVolumeClaim" here,
+		// but can't due to upstream issue:
+		// https://github.com/kubernetes-sigs/controller-runtime/issues/1517#issuecomment-839979174
+
+		pvcNameRegex, err := regexp.Compile("^" + pvcTemplate.Name + "-" + sts.Name + "-\\d+$")
+		if err != nil {
+			log.Error(err, "failed to compile PVC name regex")
+			metrics.ResizerFailedPatchAnnotationsTotal.Increment(pvc.Name, pvc.Namespace)
+			continue
+		}
+
+		if !pvcNameRegex.MatchString(pvc.Name) {
+			log.V(logLevelDebug).Info("failed to match PVC name with STS template", "PVC name", pvc.Name)
+			continue
+		}
+
+		log.V(logLevelDebug).Info("found STS provisioned PVC template", "StatefulSet", sts.Name, "PersistentVolumeClaim", pvc.Name)
+
+		pvcAnnotationBuffer := maps.Clone(pvc.Annotations)
+		if pvcAnnotationBuffer == nil {
+			log.V(logLevelDebug).Info("PVC annotation map is nil", "annotations", pvc.Annotations)
+			pvcAnnotationBuffer = map[string]string{}
+		}
+
+		// Remove pvc-autoresizer annotations on the PVC if they are not in the template
+		for annotation := range pvcAnnotationBuffer {
+			// Not a pvc-autoresizer annotation
+			if !autoresizerAnnotationRegex.MatchString(annotation) {
+				continue
+			}
+
+			// Annotation on PVC exists in PVC template
+			if _, ok := pvcTemplate.Annotations[annotation]; ok {
+				continue
+			}
+
+			delete(pvcAnnotationBuffer, annotation)
+		}
+
+		// Add and updated values of PVC annotations to match template
+		for annotation, annotationValue := range pvcTemplate.Annotations {
+			// Not a pvc-autoresizer annotation
+			if !autoresizerAnnotationRegex.MatchString(annotation) {
+				continue
+			}
+
+			// Annotation and value on PVC match PVC template
+			if pvcAnnotationValue, ok := pvcAnnotationBuffer[annotation]; ok && pvcAnnotationValue == annotationValue {
+				continue
+			}
+
+			log.Info("patching annotation", "annotation", annotation, "value", annotationValue)
+
+			pvcAnnotationBuffer[annotation] = annotationValue
+		}
+
+		// All PVC annotations match template
+		if reflect.DeepEqual(pvcAnnotationBuffer, pvc.Annotations) || (len(pvcAnnotationBuffer) == 0 && pvc.Annotations == nil) {
+			log.Info("PVC annotations match template", "annotations", pvc.Annotations)
+			metrics.ResizerSuccessPatchAnnotationsTotal.Increment(pvc.Name, pvc.Namespace)
+			continue
+		}
+
+		// Patch PVC annotations to match template
+		pvc.Annotations = maps.Clone(pvcAnnotationBuffer)
+		err = w.client.Update(ctx, pvc)
+		if err != nil {
+			metrics.KubernetesClientFailTotal.Increment()
+			return err
+		}
+		log.V(logLevelDebug).Info("annotations patched", "annotations", pvc.Annotations)
+		w.recorder.Eventf(pvc, corev1.EventTypeNormal, "Annotations patched", "PVC annotations updated to %v", pvc.Annotations)
+		metrics.ResizerSuccessPatchAnnotationsTotal.Increment(pvc.Name, pvc.Namespace)
+	}
+
+	return nil
+}
+
 func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.StorageClassList, error) {
 	var scs storagev1.StorageClassList
 	err := w.client.List(ctx, &scs, client.MatchingFields(map[string]string{resizeEnableIndexKey: "true"}))
@@ -117,6 +254,27 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) {
 		}
 		for _, pvc := range pvcs.Items {
 			log := w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name)
+
+			if w.patchAnnotations {
+				// To output the metric even if some events do not occur, we call SpecifyLabels() here.
+				metrics.ResizerSuccessPatchAnnotationsTotal.SpecifyLabels(pvc.Name, pvc.Namespace)
+				metrics.ResizerFailedPatchAnnotationsTotal.SpecifyLabels(pvc.Name, pvc.Namespace)
+
+				sts, err := w.getPVCOwnerSTS(ctx, &pvc)
+				if err != nil {
+					log.Error(err, "failed to get owner STS")
+					metrics.ResizerFailedPatchAnnotationsTotal.Increment(pvc.Name, pvc.Namespace)
+				}
+				log.V(logLevelDebug).Info("is owned by statefulset", "owned", sts != nil)
+				if sts != nil {
+					err = w.reconcileAnnotations(ctx, &pvc, sts)
+					if err != nil {
+						log.Error(err, "failed to patch PVC annotations")
+						metrics.ResizerFailedPatchAnnotationsTotal.Increment(pvc.Name, pvc.Namespace)
+					}
+				}
+			}
+
 			isTarget, err := isTargetPVC(&pvc)
 			if err != nil {
 				metrics.ResizerFailedResizeTotal.Increment(pvc.Name, pvc.Namespace)

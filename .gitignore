@@ -2,6 +2,7 @@
 /.vscode
 /.idea
 /vendor
+.DS_Store
 
 # ignore dependency charts
 charts/*/charts

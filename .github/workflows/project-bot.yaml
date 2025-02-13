@@ -1,11 +1,5 @@
 name: Add a new item to project
-on:
-  issues:
-    types:
-      - opened
-  pull_request_target:
-    types:
-      - opened
+on: workflow_dispatch
 jobs:
   add_item:
     runs-on: ubuntu-latest

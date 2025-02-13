@@ -24,7 +24,7 @@ version: 0.14.4
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: 0.17.5
+appVersion: 0.18.5
 
 annotations:
   artifacthub.io/images: |

@@ -3,12 +3,14 @@ package runners
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -425,6 +427,461 @@ var _ = Describe("test resizer", func() {
 			})
 		})
 	})
+
+	Context("annotate", func() {
+		type testCase struct {
+			description            string
+			persistentVolumeClaims []corev1.PersistentVolumeClaim
+			statefulSet            appsv1.StatefulSet
+			pvcCapacities          int64
+			expectedAnnotations    map[string]string
+			expectedPVCSizes       int64
+			expectedToPatch        bool
+		}
+		ctx := context.Background()
+		volumeMode := corev1.PersistentVolumeFilesystem
+		pvcSpec := corev1.PersistentVolumeClaimSpec{
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: *resource.NewQuantity(10<<30, resource.BinarySI),
+				},
+			},
+			AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			StorageClassName: &scName,
+			VolumeMode:       &volumeMode,
+		}
+		namespace := "default"
+		isController := true
+		stsSingleReplica := int32(1)
+		stsPodLabels := map[string]string{
+			"blank": "blank",
+		}
+		stsSelector := metav1.LabelSelector{
+			MatchLabels: stsPodLabels,
+		}
+		stsPodSpec := corev1.PodTemplateSpec{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pod",
+				Namespace: namespace,
+				Labels:    stsPodLabels,
+			},
+		}
+		stsName := "test-sts"
+		pvcName := "test-pvc"
+		testCases := []testCase{
+			{
+				description: "Should patch annotations",
+				persistentVolumeClaims: []corev1.PersistentVolumeClaim{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        pvcName + "-" + stsName,
+							Namespace:   namespace,
+							Annotations: map[string]string{},
+							OwnerReferences: []metav1.OwnerReference{
+								{
+									Kind:       "StatefulSet",
+									Name:       stsName,
+									Controller: &isController,
+									APIVersion: "v1",
+									UID:        "blank",
+								},
+							},
+						},
+						Spec: pvcSpec,
+					},
+				},
+				statefulSet: appsv1.StatefulSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      stsName,
+						Namespace: namespace,
+						Annotations: map[string]string{
+							"resize.topolvm.io/annotation-patching-enabled": "true",
+						},
+					},
+					Spec: appsv1.StatefulSetSpec{
+						Replicas: &stsSingleReplica,
+						Selector: &stsSelector,
+						Template: stsPodSpec,
+						VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
+							{
+								ObjectMeta: metav1.ObjectMeta{
+									Name:      pvcName,
+									Namespace: namespace,
+									Annotations: map[string]string{
+										"resize.topolvm.io/threshold": "20%",
+									},
+								},
+								Spec: pvcSpec,
+							},
+						},
+					},
+				},
+				pvcCapacities: 1,
+				expectedAnnotations: map[string]string{
+					"resize.topolvm.io/threshold": "20%",
+				},
+				expectedPVCSizes: 10,
+				expectedToPatch:  true,
+			},
+			{
+				description: "Should not patch annotations (not enabled)",
+				persistentVolumeClaims: []corev1.PersistentVolumeClaim{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        pvcName + "-" + stsName,
+							Namespace:   namespace,
+							Annotations: map[string]string{},
+							OwnerReferences: []metav1.OwnerReference{
+								{
+									Kind:       "StatefulSet",
+									Name:       stsName,
+									Controller: &isController,
+									APIVersion: "v1",
+									UID:        "blank",
+								},
+							},
+						},
+						Spec: pvcSpec,
+					},
+				},
+				statefulSet: appsv1.StatefulSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        stsName,
+						Namespace:   namespace,
+						Annotations: map[string]string{},
+					},
+					Spec: appsv1.StatefulSetSpec{
+						Replicas: &stsSingleReplica,
+						Selector: &stsSelector,
+						Template: stsPodSpec,
+						VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
+							{
+								ObjectMeta: metav1.ObjectMeta{
+									Name:      pvcName,
+									Namespace: namespace,
+									Annotations: map[string]string{
+										"resize.topolvm.io/threshold": "20%",
+									},
+								},
+								Spec: pvcSpec,
+							},
+						},
+					},
+				},
+				pvcCapacities:       1,
+				expectedAnnotations: map[string]string{},
+				expectedPVCSizes:    10,
+				expectedToPatch:     false,
+			},
+			{
+				description: "Should not patch annotations (disabled)",
+				persistentVolumeClaims: []corev1.PersistentVolumeClaim{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        pvcName + "-" + stsName,
+							Namespace:   namespace,
+							Annotations: map[string]string{},
+							OwnerReferences: []metav1.OwnerReference{
+								{
+									Kind:       "StatefulSet",
+									Name:       stsName,
+									Controller: &isController,
+									APIVersion: "v1",
+									UID:        "blank",
+								},
+							},
+						},
+						Spec: pvcSpec,
+					},
+				},
+				statefulSet: appsv1.StatefulSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      stsName,
+						Namespace: namespace,
+						Annotations: map[string]string{
+							"resize.topolvm.io/annotation-patching-enabled": "false",
+						},
+					},
+					Spec: appsv1.StatefulSetSpec{
+						Replicas: &stsSingleReplica,
+						Selector: &stsSelector,
+						Template: stsPodSpec,
+						VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
+							{
+								ObjectMeta: metav1.ObjectMeta{
+									Name:      pvcName,
+									Namespace: namespace,
+									Annotations: map[string]string{
+										"resize.topolvm.io/threshold": "20%",
+									},
+								},
+								Spec: pvcSpec,
+							},
+						},
+					},
+				},
+				pvcCapacities:       1,
+				expectedAnnotations: map[string]string{},
+				expectedPVCSizes:    10,
+				expectedToPatch:     false,
+			},
+			{
+				description: "Should patch annotations and resize",
+				persistentVolumeClaims: []corev1.PersistentVolumeClaim{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        pvcName + "-" + stsName,
+							Namespace:   namespace,
+							Annotations: map[string]string{},
+							OwnerReferences: []metav1.OwnerReference{
+								{
+									Kind:       "StatefulSet",
+									Name:       stsName,
+									Controller: &isController,
+									APIVersion: "v1",
+									UID:        "blank",
+								},
+							},
+						},
+						Spec: pvcSpec,
+					},
+				},
+				statefulSet: appsv1.StatefulSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      stsName,
+						Namespace: namespace,
+						Annotations: map[string]string{
+							"resize.topolvm.io/annotation-patching-enabled": "true",
+						},
+					},
+					Spec: appsv1.StatefulSetSpec{
+						Replicas: &stsSingleReplica,
+						Selector: &stsSelector,
+						Template: stsPodSpec,
+						VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
+							{
+								ObjectMeta: metav1.ObjectMeta{
+									Name:      pvcName,
+									Namespace: namespace,
+									Annotations: map[string]string{
+										"resize.topolvm.io/storage_limit":           "20Gi",
+										"resize.topolvm.io/threshold":               "50%",
+										"resize.topolvm.io/inodes-threshold":        "50%",
+										"resize.topolvm.io/increase":                "50%",
+										"resize.topolvm.io/initial-resize-group-by": "blank",
+									},
+								},
+								Spec: pvcSpec,
+							},
+						},
+					},
+				},
+				pvcCapacities: 10,
+				expectedAnnotations: map[string]string{
+					"resize.topolvm.io/storage_limit":           "20Gi",
+					"resize.topolvm.io/threshold":               "50%",
+					"resize.topolvm.io/inodes-threshold":        "50%",
+					"resize.topolvm.io/increase":                "50%",
+					"resize.topolvm.io/initial-resize-group-by": "blank",
+				},
+				expectedPVCSizes: 15,
+				expectedToPatch:  true,
+			},
+			{
+				description: "Should patch annotations (removal)",
+				persistentVolumeClaims: []corev1.PersistentVolumeClaim{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      pvcName + "-" + stsName,
+							Namespace: namespace,
+							Annotations: map[string]string{
+								"resize.topolvm.io/threshold":     "50%",
+								"resize.topolvm.io/increase":      "50%",
+								"resize.topolvm.io/storage_limit": "20Gi",
+								"some.other/annotation":           "blank",
+							},
+							OwnerReferences: []metav1.OwnerReference{
+								{
+									Kind:       "StatefulSet",
+									Name:       stsName,
+									Controller: &isController,
+									APIVersion: "v1",
+									UID:        "blank",
+								},
+							},
+						},
+						Spec: pvcSpec,
+					},
+				},
+				statefulSet: appsv1.StatefulSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      stsName,
+						Namespace: namespace,
+						Annotations: map[string]string{
+							"resize.topolvm.io/annotation-patching-enabled": "true",
+						},
+					},
+					Spec: appsv1.StatefulSetSpec{
+						Replicas: &stsSingleReplica,
+						Selector: &stsSelector,
+						Template: stsPodSpec,
+						VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
+							{
+								ObjectMeta: metav1.ObjectMeta{
+									Name:      pvcName,
+									Namespace: namespace,
+									Annotations: map[string]string{
+										"resize.topolvm.io/threshold":     "20%",
+										"resize.topolvm.io/storage_limit": "20Gi",
+									},
+								},
+								Spec: pvcSpec,
+							},
+						},
+					},
+				},
+				pvcCapacities: 5,
+				expectedAnnotations: map[string]string{
+					"resize.topolvm.io/threshold":     "20%",
+					"resize.topolvm.io/storage_limit": "20Gi",
+					"some.other/annotation":           "blank",
+				},
+				expectedPVCSizes: 10,
+				expectedToPatch:  true,
+			},
+		}
+
+		for testCaseIndex, testCase := range testCases {
+			description := testCase.description + fmt.Sprintf(" %v", testCase.expectedAnnotations)
+			namespace := testCase.statefulSet.Namespace
+
+			testCase.statefulSet.Name += fmt.Sprintf("-%d", testCaseIndex)
+			for pvcIndex := range testCase.persistentVolumeClaims {
+				testCase.persistentVolumeClaims[pvcIndex].OwnerReferences[0].Name = testCase.statefulSet.Name
+				testCase.persistentVolumeClaims[pvcIndex].Name += fmt.Sprintf("-%d-%d", testCaseIndex, pvcIndex)
+			}
+
+			It(description+" and should output metrics", func() {
+				createSTS(ctx, &testCase.statefulSet)
+				for _, pvc := range testCase.persistentVolumeClaims {
+					createDefinedPVC(ctx, &pvc, testCase.pvcCapacities)
+					storageBytesRequested := pvc.Spec.Resources.Requests.Storage().Value()
+					availableBytes := storageBytesRequested - testCase.pvcCapacities<<30
+					setMetrics(pvc.Namespace, pvc.Name, availableBytes, storageBytesRequested, 100, 100)
+				}
+
+				var sts appsv1.StatefulSet
+				err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: testCase.statefulSet.Name}, &sts)
+				Expect(err).NotTo(HaveOccurred())
+
+				annotationCheck := func() error {
+					for _, expectedPVC := range testCase.persistentVolumeClaims {
+						var pvc corev1.PersistentVolumeClaim
+						err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: expectedPVC.Name}, &pvc)
+						if err != nil {
+							return err
+						}
+
+						if reflect.DeepEqual(testCase.expectedAnnotations, pvc.Annotations) {
+							return nil
+						}
+
+						if len(testCase.expectedAnnotations) != 0 && pvc.Annotations == nil {
+							return fmt.Errorf("PVC (%s) annotations should be (%v), but are (%v)", pvc.Name, testCase.expectedAnnotations, pvc.Annotations)
+						}
+
+						req := pvc.Spec.Resources.Requests.Storage().Value()
+
+						ALLOWANCE := int64(1 << 10)
+						if !(testCase.expectedPVCSizes<<30-ALLOWANCE < req && req <= testCase.expectedPVCSizes<<30+ALLOWANCE) {
+							return fmt.Errorf("PVC (%s) request size(Gi) should be %d, but is %d", pvc.Name, testCase.expectedPVCSizes, req>>30)
+						}
+					}
+
+					return nil
+				}
+
+				Eventually(annotationCheck, 3*time.Second).ShouldNot(HaveOccurred())
+
+				By("checking metrics", func() {
+					pvcLabelName := "persistentvolumeclaim"
+
+					successAnnotateMetricCheck := func() int {
+						metricsFamilies, err := getMetricsFamily()
+						Expect(err).NotTo(HaveOccurred())
+
+						metricsFamily, ok := metricsFamilies["pvcautoresizer_success_patch_annotations_total"]
+						Expect(ok).To(BeTrue())
+
+						successAnnotateMetricValue := 0
+						for _, metric := range metricsFamily.Metric {
+							if metric.Counter == nil || metric.Counter.Value == nil {
+								continue
+							}
+
+							for _, label := range metric.Label {
+								if *label.Name != pvcLabelName {
+									continue
+								}
+
+								for _, pvc := range testCase.persistentVolumeClaims {
+									if *label.Value != pvc.Name {
+										continue
+									}
+
+									successAnnotateMetricValue = int(*metric.Counter.Value)
+								}
+							}
+						}
+
+						return successAnnotateMetricValue
+					}
+
+					if testCase.expectedToPatch {
+						Eventually(successAnnotateMetricCheck, 3*time.Second).ShouldNot(Equal(0))
+					} else {
+						Eventually(successAnnotateMetricCheck, 3*time.Second).Should(Equal(0))
+					}
+
+					failedAnnotateMetricCheck := func() int {
+						metricsFamilies, err := getMetricsFamily()
+						Expect(err).NotTo(HaveOccurred())
+
+						metricsFamily, ok := metricsFamilies["pvcautoresizer_failed_patch_annotations_total"]
+						Expect(ok).To(BeTrue())
+
+						failedAnnotateMetricValue := 0
+						for _, metric := range metricsFamily.Metric {
+							if metric.Counter == nil || metric.Counter.Value == nil {
+								continue
+							}
+
+							for _, label := range metric.Label {
+								if *label.Name != pvcLabelName {
+									continue
+								}
+
+								for _, pvc := range testCase.persistentVolumeClaims {
+									if *label.Value != pvc.Name {
+										continue
+									}
+
+									failedAnnotateMetricValue = int(*metric.Counter.Value)
+								}
+							}
+						}
+						return failedAnnotateMetricValue
+					}
+
+					if testCase.expectedToPatch {
+						Eventually(failedAnnotateMetricCheck, 3*time.Second).ShouldNot(Equal(0))
+					} else {
+						Eventually(failedAnnotateMetricCheck, 3*time.Second).Should(Equal(0))
+					}
+				})
+			})
+		}
+	})
 })
 
 func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold, increase string,
@@ -485,4 +942,21 @@ func setMetrics(ns, name string, availableBytes, capacityBytes, availableInodeSi
 		AvailableInodeSize: availableInodeSize,
 		CapacityInodeSize:  capacityInodeSize,
 	})
+}
+
+func createSTS(ctx context.Context, sts *appsv1.StatefulSet) {
+	err := k8sClient.Create(ctx, sts)
+	Expect(err).NotTo(HaveOccurred())
+}
+
+func createDefinedPVC(ctx context.Context, pvc *corev1.PersistentVolumeClaim, capacityGi int64) {
+	err := k8sClient.Create(ctx, pvc)
+	Expect(err).NotTo(HaveOccurred())
+
+	pvc.Status.Phase = corev1.ClaimBound
+	pvc.Status.Capacity = map[corev1.ResourceName]resource.Quantity{
+		corev1.ResourceStorage: *resource.NewQuantity(capacityGi<<30, resource.BinarySI),
+	}
+	err = k8sClient.Status().Update(ctx, pvc)
+	Expect(err).NotTo(HaveOccurred())
 }

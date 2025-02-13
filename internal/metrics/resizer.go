@@ -7,10 +7,12 @@ import (
 
 // Metrics subsystem and all of the keys used by the resizer.
 const (
-	ResizerSuccessResizeTotalKey = "success_resize_total"
-	ResizerFailedResizeTotalKey  = "failed_resize_total"
-	ResizerLoopSecondsTotalKey   = "loop_seconds_total"
-	ResizerLimitReachedTotalKey  = "limit_reached_total"
+	ResizerSuccessResizeTotalKey           = "success_resize_total"
+	ResizerFailedResizeTotalKey            = "failed_resize_total"
+	ResizerLoopSecondsTotalKey             = "loop_seconds_total"
+	ResizerLimitReachedTotalKey            = "limit_reached_total"
+	ResizerSuccessPatchAnnotationsTotalKey = "success_patch_annotations_total"
+	ResizerFailedPatchAnnotationsTotalKey  = "failed_patch_annotations_total"
 )
 
 func init() {
@@ -67,11 +69,39 @@ func (a *resizerLimitReachedTotalAdapter) SpecifyLabels(pvcname string, pvcns st
 	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Add(0)
 }
 
+type resizerSuccessPatchAnnotationsTotalAdapter struct {
+	metric prometheus.CounterVec
+}
+
+func (a *resizerSuccessPatchAnnotationsTotalAdapter) Increment(pvcName string, pvcNamespace string) {
+	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcName, "namespace": pvcNamespace}).Inc()
+}
+
+// SpecifyLabels helps output metrics before the first limit reached event of resize.
+// This method specifies the metric labels and add 0 to the metric value.
+func (a *resizerSuccessPatchAnnotationsTotalAdapter) SpecifyLabels(pvcName string, pvcNamespace string) {
+	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcName, "namespace": pvcNamespace}).Add(0)
+}
+
+type resizerFailedPatchAnnotationsTotalAdapter struct {
+	metric prometheus.CounterVec
+}
+
+func (a *resizerFailedPatchAnnotationsTotalAdapter) Increment(pvcName string, pvcNamespace string) {
+	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcName, "namespace": pvcNamespace}).Inc()
+}
+
+// SpecifyLabels helps output metrics before the first limit reached event of resize.
+// This method specifies the metric labels and add 0 to the metric value.
+func (a *resizerFailedPatchAnnotationsTotalAdapter) SpecifyLabels(pvcName string, pvcNamespace string) {
+	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcName, "namespace": pvcNamespace}).Add(0)
+}
+
 var (
 	resizerSuccessResizeTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
 		Name:      ResizerSuccessResizeTotalKey,
-		Help:      "counter that indicates how many volume expansion processing resized succeed.",
+		Help:      "counter that indicates how many volume expansion processing resizes succeed.",
 	}, []string{"persistentvolumeclaim", "namespace"})
 
 	resizerFailedResizeTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -92,6 +122,18 @@ var (
 		Help:      "counter that indicates how many storage limits were reached.",
 	}, []string{"persistentvolumeclaim", "namespace"})
 
+	resizerSuccessPatchAnnotationsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: MetricsNamespace,
+		Name:      ResizerSuccessPatchAnnotationsTotalKey,
+		Help:      "counter that indicates how many annotation patches on StatefulSet provisioned PersistentVolumeClaims succeed.",
+	}, []string{"persistentvolumeclaim", "namespace"})
+
+	resizerFailedPatchAnnotationsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: MetricsNamespace,
+		Name:      ResizerFailedPatchAnnotationsTotalKey,
+		Help:      "counter that indicates how many annotation patches on StatefulSet provisioned PersistentVolumeClaims fail.",
+	}, []string{"persistentvolumeclaim", "namespace"})
+
 	ResizerSuccessResizeTotal *resizerSuccessResizeTotalAdapter = &resizerSuccessResizeTotalAdapter{
 		metric: *resizerSuccessResizeTotal,
 	}
@@ -104,6 +146,12 @@ var (
 	ResizerLimitReachedTotal *resizerLimitReachedTotalAdapter = &resizerLimitReachedTotalAdapter{
 		metric: *resizerLimitReachedTotal,
 	}
+	ResizerSuccessPatchAnnotationsTotal *resizerSuccessPatchAnnotationsTotalAdapter = &resizerSuccessPatchAnnotationsTotalAdapter{
+		metric: *resizerSuccessPatchAnnotationsTotal,
+	}
+	ResizerFailedPatchAnnotationsTotal *resizerFailedPatchAnnotationsTotalAdapter = &resizerFailedPatchAnnotationsTotalAdapter{
+		metric: *resizerFailedPatchAnnotationsTotal,
+	}
 )
 
 func registerResizerMetrics() {
@@ -111,4 +159,6 @@ func registerResizerMetrics() {
 	runtimemetrics.Registry.MustRegister(resizerFailedResizeTotal)
 	runtimemetrics.Registry.MustRegister(resizerLoopSecondsTotal)
 	runtimemetrics.Registry.MustRegister(resizerLimitReachedTotal)
+	runtimemetrics.Registry.MustRegister(resizerSuccessPatchAnnotationsTotal)
+	runtimemetrics.Registry.MustRegister(resizerFailedPatchAnnotationsTotal)
 }
