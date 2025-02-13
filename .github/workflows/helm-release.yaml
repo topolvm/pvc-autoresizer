@@ -23,9 +23,11 @@ jobs:
         run: |
           helm repo add cert-manager https://charts.jetstack.io
 
-      - name: "Run chart-releaser"
-        uses: helm/chart-releaser-action@v1.7.0
-        with:
-          config: ".cr.yaml"
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Login to Helm registry
+        run: echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io/appian --username ${{ github.actor }} --password-stdin
+      - name: Package chart
+        run: helm package --dependency-update ./charts/pvc-autoresizer
+      - name: Publish chart
+        run: |
+          chartVersion=$(helm show chart ./charts/pvc-autoresizer | grep -E "^version:" | awk '{print $2}')
+          helm push ./pvc-autoresizer-${chartVersion}.tgz oci://ghcr.io/appian/charts
