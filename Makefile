@@ -18,7 +18,7 @@ KUBEBUILDER_ASSETS := $(shell $(SETUP_ENVTEST) use -p path $(ENVTEST_K8S_VERSION
 export KUBEBUILDER_ASSETS
 
 IMAGE_TAG ?= latest
-IMAGE_PREFIX ?= ghcr.io/topolvm/
+IMAGE_PREFIX ?= ghcr.io/appian/
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
