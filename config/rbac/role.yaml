@@ -29,6 +29,7 @@ rules:
   - statefulsets
   verbs:
   - get
+  - list
   - watch
 - apiGroups:
   - storage.k8s.io

@@ -29,7 +29,7 @@ import (
 //+kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=get;list;watch;update;patch
 //+kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create
-//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;watch
+//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch
 
 const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
 const storageClassNameIndexKey = ".spec.storageClassName"
