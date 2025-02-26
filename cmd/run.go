@@ -135,7 +135,7 @@ func subMain() error {
 
 	var metricsClient runners.MetricsClient
 	if config.useK8sMetricsApi {
-		metricsClient, err = runners.NewK8sMetricsApiClient()
+		metricsClient, err = runners.NewK8sMetricsApiClient(ctrl.Log.WithName("k8s-metrics-api"))
 	} else if config.prometheusURL != "" {
 		metricsClient, err = runners.NewPrometheusClient(config.prometheusURL)
 	} else {

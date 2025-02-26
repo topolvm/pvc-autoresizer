@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/go-logr/logr"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/topolvm/pvc-autoresizer/internal/metrics"
 	"golang.org/x/sync/errgroup"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -17,11 +19,14 @@ import (
 )
 
 // NewK8sMetricsApiClient returns a new k8sMetricsApiClient client
-func NewK8sMetricsApiClient() (MetricsClient, error) {
-	return &k8sMetricsApiClient{}, nil
+func NewK8sMetricsApiClient(log logr.Logger) (MetricsClient, error) {
+	return &k8sMetricsApiClient{
+		log: log,
+	}, nil
 }
 
 type k8sMetricsApiClient struct {
+	log logr.Logger
 }
 
 func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
@@ -52,11 +57,15 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 	// use an errgroup to query kubelet for PVC usage on each node
 	eg, ctx := errgroup.WithContext(ctx)
 	for _, node := range nodes.Items {
+		if !IsNodeReady(node) {
+			continue
+		}
 		nodeName := node.Name
 		eg.Go(func() error {
 			nodePVCUsage, err := getPVCUsageFromK8sMetricsAPI(ctx, clientset, nodeName)
 			if err != nil {
-				return err
+				c.log.Error(err, "metricsClient.GetMetrics failed")
+				return nil
 			}
 			mu.Lock()
 			defer mu.Unlock()
@@ -144,4 +153,13 @@ func parseMetric(m *dto.Metric) (pvcName types.NamespacedName, value uint64) {
 	}
 	value = uint64(m.GetGauge().GetValue())
 	return pvcName, value
+}
+
+func IsNodeReady(node corev1.Node) bool {
+	for _, condition := range node.Status.Conditions {
+		if condition.Type == corev1.NodeReady {
+			return condition.Status == corev1.ConditionTrue
+		}
+	}
+	return false
 }
