@@ -704,7 +704,6 @@ var _ = Describe("test resizer", func() {
 								{
 									Kind:       "StatefulSet",
 									Name:       stsName,
-									Controller: &isController,
 									APIVersion: "v1",
 									UID:        "blank",
 								},

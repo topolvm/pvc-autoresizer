@@ -99,8 +99,18 @@ func (w *pvcAutoresizer) getPVCOwnerSTS(ctx context.Context, pvc *corev1.Persist
 
 	owner := metav1.GetControllerOf(pvc)
 	if owner == nil {
-		log.V(logLevelDebug).Info("no controller reference")
-		return nil, nil
+		// In k8s versions <=1.27, PVCs may have an ownerReference for a StatefulSet without the controller key
+		for _, ownerRef := range pvc.ObjectMeta.OwnerReferences {
+			if ownerRef.Kind == "StatefulSet" {
+				owner = &ownerRef
+				break
+			}
+		}
+
+		if owner == nil {
+			log.V(logLevelDebug).Info("no controller reference")
+			return nil, nil
+		}
 	}
 
 	if owner.Kind != "StatefulSet" {
