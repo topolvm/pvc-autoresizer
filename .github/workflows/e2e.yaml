@@ -16,7 +16,7 @@ jobs:
     runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.31.0", "1.30.4", "1.29.8"]
+        kubernetes_versions: ["1.32.2", "1.31.6", "1.30.10"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
@@ -33,7 +33,7 @@ jobs:
     runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.31.0", "1.30.4", "1.29.8"]
+        kubernetes_versions: ["1.32.2", "1.31.6", "1.30.10"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
@@ -50,7 +50,7 @@ jobs:
     runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.31.0", "1.30.4", "1.29.8"]
+        kubernetes_versions: ["1.32.2", "1.31.6", "1.30.10"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
