@@ -9,6 +9,39 @@ image:
   # image.pullPolicy -- pvc-autoresizer image pullPolicy.
   pullPolicy:  # Always
 
+# -- Slack notification configuration
+notifications:
+  slack:
+    # notifications.slack.enabled -- Enable Slack notifications
+    enabled: false
+    
+    # notifications.slack.webhookUrl -- Slack webhook URL for sending notifications.
+    # The webhook URL already includes a default channel configuration.
+    # You should use a secret to store this value.
+    webhookUrl: ""
+    
+    # notifications.slack.channel -- (Optional) Override the default channel from webhook URL.
+    # Leave empty to use the channel configured in the webhook URL.
+    channel: ""
+    
+    # notifications.slack.username -- (Optional) Username that will appear as the sender.
+    # Leave empty to use the default bot name configured in Slack.
+    username: ""
+
+    # notifications.slack.existingSecret -- Name of existing secret containing webhook URL
+    existingSecret: ""
+    
+    # notifications.slack.existingSecretKey -- Key in existing secret containing webhook URL
+    existingSecretKey: "webhook-url"
+
+    # notifications.slack.clusterName -- (Optional) Name of the cluster to be shown in notifications.
+    # Leave empty to use "current cluster" as default.
+    clusterName: ""
+
+    # notifications.slack.disableStartupNotification -- (Optional) Disable startup notification while keeping other notifications enabled.
+    # Set to true to disable the startup notification.
+    disableStartupNotification: false
+
 controller:
   # controller.replicas -- Specify the number of replicas of the controller Pod.
   replicas: 1
