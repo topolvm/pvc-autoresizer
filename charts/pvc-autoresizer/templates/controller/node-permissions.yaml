@@ -1,0 +1,38 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "pvc-autoresizer.fullname" . }}-node-permissions
+  labels:
+    {{- include "pvc-autoresizer.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - "nodes/proxy"
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "pvc-autoresizer.fullname" . }}-node-permissions
+  labels:
+    {{- include "pvc-autoresizer.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "pvc-autoresizer.fullname" . }}-node-permissions
+subjects:
+- kind: ServiceAccount
+  name: {{ template "pvc-autoresizer.fullname" . }}-controller
+  namespace: {{ .Release.Namespace }} 

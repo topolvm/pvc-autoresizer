@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"github.com/topolvm/pvc-autoresizer/internal/notifications"
 )
 
 //+kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=get;list;watch;update;patch
@@ -28,10 +30,18 @@ import (
 const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
 const storageClassNameIndexKey = ".spec.storageClassName"
 const logLevelWarn = 3
+const limitWarningThresholdPercent = 80 // Threshold percentage for limit warning
+const lastWarningTimestampAnnotation = "pvc-autoresizer.topolvm.io/last-warning-timestamp"
+const lastLimitReachedTimestampAnnotation = "pvc-autoresizer.topolvm.io/last-limit-reached-timestamp"
 
 // NewPVCAutoresizer returns a new pvcAutoresizer struct
 func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, interval time.Duration,
-	recorder record.EventRecorder) manager.Runnable {
+	recorder record.EventRecorder, slackConfig *notifications.SlackConfig) manager.Runnable {
+
+	var slackNotifier *notifications.SlackNotifier
+	if slackConfig != nil {
+		slackNotifier = notifications.NewSlackNotifier(*slackConfig)
+	}
 
 	return &pvcAutoresizer{
 		metricsClient: mc,
@@ -39,6 +49,7 @@ func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, inter
 		log:           log,
 		interval:      interval,
 		recorder:      recorder,
+		slackNotifier: slackNotifier,
 	}
 }
 
@@ -48,20 +59,42 @@ type pvcAutoresizer struct {
 	interval      time.Duration
 	log           logr.Logger
 	recorder      record.EventRecorder
+	slackNotifier *notifications.SlackNotifier
 }
 
 // Start implements manager.Runnable
 func (w *pvcAutoresizer) Start(ctx context.Context) error {
-	ticker := time.NewTicker(w.interval)
+	log := w.log.WithName("Start")
+	log.Info("starting pvc autoresizer")
 
+	// Send startup notification after leader election
+	if w.slackNotifier != nil && !w.slackNotifier.IsStartupNotificationDisabled() {
+		clusterName := os.Getenv("CLUSTER_NAME")
+		if clusterName == "" {
+			clusterName = "current cluster"
+		}
+		message := fmt.Sprintf("🚀 PVC Autoresizer started monitoring in %s\n"+
+			"*Configuration:*\n"+
+			"• Monitoring Interval: %s",
+			clusterName,
+			w.interval)
+		if err := w.slackNotifier.SendStartupNotification(message); err != nil {
+			log.Error(err, "failed to send startup notification")
+		}
+	}
+
+	ticker := time.NewTicker(w.interval)
 	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
 			startTime := time.Now()
-			w.reconcile(ctx)
+			if err := w.reconcile(ctx); err != nil {
+				log.Error(err, "reconciliation failed")
+			}
 			metrics.ResizerLoopSecondsTotal.Add(time.Since(startTime).Seconds())
 		}
 	}
@@ -94,17 +127,17 @@ func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.St
 	return &scs, nil
 }
 
-func (w *pvcAutoresizer) reconcile(ctx context.Context) {
+func (w *pvcAutoresizer) reconcile(ctx context.Context) error {
 	scs, err := w.getStorageClassList(ctx)
 	if err != nil {
 		w.log.Error(err, "getStorageClassList failed")
-		return
+		return err
 	}
 
 	vsMap, err := w.metricsClient.GetMetrics(ctx)
 	if err != nil {
 		w.log.Error(err, "metricsClient.GetMetrics failed")
-		return
+		return err
 	}
 
 	for _, sc := range scs.Items {
@@ -113,7 +146,7 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) {
 		if err != nil {
 			metrics.KubernetesClientFailTotal.Increment()
 			w.log.Error(err, "list pvc failed")
-			return
+			return err
 		}
 		for _, pvc := range pvcs.Items {
 			log := w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name)
@@ -136,26 +169,18 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) {
 				Name:      pvc.Name,
 			}
 			if _, ok := vsMap[namespacedName]; !ok {
-				// Do not increment ResizerFailedResizeTotal here. The controller cannot get volume
-				// stats for "offline" volumes (i.e. volumes not mounted by any pod) since kubelet
-				// exports volume stats of a persistent volume claim only if it is online. Besides,
-				// NodeExpandVolume RPC assumes that the volume to be published or staged on a node
-				// (and hence online), the resize request of controller for offline PVC will not be
-				// processed for the time being. So, we do not regard it as a resize failure that
-				// the controller failed to retrieve volume stats for the PVC. This may result in a
-				// failure to increment the counter in the case which the PVC is online but fails
-				// to retrieve its metrics, but accept this as a limitation for now.
 				log.Info("failed to get volume stats")
 				continue
 			}
 
-			err = w.resize(ctx, &pvc, vsMap[namespacedName])
-			if err != nil {
+			if err := w.resize(ctx, &pvc, vsMap[namespacedName]); err != nil {
 				metrics.ResizerFailedResizeTotal.Increment(pvc.Name, pvc.Namespace)
 				log.Error(err, "failed to resize PVC")
 			}
 		}
 	}
+
+	return nil
 }
 
 func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolumeClaim, vs *VolumeStats) error {
@@ -208,11 +233,85 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 	limitRes, err := PvcStorageLimit(pvc)
 	if err != nil {
 		log.Error(err, "fetching storage limit failed")
+		if w.slackNotifier != nil {
+			_ = w.slackNotifier.SendResizeNotification(pvc.Namespace, pvc.Name, cap.Value(), cap.Value(), false)
+		}
 		return err
 	}
+
+	// Check if current size is approaching the limit
+	if !limitRes.IsZero() {
+		currentSizePercent := float64(cap.Value()) / float64(limitRes.Value()) * 100
+		if currentSizePercent >= float64(limitWarningThresholdPercent) && currentSizePercent < 100 {
+			// Check if we've already sent a warning recently
+			shouldSendWarning := true
+			if lastWarningStr, exists := pvc.Annotations[lastWarningTimestampAnnotation]; exists {
+				lastWarning, err := strconv.ParseInt(lastWarningStr, 10, 64)
+				if err == nil {
+					// Only send warning if more than 1 hour has passed since the last warning
+					if time.Since(time.Unix(lastWarning, 0)) < time.Hour {
+						shouldSendWarning = false
+					}
+				}
+			}
+
+			if shouldSendWarning {
+				log.Info("volume size approaching limit",
+					"currentSize", cap.Value(),
+					"limit", limitRes.Value(),
+					"percentage", currentSizePercent)
+				
+				if w.slackNotifier != nil {
+					message := fmt.Sprintf("PVC is approaching storage limit (%.1f%% of %s)", 
+						currentSizePercent, limitRes.String())
+					if err := w.slackNotifier.SendLimitWarningNotification(pvc.Namespace, pvc.Name, cap.Value(), limitRes.Value(), message); err != nil {
+						log.Error(err, "failed to send limit warning notification")
+					} else {
+						// Update the annotation with current timestamp
+						if pvc.Annotations == nil {
+							pvc.Annotations = make(map[string]string)
+						}
+						pvc.Annotations[lastWarningTimestampAnnotation] = strconv.FormatInt(time.Now().Unix(), 10)
+						if err := w.client.Update(ctx, pvc); err != nil {
+							log.Error(err, "failed to update last warning timestamp annotation")
+						}
+					}
+				}
+			}
+		}
+	}
+
 	if cap.Cmp(limitRes) >= 0 {
-		log.Info("volume storage limit reached")
+		// Check if we've already sent a limit reached notification recently
+		shouldSendNotification := true
+		if lastNotificationStr, exists := pvc.Annotations[lastLimitReachedTimestampAnnotation]; exists {
+			lastNotification, err := strconv.ParseInt(lastNotificationStr, 10, 64)
+			if err == nil {
+				// Only send notification if more than 1 hour has passed since the last one
+				if time.Since(time.Unix(lastNotification, 0)) < time.Hour {
+					shouldSendNotification = false
+				}
+			}
+		}
+
+		currentSizeStr := resource.NewQuantity(cap.Value(), resource.BinarySI).String()
+		log.Info("volume storage limit reached",
+			"currentSize", currentSizeStr,
+			"limit", limitRes.String())
 		metrics.ResizerLimitReachedTotal.Increment(pvc.Name, pvc.Namespace)
+
+		if shouldSendNotification && w.slackNotifier != nil {
+			_ = w.slackNotifier.SendResizeNotification(pvc.Namespace, pvc.Name, cap.Value(), cap.Value(), false)
+			
+			// Update the annotation with current timestamp
+			if pvc.Annotations == nil {
+				pvc.Annotations = make(map[string]string)
+			}
+			pvc.Annotations[lastLimitReachedTimestampAnnotation] = strconv.FormatInt(time.Now().Unix(), 10)
+			if err := w.client.Update(ctx, pvc); err != nil {
+				log.Error(err, "failed to update last limit reached timestamp annotation")
+			}
+		}
 		return nil
 	}
 
@@ -226,11 +325,15 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 			newReq = &limitRes
 		}
 
+		oldSize := cap.Value()
 		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = *newReq
 		pvc.Annotations[pvcautoresizer.PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
 		err = w.client.Update(ctx, pvc)
 		if err != nil {
 			metrics.KubernetesClientFailTotal.Increment()
+			if w.slackNotifier != nil {
+				_ = w.slackNotifier.SendResizeNotification(pvc.Namespace, pvc.Name, oldSize, newReq.Value(), false)
+			}
 			return err
 		}
 		log.Info("resize started",
@@ -243,6 +346,9 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		)
 		w.recorder.Eventf(pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
 		metrics.ResizerSuccessResizeTotal.Increment(pvc.Name, pvc.Namespace)
+		if w.slackNotifier != nil {
+			_ = w.slackNotifier.SendResizeNotification(pvc.Namespace, pvc.Name, oldSize, newReq.Value(), true)
+		}
 	}
 
 	return nil

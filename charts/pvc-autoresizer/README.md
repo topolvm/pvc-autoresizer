@@ -27,6 +27,40 @@ Alternatively a YAML file that specifies the values for the parameters can be pr
 helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -f values.yaml pvc-autoresizer/pvc-autoresizer
 ```
 
+### Configuring Slack Notifications
+
+To enable Slack notifications, you can either specify the webhook URL directly (not recommended for production) or use an existing secret:
+
+```yaml
+# Option 1: Direct webhook URL
+notifications:
+  slack:
+    enabled: true
+    webhookUrl: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+    channel: "#kubernetes-alerts"
+    username: "PVC Autoresizer"
+
+# Option 2: Using existing secret (recommended)
+notifications:
+  slack:
+    enabled: true
+    existingSecret: "my-slack-secret"
+    existingSecretKey: "webhook-url"
+    channel: "#kubernetes-alerts"
+    username: "PVC Autoresizer"
+```
+
+If using an existing secret, create it separately:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-slack-secret
+type: Opaque
+data:
+  webhook-url: <base64-encoded-webhook-url>
+```
+
 ## Values
 
 | Key | Type | Default | Description |
@@ -52,6 +86,12 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | image.pullPolicy | string | `nil` | pvc-autoresizer image pullPolicy. |
 | image.repository | string | `"ghcr.io/topolvm/pvc-autoresizer"` | pvc-autoresizer image repository to use. |
 | image.tag | string | `{{ .Chart.AppVersion }}` | pvc-autoresizer image tag to use. |
+| notifications.slack.enabled | bool | `false` | Enable Slack notifications |
+| notifications.slack.webhookUrl | string | `""` | Slack webhook URL for sending notifications (not recommended for production) |
+| notifications.slack.existingSecret | string | `""` | Name of existing secret containing webhook URL |
+| notifications.slack.existingSecretKey | string | `"webhook-url"` | Key in existing secret containing webhook URL |
+| notifications.slack.channel | string | `"#kubernetes-alerts"` | Slack channel to send notifications to |
+| notifications.slack.username | string | `"PVC Autoresizer"` | Username that will appear as the sender |
 | podMonitor | object | `{"additionalLabels":{},"enabled":false,"interval":"","metricRelabelings":[],"namespace":"","relabelings":[],"scheme":"http","scrapeTimeout":""}` | deploy a PodMonitor. This is not tested in CI so make sure to test it yourself. |
 | podMonitor.additionalLabels | object | `{}` | Additional labels that can be used so PodMonitor will be discovered by Prometheus. |
 | podMonitor.enabled | bool | `false` | If true, creates a Prometheus Operator PodMonitor. |

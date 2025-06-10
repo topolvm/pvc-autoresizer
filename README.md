@@ -45,6 +45,43 @@ helm install --create-namespace --namespace pvc-autoresizer pvc-autoresizer pvc-
 
 See the Chart [README.md](./charts/pvc-autoresizer/README.md) for detailed documentation on the Helm Chart.
 
+### Slack Notifications
+
+The PVC autoresizer supports sending notifications to Slack for important events such as:
+- Successful PVC resizing operations
+- Failed resize attempts
+- Storage limit reached warnings
+- When PVC size approaches the configured limit (80% of the limit)
+
+To enable Slack notifications, configure the following in your Helm values:
+
+```yaml
+notifications:
+  slack:
+    enabled: true
+    # Option 1: Direct webhook URL (not recommended for production)
+    webhookUrl: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+    
+    # Option 2: Use existing secret (recommended for production)
+    existingSecret: "my-slack-secret"
+    existingSecretKey: "webhook-url"
+    
+    # Common configuration
+    channel: "#kubernetes-alerts"
+    username: "PVC Autoresizer"
+```
+
+If using an existing secret, create it separately:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-slack-secret
+type: Opaque
+data:
+  webhook-url: <base64-encoded-webhook-url>
+```
+
 ### How to use
 
 To allow auto volume expansion, the StorageClass of PVC need to allow volume expansion and
@@ -76,7 +113,7 @@ metadata:
   name: topolvm-pvc
   namespace: default
   annotations:
-    resize.topolvm.io/storage_limit: 100Gi
+    resize.topolvm.io/storage_limit: 100Gi  # You'll receive a warning when PVC reaches 80% of this limit
 spec:
   accessModes:
   - ReadWriteOnce
