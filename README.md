@@ -15,6 +15,10 @@ Our supported platforms are:
 - CSI drivers that implements the following features
   - [Volume Expansion](https://kubernetes-csi.github.io/docs/volume-expansion.html)
   - [NodeGetVolumeStats](https://github.com/container-storage-interface/spec/blob/master/spec.md#nodegetvolumestats)
+- CPU Architecture: x86 (\*1), arm64 (\*2)
+
+\*1 Tier1 support. The official docker images are provided and all functionalities are tested by CI.  
+\*2 Tier2 support. The official docker images are provided, but no tests run by CI.
 
 Container images are available on [ghcr.io](https://github.com/topolvm/pvc-autoresizer/pkgs/container/pvc-autoresizer).  
 
