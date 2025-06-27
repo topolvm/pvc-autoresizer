@@ -40,6 +40,22 @@ rules:
   - watch
   - patch
   - update
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - "nodes/proxy"
+  verbs:
+  - get
+  - list
+  - watch
 {{- if .Values.controller.args.useK8sMetricsApi }}
 - apiGroups:
   - ""

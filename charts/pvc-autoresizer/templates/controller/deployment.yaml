@@ -49,6 +49,29 @@ spec:
           {{- if not .Values.webhook.pvcMutatingWebhook.enabled }}
             - --pvc-mutating-webhook-enabled=false
           {{- end}}
+          {{- if .Values.notifications.slack.enabled }}
+          env:
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.notifications.slack.existingSecret }}
+                  name: {{ .Values.notifications.slack.existingSecret }}
+                  key: {{ .Values.notifications.slack.existingSecretKey }}
+                  {{- else }}
+                  name: {{ template "pvc-autoresizer.fullname" . }}-slack
+                  key: webhook-url
+                  {{- end }}
+            - name: SLACK_CHANNEL
+              value: {{ .Values.notifications.slack.channel | quote }}
+            - name: SLACK_USERNAME
+              value: {{ .Values.notifications.slack.username | quote }}
+            - name: SLACK_ENABLED
+              value: {{ .Values.notifications.slack.enabled | quote }}
+            - name: CLUSTER_NAME
+              value: {{ .Values.notifications.slack.clusterName | default "current cluster" | quote }}
+            - name: SLACK_DISABLE_STARTUP
+              value: {{ .Values.notifications.slack.disableStartupNotification | quote }}
+          {{- end }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           {{- with .Values.image.pullPolicy }}
           imagePullPolicy: {{ . }}

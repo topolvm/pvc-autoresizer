@@ -3,9 +3,11 @@ package main
 import (
 	"net"
 	"time"
+	"os"
 
 	"github.com/topolvm/pvc-autoresizer/internal/hooks"
 	"github.com/topolvm/pvc-autoresizer/internal/runners"
+	"github.com/topolvm/pvc-autoresizer/internal/notifications"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -132,9 +134,19 @@ func subMain() error {
 		return err
 	}
 
+	// Setup Slack configuration
+	slackConfig := &notifications.SlackConfig{
+		WebhookURL: os.Getenv("SLACK_WEBHOOK_URL"),
+		Channel:    os.Getenv("SLACK_CHANNEL"),
+		Username:   os.Getenv("SLACK_USERNAME"),
+		Enabled:    os.Getenv("SLACK_ENABLED") == "true",
+		DisableStartupNotification: os.Getenv("SLACK_DISABLE_STARTUP") == "true",
+	}
+
 	pvcAutoresizer := runners.NewPVCAutoresizer(metricsClient, mgr.GetClient(),
 		ctrl.Log.WithName("pvc-autoresizer"),
-		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
+		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"),
+		slackConfig)
 	if err := mgr.Add(pvcAutoresizer); err != nil {
 		setupLog.Error(err, "unable to add autoresier to manager")
 		return err
