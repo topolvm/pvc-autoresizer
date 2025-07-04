@@ -4,7 +4,7 @@ image:
 
   # image.tag -- pvc-autoresizer image tag to use.
   # @default -- `{{ .Chart.AppVersion }}`
-  tag:  # 0.17.3
+  tag:  # 0.17.4
 
   # image.pullPolicy -- pvc-autoresizer image pullPolicy.
   pullPolicy:  # Always
