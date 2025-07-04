@@ -29,15 +29,12 @@ jobs:
         with:
           go-version-file: "go.mod"
       - run: make setup
-      - run: make image
-      - run: make tag IMAGE_TAG=${{ steps.check_version.outputs.version }}
       - run: make multi-platform-image IMAGE_TAG=${{ steps.check_version.outputs.version }} PUSH=true
       - name: "Push branch tag"
         if: ${{ steps.check_version.outputs.prerelease == 'false' }}
         run: |
           BRANCH=$(echo ${{ steps.check_version.outputs.version }} | cut -d "." -f 1-2)
-          make tag IMAGE_TAG=$BRANCH
-          make multi-platform-image IMAGE_TAG=$BRANCH PUSH=true
+          make tag IMAGE_TAG=$BRANCH ORIGINAL_IMAGE_TAG=${{ steps.check_version.outputs.version }}
       - name: "Get previous tag"
         id: get_previous_tag
         run: |

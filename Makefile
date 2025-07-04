@@ -113,11 +113,9 @@ multi-platform-image: ## Build multi-platform docker image.
 
 .PHONY: tag
 tag: ## Set a docker tag to the image.
-	docker tag $(IMAGE_PREFIX)pvc-autoresizer:devel $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
-
-.PHONY: push
-push: ## Push docker image.
-	docker push $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
+	docker buildx imagetools create \
+		--tag $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG) \
+		$(IMAGE_PREFIX)pvc-autoresizer:$(ORIGINAL_IMAGE_TAG)
 
 ##@ Chart Testing
 
