@@ -9,12 +9,10 @@ CRD_OPTIONS = "crd:crdVersions=v1"
 
 BINDIR := $(shell pwd)/bin
 CONTROLLER_GEN := $(BINDIR)/controller-gen
+ENVTEST_ASSETS_DIR := $(shell pwd)/testbin
 GOLANGCI_LINT = $(BINDIR)/golangci-lint
 KUBECTL := $(BINDIR)/kubectl
 KUSTOMIZE := $(BINDIR)/kustomize
-
-KUBEBUILDER_ASSETS := $(BINDIR)
-export KUBEBUILDER_ASSETS
 
 IMAGE_TAG ?= latest
 IMAGE_PREFIX ?= ghcr.io/topolvm/
@@ -29,6 +27,9 @@ BUILDX_PUSH_OPTIONS := --load
 ifeq ($(PUSH),true)
 BUILDX_PUSH_OPTIONS := --push
 endif
+
+export ENVTEST_KUBERNETES_VERSION
+export ENVTEST_ASSETS_DIR
 
 .PHONY: all
 all: build
@@ -79,8 +80,7 @@ vet: ## Run go vet against code.
 test: manifests generate tools fmt vet ## Run tests.
 	$(shell go env GOPATH)/bin/staticcheck ./...
 	go install ./...
-	source <($(SETUP_ENVTEST) use -p env $(ENVTEST_K8S_VERSION)); \
-		go test -race -v -count 1 ./... --timeout=60s
+	go test -race -v -count 1 ./... --timeout=60s
 
 .PHONY: lint
 lint: ## Run golangci-lint linter & yamllint
@@ -145,20 +145,13 @@ ct-install: ## Install and test a chart.
 ##@ Tools
 
 .PHONY: tools
-tools: staticcheck setup-envtest
+tools: staticcheck
 
 .PHONY: staticcheck
 staticcheck: ## Install staticcheck
 	if ! which staticcheck >/dev/null; then \
 		env GOFLAGS= go install honnef.co/go/tools/cmd/staticcheck@latest; \
 	fi
-
-SETUP_ENVTEST := $(BINDIR)/setup-envtest
-.PHONY: setup-envtest
-setup-envtest: $(SETUP_ENVTEST) ## Download setup-envtest locally if necessary
-$(SETUP_ENVTEST):
-	# see https://github.com/kubernetes-sigs/controller-runtime/tree/master/tools/setup-envtest
-	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_BRANCH)
 
 .PHONY: setup
 setup: # Setup tools

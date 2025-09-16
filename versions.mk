@@ -18,8 +18,7 @@ TOPOLVM_VERSION := a748230cc839ad033d55aa8a1559c8686b2832e0
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 CONTROLLER_RUNTIME_VERSION := $(shell awk '/sigs\.k8s\.io\/controller-runtime/ {print substr($$2, 2)}' $(SELF_DIR)/go.mod)
 
-ENVTEST_BRANCH := release-$(shell echo $(CONTROLLER_RUNTIME_VERSION) | cut -d "." -f 1-2)
-ENVTEST_K8S_VERSION := $(shell echo $(KUBERNETES_VERSION) | cut -d "." -f 1-2)
+ENVTEST_KUBERNETES_VERSION := $(shell echo $(KUBERNETES_VERSION) | cut -d "." -f 1-2).0
 
 # Tools versions which are defined in go.mod
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
