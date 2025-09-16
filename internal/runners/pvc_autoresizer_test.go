@@ -322,7 +322,7 @@ var _ = Describe("test resizer", func() {
 						req := pvc.Spec.Resources.Requests.Storage().Value()
 
 						ALLOWANCE := int64(1 << 10)
-						if !(expectSizeGi<<30-ALLOWANCE < req && req <= expectSizeGi<<30+ALLOWANCE) {
+						if expectSizeGi<<30-ALLOWANCE >= req || req > expectSizeGi<<30+ALLOWANCE {
 							return fmt.Errorf("request size(Gi) should be %d, but %d", expectSizeGi, req>>30)
 						}
 						return nil
