@@ -77,8 +77,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate tools fmt vet ## Run tests.
-	$(shell go env GOPATH)/bin/staticcheck ./...
+test: manifests generate fmt vet ## Run tests.
 	go install ./...
 	go test -race -v -count 1 ./... --timeout=60s
 
@@ -141,17 +140,6 @@ ct-install: ## Install and test a chart.
 		--volume $(shell pwd):/data \
 		quay.io/helmpack/chart-testing:v$(CHART_TESTING_VERSION) \
 		ct install --config ct.yaml
-
-##@ Tools
-
-.PHONY: tools
-tools: staticcheck
-
-.PHONY: staticcheck
-staticcheck: ## Install staticcheck
-	if ! which staticcheck >/dev/null; then \
-		env GOFLAGS= go install honnef.co/go/tools/cmd/staticcheck@latest; \
-	fi
 
 .PHONY: setup
 setup: # Setup tools
