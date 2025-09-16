@@ -11,7 +11,7 @@ It queries the volume usage metrics from Prometheus that collects metrics from `
 
 Our supported platforms are:
 
-- Kubernetes: 1.32, 1.31, 1.30
+- Kubernetes: 1.33, 1.32, 1.31
 - CSI drivers that implements the following features
   - [Volume Expansion](https://kubernetes-csi.github.io/docs/volume-expansion.html)
   - [NodeGetVolumeStats](https://github.com/container-storage-interface/spec/blob/master/spec.md#nodegetvolumestats)
