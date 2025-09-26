@@ -454,10 +454,7 @@ func buildPodPVCTemplateYAML(ns, pvcName, storageClassName, volumeMode, podName,
 	if threshold != "" || increase != "" || storageLimit != "" {
 		useAnnotation = "true"
 	}
-	useLabel := false
-	if len(labels) != 0 {
-		useLabel = true
-	}
+	useLabel := len(labels) != 0
 
 	podPVCTemplateOnce.Do(func() {
 		podPVCTmpl, err = template.New("").Parse(podPVCTemplateYAML)
