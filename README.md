@@ -49,6 +49,8 @@ helm install --create-namespace --namespace pvc-autoresizer pvc-autoresizer pvc-
 
 See the Chart [README.md](./charts/pvc-autoresizer/README.md) for detailed documentation on the Helm Chart.
 
+For instructions on installing on OpenShift refer to the doc [openshift_monitoring.md](./docs/openshift_monitoring.md).
+
 ### How to use
 
 To allow auto volume expansion, the StorageClass of PVC need to allow volume expansion and
