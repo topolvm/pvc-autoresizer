@@ -16,12 +16,12 @@ jobs:
     runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.32.2", "1.31.6", "1.30.10"]
+        kubernetes_versions: ["1.33.4", "1.32.8", "1.31.12"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: "go.mod"
       - run: make -C test/e2e setup
@@ -33,12 +33,12 @@ jobs:
     runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.32.2", "1.31.6", "1.30.10"]
+        kubernetes_versions: ["1.33.4", "1.32.8", "1.31.12"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: "go.mod"
       - run: make -C test/e2e setup
@@ -50,12 +50,12 @@ jobs:
     runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.32.2", "1.31.6", "1.30.10"]
+        kubernetes_versions: ["1.33.4", "1.32.8", "1.31.12"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: "go.mod"
       - run: make -C test/e2e setup

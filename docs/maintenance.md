@@ -82,6 +82,12 @@ $ make setup
 $ make generate
 ```
 
+#### Update Ubuntu
+
+If the support term for using Ubuntu is about to expire, update the versions.
+
+Unlike TopoLVM, there is no reason to use an old version of Ubuntu for pvc-autoresizer. We use the same update policy at the organizational level to ensure consistency.
+
 #### Final check
 
 `git grep <the kubernetes version which support will be dropped>`, `git grep image:`, `git grep -i VERSION` and looking `versions.mk` might help to avoid overlooking necessary changes.
