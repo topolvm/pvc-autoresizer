@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"sync"
 
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/types"
@@ -40,7 +41,7 @@ var _ = Describe("test prometheusClient", func() {
 		ts := httptest.NewServer(http.HandlerFunc(http.NotFound))
 		defer ts.Close()
 
-		c, err := NewPrometheusClient(ts.URL)
+		c, err := NewPrometheusClient(ts.URL, "", logr.Discard())
 		Expect(err).ToNot(HaveOccurred())
 		_, err = c.GetMetrics(context.TODO())
 		Expect(err).To(HaveOccurred())
