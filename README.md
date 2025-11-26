@@ -26,9 +26,16 @@ Container images are available on [ghcr.io](https://github.com/topolvm/pvc-autor
 
 ### Prepare
 
-`pvc-autoresizer` behaves based on the metrics that prometheus collects from kubelet.
+`pvc-autoresizer` needs a source of volume usage metrics. You can provide metrics in one of two ways:
 
-Please refer to the following pages to set up Prometheus:
+- Prometheus: collect kubelet metrics with Prometheus and point `pvc-autoresizer` to your Prometheus HTTP endpoint.
+- Kubernetes Metrics API: use the cluster's Metrics API (for example, a metrics-server or a compatible implementation) instead of Prometheus.
+
+Note:
+- When this document mentions Prometheus, any Prometheus-compatible backend (for example, VictoriaMetrics or other systems that expose a Prometheus-compatible HTTP query API) can be used as well.
+- Using the Kubernetes Metrics API, the kube-apiserver might be loaded to some degree. For large clusters or high-scale environments, using a Prometheus-based solution is recommended to avoid extra pressure on the API server.
+
+If you plan to use Prometheus, please refer to the following pages to set it up:
 
 - [Installation | Prometheus](https://prometheus.io/docs/prometheus/latest/installation/)
 
@@ -38,16 +45,28 @@ In addition, configure scraping as follows:
 
 ### Installation
 
-Specify the Prometheus URL to `pvc-autoresizer` argument as `--prometheus-url`.
+You must configure how `pvc-autoresizer` obtains volume usage metrics. Two supported methods are described below.
 
-`pvc-autoresizer` can be deployed to a Kubernetes cluster via `helm`:
+- Prometheus (HTTP endpoint): set the `--prometheus-url` argument to point to your Prometheus server endpoint.
+- Kubernetes Metrics API: enable use of the cluster Metrics API by setting the `--use-k8s-metrics-api=true` argument.
+
+`pvc-autoresizer` can be deployed to a Kubernetes cluster via `helm`.
+
+Example: install using Prometheus endpoint
 
 ```sh
 helm repo add pvc-autoresizer https://topolvm.github.io/pvc-autoresizer/
-helm install --create-namespace --namespace pvc-autoresizer pvc-autoresizer pvc-autoresizer/pvc-autoresizer --set "controller.args.prometheusURL=<YOUR PROMETHEUS ENDPOINT>"
+helm install --create-namespace --namespace pvc-autoresizer pvc-autoresizer pvc-autoresizer/pvc-autoresizer --set "controller.args.prometheusURL=<YOUR_PROMETHEUS_ENDPOINT>"
 ```
 
-See the Chart [README.md](./charts/pvc-autoresizer/README.md) for detailed documentation on the Helm Chart.
+Example: install using Kubernetes Metrics API
+
+```sh
+helm repo add pvc-autoresizer https://topolvm.github.io/pvc-autoresizer/
+helm install --create-namespace --namespace pvc-autoresizer pvc-autoresizer pvc-autoresizer/pvc-autoresizer --set "controller.args.useK8sMetricsApi=true"
+```
+
+See [`charts/pvc-autoresizer/README.md`](./charts/pvc-autoresizer/README.md) for detailed Helm options and additional configuration.
 
 ### How to use
 
