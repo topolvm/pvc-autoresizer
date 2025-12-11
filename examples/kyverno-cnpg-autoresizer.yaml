@@ -1,0 +1,191 @@
+---
+# Kyverno ClusterPolicy to automatically add pvc-autoresizer annotations to CloudNativePG PVCs
+# This policy handles:
+# - PG_DATA volumes (main PostgreSQL data)
+# - PG_WAL volumes (Write-Ahead Log)
+# - PG_TABLESPACE volumes (tablespaces)
+#
+# Reference: https://github.com/cloudnative-pg/cloudnative-pg/discussions/2321
+#
+# Each PVC type requires a different JSON path to target the correct field in the CNPG Cluster CR.
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-cnpg-pvc-autoresizer-annotations
+  annotations:
+    policies.kyverno.io/title: Add PVC Autoresizer Annotations for CloudNativePG
+    policies.kyverno.io/category: CloudNativePG
+    policies.kyverno.io/subject: PersistentVolumeClaim
+    policies.kyverno.io/description: >-
+      Automatically adds pvc-autoresizer annotations to CloudNativePG PVCs
+      with operator-aware resizing support. Handles data, WAL, and tablespace volumes.
+spec:
+  rules:
+    # Rule 1: Add annotations to PG_DATA volumes (main PostgreSQL data)
+    - name: add-annotations-to-pg-data-pvc
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolumeClaim
+              selector:
+                matchLabels:
+                  cnpg.io/pvcRole: PG_DATA
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              +(resize.topolvm.io/enabled): "true"
+              +(resize.topolvm.io/storage_limit): "500Gi"
+              +(resize.topolvm.io/threshold): "20%"
+              +(resize.topolvm.io/increase): "10Gi"
+              +(resize.topolvm.io/target-resource-api-version): "postgresql.cnpg.io/v1"
+              +(resize.topolvm.io/target-resource-kind): "Cluster"
+              +(resize.topolvm.io/target-resource-name): "{{ request.object.metadata.labels.\"cnpg.io/cluster\" }}"
+              +(resize.topolvm.io/target-resource-json-path): ".spec.storage.size"
+
+    # Rule 2: Add annotations to PG_WAL volumes (Write-Ahead Log)
+    - name: add-annotations-to-pg-wal-pvc
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolumeClaim
+              selector:
+                matchLabels:
+                  cnpg.io/pvcRole: PG_WAL
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              +(resize.topolvm.io/enabled): "true"
+              +(resize.topolvm.io/storage_limit): "200Gi"
+              +(resize.topolvm.io/threshold): "20%"
+              +(resize.topolvm.io/increase): "10Gi"
+              +(resize.topolvm.io/target-resource-api-version): "postgresql.cnpg.io/v1"
+              +(resize.topolvm.io/target-resource-kind): "Cluster"
+              +(resize.topolvm.io/target-resource-name): "{{ request.object.metadata.labels.\"cnpg.io/cluster\" }}"
+              +(resize.topolvm.io/target-resource-json-path): ".spec.walStorage.size"
+
+    # Rule 3: Add annotations to PG_TABLESPACE volumes
+    # Note: Tablespace resizing requires knowing the tablespace name, which is in the PVC name
+    # Format: <cluster-name>-<instance>-<tablespace-name>
+    - name: add-annotations-to-pg-tablespace-pvc
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolumeClaim
+              selector:
+                matchLabels:
+                  cnpg.io/pvcRole: PG_TABLESPACE
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              +(resize.topolvm.io/enabled): "true"
+              +(resize.topolvm.io/storage_limit): "10Gi"
+              +(resize.topolvm.io/threshold): "20%"
+              +(resize.topolvm.io/increase): "1Gi"
+              +(resize.topolvm.io/target-resource-api-version): "postgresql.cnpg.io/v1"
+              +(resize.topolvm.io/target-resource-kind): "Cluster"
+              +(resize.topolvm.io/target-resource-name): "{{ request.object.metadata.labels.\"cnpg.io/cluster\" }}"
+              # Note: The tablespace name is stored in cnpg.io/tablespaceName label
+              +(resize.topolvm.io/target-resource-json-path): ".spec.tablespaces[?(@.name=='{{ request.object.metadata.labels.\"cnpg.io/tablespaceName\" }}')].storage.size"
+
+---
+# Example: Customized Policy for Production Environment
+# This example shows how to customize thresholds and limits per volume type
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-cnpg-pvc-autoresizer-annotations-prod
+  annotations:
+    policies.kyverno.io/title: Add PVC Autoresizer Annotations for CloudNativePG (Production)
+    policies.kyverno.io/category: CloudNativePG
+    policies.kyverno.io/description: >-
+      Production-tuned pvc-autoresizer annotations for CloudNativePG clusters.
+      Data volumes: 15% threshold, 20Gi increments, 2TB limit
+      WAL volumes: 25% threshold, 10Gi increments, 500Gi limit
+      Tablespaces: 20% threshold, 50Gi increments, 5TB limit
+spec:
+  # Only apply to namespaces labeled with environment=production
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: add-annotations-to-pg-data-pvc-prod
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolumeClaim
+              selector:
+                matchLabels:
+                  cnpg.io/pvcRole: PG_DATA
+              namespaceSelector:
+                matchLabels:
+                  environment: production
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              +(resize.topolvm.io/enabled): "true"
+              +(resize.topolvm.io/storage_limit): "2000Gi"  # 2TB limit
+              +(resize.topolvm.io/threshold): "15%"          # Resize earlier
+              +(resize.topolvm.io/increase): "20Gi"          # Larger increments
+              +(resize.topolvm.io/target-resource-api-version): "postgresql.cnpg.io/v1"
+              +(resize.topolvm.io/target-resource-kind): "Cluster"
+              +(resize.topolvm.io/target-resource-name): "{{ request.object.metadata.labels.\"cnpg.io/cluster\" }}"
+              +(resize.topolvm.io/target-resource-json-path): ".spec.storage.size"
+
+    - name: add-annotations-to-pg-wal-pvc-prod
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolumeClaim
+              selector:
+                matchLabels:
+                  cnpg.io/pvcRole: PG_WAL
+              namespaceSelector:
+                matchLabels:
+                  environment: production
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              +(resize.topolvm.io/enabled): "true"
+              +(resize.topolvm.io/storage_limit): "500Gi"
+              +(resize.topolvm.io/threshold): "25%"          # WAL can tolerate less free space
+              +(resize.topolvm.io/increase): "10Gi"
+              +(resize.topolvm.io/target-resource-api-version): "postgresql.cnpg.io/v1"
+              +(resize.topolvm.io/target-resource-kind): "Cluster"
+              +(resize.topolvm.io/target-resource-name): "{{ request.object.metadata.labels.\"cnpg.io/cluster\" }}"
+              +(resize.topolvm.io/target-resource-json-path): ".spec.walStorage.size"
+
+    - name: add-annotations-to-pg-tablespace-pvc-prod
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolumeClaim
+              selector:
+                matchLabels:
+                  cnpg.io/pvcRole: PG_TABLESPACE
+              namespaceSelector:
+                matchLabels:
+                  environment: production
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              +(resize.topolvm.io/enabled): "true"
+              +(resize.topolvm.io/storage_limit): "5000Gi"  # 5TB limit for tablespaces
+              +(resize.topolvm.io/threshold): "20%"
+              +(resize.topolvm.io/increase): "50Gi"          # Larger increments
+              +(resize.topolvm.io/target-resource-api-version): "postgresql.cnpg.io/v1"
+              +(resize.topolvm.io/target-resource-kind): "Cluster"
+              +(resize.topolvm.io/target-resource-name): "{{ request.object.metadata.labels.\"cnpg.io/cluster\" }}"
+              +(resize.topolvm.io/target-resource-json-path): ".spec.tablespaces[?(@.name=='{{ request.object.metadata.labels.\"cnpg.io/tablespaceName\" }}')].storage.size"

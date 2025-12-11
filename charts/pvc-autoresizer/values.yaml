@@ -157,3 +157,26 @@ serviceAccount:
   enabled: true
   # serviceAccount.automountServiceAccountToken -- Controls the automatic mounting of ServiceAccount API credentials.
   automountServiceAccountToken: true
+
+# Operator-aware resizing configuration
+# When enabled, pvc-autoresizer can patch Custom Resources instead of directly modifying PVCs
+# This is useful for PVCs managed by operators (RabbitMQ, CloudNativePG, etc.)
+operatorAwareResizing:
+  # operatorAwareResizing.enabled -- Enable operator-aware resizing
+  # When false, CR patching is completely disabled for security
+  enabled: false
+
+  # operatorAwareResizing.allowedResources -- List of allowed CR types for auto-resizing
+  # RBAC rules are automatically generated from this list
+  # Each entry must have apiGroup, kind, and resource (plural name for RBAC)
+  allowedResources: []
+  # Examples:
+  # - apiGroup: "rabbitmq.com"
+  #   kind: "RabbitmqCluster"
+  #   resource: "rabbitmqclusters"
+  # - apiGroup: "postgresql.cnpg.io"
+  #   kind: "Cluster"
+  #   resource: "clusters"
+  # - apiGroup: "dragonflydb.io"
+  #   kind: "Dragonfly"
+  #   resource: "dragonflies"

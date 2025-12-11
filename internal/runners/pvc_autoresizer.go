@@ -226,6 +226,67 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 			newReq = &limitRes
 		}
 
+		// Check for CR target annotations for operator-aware resizing
+		crTarget, err := parseCRTargetAnnotations(pvc)
+		if err != nil {
+			// Invalid CR target annotations
+			log.V(logLevelWarn).Info("invalid CR target annotations", "error", err.Error())
+			w.recorder.Eventf(pvc, corev1.EventTypeWarning, "ResizeCRInvalidConfig",
+				"Invalid CR target configuration: %v", err)
+			return nil // Skip this PVC, invalid annotations
+		}
+
+		if crTarget != nil {
+			// Operator-aware resizing: Patch the target CR instead of the PVC
+			log.Info("using operator-aware resizing",
+				"target_kind", crTarget.Kind,
+				"target_namespace", crTarget.Namespace,
+				"target_name", crTarget.Name,
+				"target_path", crTarget.JSONPath)
+
+			// Patch the target CR
+			err = w.patchCRField(ctx, pvc, crTarget, newReq)
+			if err != nil {
+				log.Error(err, "failed to patch CR")
+				w.recorder.Eventf(pvc, corev1.EventTypeWarning, "ResizeCRFailed",
+					"Failed to resize CR %s/%s/%s: %v",
+					crTarget.Kind, crTarget.Namespace, crTarget.Name, err)
+				metrics.ResizerCRPatchFailedTotal.Increment(pvc.Name, pvc.Namespace,
+					crTarget.Kind, crTarget.Namespace)
+				return err
+			}
+
+			// Update tracking annotation on PVC (but don't modify PVC spec)
+			pvc.Annotations[pvcautoresizer.PreviousCapacityBytesAnnotation] =
+				strconv.FormatInt(vs.CapacityBytes, 10)
+			err = w.client.Update(ctx, pvc)
+			if err != nil {
+				metrics.KubernetesClientFailTotal.Increment()
+				return err
+			}
+
+			log.Info("CR resize started",
+				"from", cap.Value(),
+				"to", newReq.Value(),
+				"target_cr", fmt.Sprintf("%s/%s/%s", crTarget.Kind, crTarget.Namespace, crTarget.Name),
+				"target_path", crTarget.JSONPath,
+				"threshold", threshold,
+				"available", vs.AvailableBytes,
+				"inodesThreshold", inodesThreshold,
+				"inodesAvailable", vs.AvailableInodeSize,
+			)
+
+			w.recorder.Eventf(pvc, corev1.EventTypeNormal, "ResizedCR",
+				"CR %s/%s/%s field %s resized to %s",
+				crTarget.Kind, crTarget.Namespace, crTarget.Name, crTarget.JSONPath, newReq.String())
+
+			metrics.ResizerCRPatchSuccessTotal.Increment(pvc.Name, pvc.Namespace,
+				crTarget.Kind, crTarget.Namespace)
+
+			return nil
+		}
+
+		// Standard PVC resizing (no CR target configured)
 		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = *newReq
 		pvc.Annotations[pvcautoresizer.PreviousCapacityBytesAnnotation] = strconv.FormatInt(vs.CapacityBytes, 10)
 		err = w.client.Update(ctx, pvc)

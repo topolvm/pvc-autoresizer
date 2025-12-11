@@ -52,6 +52,8 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | image.pullPolicy | string | `nil` | pvc-autoresizer image pullPolicy. |
 | image.repository | string | `"ghcr.io/topolvm/pvc-autoresizer"` | pvc-autoresizer image repository to use. |
 | image.tag | string | `{{ .Chart.AppVersion }}` | pvc-autoresizer image tag to use. |
+| operatorAwareResizing.allowedResources | list | `[]` | List of allowed CR types for auto-resizing RBAC rules are automatically generated from this list Each entry must have apiGroup, kind, and resource (plural name for RBAC) |
+| operatorAwareResizing.enabled | bool | `false` | Enable operator-aware resizing When false, CR patching is completely disabled for security |
 | podMonitor | object | `{"additionalLabels":{},"enabled":false,"interval":"","metricRelabelings":[],"namespace":"","relabelings":[],"scheme":"http","scrapeTimeout":""}` | deploy a PodMonitor. This is not tested in CI so make sure to test it yourself. |
 | podMonitor.additionalLabels | object | `{}` | Additional labels that can be used so PodMonitor will be discovered by Prometheus. |
 | podMonitor.enabled | bool | `false` | If true, creates a Prometheus Operator PodMonitor. |

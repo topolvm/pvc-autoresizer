@@ -7,10 +7,12 @@ import (
 
 // Metrics subsystem and all of the keys used by the resizer.
 const (
-	ResizerSuccessResizeTotalKey = "success_resize_total"
-	ResizerFailedResizeTotalKey  = "failed_resize_total"
-	ResizerLoopSecondsTotalKey   = "loop_seconds_total"
-	ResizerLimitReachedTotalKey  = "limit_reached_total"
+	ResizerSuccessResizeTotalKey  = "success_resize_total"
+	ResizerFailedResizeTotalKey   = "failed_resize_total"
+	ResizerLoopSecondsTotalKey    = "loop_seconds_total"
+	ResizerLimitReachedTotalKey   = "limit_reached_total"
+	ResizerCRPatchSuccessTotalKey = "cr_patch_success_total"
+	ResizerCRPatchFailedTotalKey  = "cr_patch_failed_total"
 )
 
 func init() {
@@ -67,6 +69,54 @@ func (a *resizerLimitReachedTotalAdapter) SpecifyLabels(pvcname string, pvcns st
 	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Add(0)
 }
 
+type resizerCRPatchSuccessTotalAdapter struct {
+	metric prometheus.CounterVec
+}
+
+func (a *resizerCRPatchSuccessTotalAdapter) Increment(pvcname string, pvcns string, targetKind string, targetNs string) {
+	a.metric.With(prometheus.Labels{
+		"persistentvolumeclaim": pvcname,
+		"namespace":             pvcns,
+		"target_kind":           targetKind,
+		"target_namespace":      targetNs,
+	}).Inc()
+}
+
+// SpecifyLabels helps output metrics before the first CR patch event.
+// This method specifies the metric labels and add 0 to the metric value.
+func (a *resizerCRPatchSuccessTotalAdapter) SpecifyLabels(pvcname string, pvcns string, targetKind string, targetNs string) {
+	a.metric.With(prometheus.Labels{
+		"persistentvolumeclaim": pvcname,
+		"namespace":             pvcns,
+		"target_kind":           targetKind,
+		"target_namespace":      targetNs,
+	}).Add(0)
+}
+
+type resizerCRPatchFailedTotalAdapter struct {
+	metric prometheus.CounterVec
+}
+
+func (a *resizerCRPatchFailedTotalAdapter) Increment(pvcname string, pvcns string, targetKind string, targetNs string) {
+	a.metric.With(prometheus.Labels{
+		"persistentvolumeclaim": pvcname,
+		"namespace":             pvcns,
+		"target_kind":           targetKind,
+		"target_namespace":      targetNs,
+	}).Inc()
+}
+
+// SpecifyLabels helps output metrics before the first failed CR patch event.
+// This method specifies the metric labels and add 0 to the metric value.
+func (a *resizerCRPatchFailedTotalAdapter) SpecifyLabels(pvcname string, pvcns string, targetKind string, targetNs string) {
+	a.metric.With(prometheus.Labels{
+		"persistentvolumeclaim": pvcname,
+		"namespace":             pvcns,
+		"target_kind":           targetKind,
+		"target_namespace":      targetNs,
+	}).Add(0)
+}
+
 var (
 	resizerSuccessResizeTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
@@ -92,6 +142,18 @@ var (
 		Help:      "counter that indicates how many storage limits were reached.",
 	}, []string{"persistentvolumeclaim", "namespace"})
 
+	resizerCRPatchSuccessTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: MetricsNamespace,
+		Name:      ResizerCRPatchSuccessTotalKey,
+		Help:      "counter that indicates how many Custom Resource patch operations succeeded.",
+	}, []string{"persistentvolumeclaim", "namespace", "target_kind", "target_namespace"})
+
+	resizerCRPatchFailedTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: MetricsNamespace,
+		Name:      ResizerCRPatchFailedTotalKey,
+		Help:      "counter that indicates how many Custom Resource patch operations failed.",
+	}, []string{"persistentvolumeclaim", "namespace", "target_kind", "target_namespace"})
+
 	ResizerSuccessResizeTotal *resizerSuccessResizeTotalAdapter = &resizerSuccessResizeTotalAdapter{
 		metric: *resizerSuccessResizeTotal,
 	}
@@ -104,6 +166,12 @@ var (
 	ResizerLimitReachedTotal *resizerLimitReachedTotalAdapter = &resizerLimitReachedTotalAdapter{
 		metric: *resizerLimitReachedTotal,
 	}
+	ResizerCRPatchSuccessTotal *resizerCRPatchSuccessTotalAdapter = &resizerCRPatchSuccessTotalAdapter{
+		metric: *resizerCRPatchSuccessTotal,
+	}
+	ResizerCRPatchFailedTotal *resizerCRPatchFailedTotalAdapter = &resizerCRPatchFailedTotalAdapter{
+		metric: *resizerCRPatchFailedTotal,
+	}
 )
 
 func registerResizerMetrics() {
@@ -111,4 +179,6 @@ func registerResizerMetrics() {
 	runtimemetrics.Registry.MustRegister(resizerFailedResizeTotal)
 	runtimemetrics.Registry.MustRegister(resizerLoopSecondsTotal)
 	runtimemetrics.Registry.MustRegister(resizerLimitReachedTotal)
+	runtimemetrics.Registry.MustRegister(resizerCRPatchSuccessTotal)
+	runtimemetrics.Registry.MustRegister(resizerCRPatchFailedTotal)
 }
