@@ -31,23 +31,25 @@ const logLevelWarn = 3
 
 // NewPVCAutoresizer returns a new pvcAutoresizer struct
 func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, interval time.Duration,
-	recorder record.EventRecorder) manager.Runnable {
+	recorder record.EventRecorder, metricsResetSizeThreshold uint64) manager.Runnable {
 
 	return &pvcAutoresizer{
-		metricsClient: mc,
-		client:        c,
-		log:           log,
-		interval:      interval,
-		recorder:      recorder,
+		metricsClient:             mc,
+		client:                    c,
+		log:                       log,
+		interval:                  interval,
+		recorder:                  recorder,
+		metricsResetSizeThreshold: metricsResetSizeThreshold,
 	}
 }
 
 type pvcAutoresizer struct {
-	client        client.Client
-	metricsClient MetricsClient
-	interval      time.Duration
-	log           logr.Logger
-	recorder      record.EventRecorder
+	client                    client.Client
+	metricsClient             MetricsClient
+	interval                  time.Duration
+	log                       logr.Logger
+	recorder                  record.EventRecorder
+	metricsResetSizeThreshold uint64
 }
 
 // Start implements manager.Runnable
@@ -63,6 +65,13 @@ func (w *pvcAutoresizer) Start(ctx context.Context) error {
 			startTime := time.Now()
 			w.reconcile(ctx)
 			metrics.ResizerLoopSecondsTotal.Add(time.Since(startTime).Seconds())
+
+			reset, err := metrics.ResetMetricsIfExceedsThreshold(w.metricsResetSizeThreshold)
+			if err != nil {
+				w.log.Error(err, "failed to check metrics size for reset")
+			} else if reset {
+				w.log.Info("metrics reset because they exceeded threshold", "thresholdBytes", w.metricsResetSizeThreshold)
+			}
 		}
 	}
 }
