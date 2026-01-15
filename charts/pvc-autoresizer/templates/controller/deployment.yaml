@@ -43,6 +43,9 @@ spec:
           {{- if .Values.controller.args.namespaces }}
             - --namespaces={{ join "," .Values.controller.args.namespaces }}
           {{- end }}
+          {{- if ne .Values.controller.args.metricsResetSizeThreshold nil }}
+            - --metrics-reset-size-threshold={{ .Values.controller.args.metricsResetSizeThreshold }}
+          {{- end }}
           {{- with .Values.controller.args.additionalArgs -}}
             {{ toYaml . | nindent 12 }}
           {{- end }}

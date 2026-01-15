@@ -30,6 +30,10 @@ controller:
     # Used as "--interval" option
     interval: 10s
 
+    # controller.args.metricsResetSizeThreshold -- Reset metrics when their encoded size exceeds this threshold in bytes. Set 0 to disable.
+    # Used as "--metrics-reset-size-threshold" option
+    metricsResetSizeThreshold: 0
+
     # controller.args.additionalArgs -- Specify additional args.
     additionalArgs: []
 
