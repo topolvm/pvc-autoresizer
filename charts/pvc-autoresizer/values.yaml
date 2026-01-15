@@ -11,7 +11,7 @@ image:
 
 controller:
   # controller.replicas -- Specify the number of replicas of the controller Pod.
-  replicas: 1
+  replicas: 2
 
   args:
     # controller.args.useK8sMetricsApi -- Use Kubernetes metrics API instead of Prometheus.
@@ -47,6 +47,10 @@ controller:
 
   # controller.podAnnotations -- Annotations to be added to controller pods.
   podAnnotations: {}
+
+  podDisruptionBudget:
+    # controller.podDisruptionBudget.enabled -- Specify podDisruptionBudget enabled.
+    enabled: true
 
   # controller.podSecurityContext -- Security Context to be applied to the controller pods.
   podSecurityContext: {}

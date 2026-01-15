@@ -112,7 +112,7 @@ var _ = BeforeSuite(func() {
 			return err
 		}
 
-		if deploy.Status.AvailableReplicas != 1 {
+		if deploy.Status.AvailableReplicas == 0 {
 			return errors.New("pvc-autoresizer-controller is not available yet")
 		}
 
