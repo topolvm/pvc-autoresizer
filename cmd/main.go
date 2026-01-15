@@ -25,6 +25,7 @@ var config struct {
 	development               bool
 	zapOpts                   zap.Options
 	pvcMutatingWebhookEnabled bool
+	metricsResetSizeThreshold uint64
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -61,6 +62,8 @@ func init() {
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")
 	fs.BoolVar(&config.pvcMutatingWebhookEnabled, "pvc-mutating-webhook-enabled", true,
 		"Enable the pvc mutating webhook endpoint")
+	fs.Uint64Var(&config.metricsResetSizeThreshold, "metrics-reset-size-threshold", 0,
+		"Reset metrics when their encoded size exceeds this threshold in bytes. Set 0 to disable. (default 0)")
 
 	goflags := flag.NewFlagSet("zap", flag.ExitOnError)
 	config.zapOpts.BindFlags(goflags)

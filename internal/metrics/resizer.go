@@ -1,7 +1,11 @@
 package metrics
 
 import (
+	"bytes"
+	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/expfmt"
 	runtimemetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
@@ -111,4 +115,47 @@ func registerResizerMetrics() {
 	runtimemetrics.Registry.MustRegister(resizerFailedResizeTotal)
 	runtimemetrics.Registry.MustRegister(resizerLoopSecondsTotal)
 	runtimemetrics.Registry.MustRegister(resizerLimitReachedTotal)
+}
+
+// currentMetricsSizeBytes returns the byte size of all metrics encoded in the
+// Prometheus text format, matching the payload used to decide when to reset.
+func currentMetricsSizeBytes() (uint64, error) {
+	mfs, err := runtimemetrics.Registry.Gather()
+	if err != nil {
+		return 0, err
+	}
+
+	var buf bytes.Buffer
+	enc := expfmt.NewEncoder(&buf, expfmt.NewFormat(expfmt.TypeTextPlain))
+	for _, mf := range mfs {
+		if err := enc.Encode(mf); err != nil {
+			return 0, err
+		}
+	}
+	return uint64(buf.Len()), nil
+}
+
+func resetLabelHeavyMetrics() {
+	resizerSuccessResizeTotal.Reset()
+	resizerFailedResizeTotal.Reset()
+	resizerLimitReachedTotal.Reset()
+}
+
+// ResetMetricsIfExceedsThreshold checks the total size of all registered metrics and
+// resets label-heavy resizer metrics if their encoded size exceeds thresholdBytes.
+// If thresholdBytes is 0, reset is disabled and this returns false, nil.
+func ResetMetricsIfExceedsThreshold(thresholdBytes uint64) (bool, error) {
+	if thresholdBytes == 0 {
+		return false, nil
+	}
+
+	size, err := currentMetricsSizeBytes()
+	if err != nil {
+		return false, fmt.Errorf("failed to calculate metrics size: %w", err)
+	}
+	if size > thresholdBytes {
+		resetLabelHeavyMetrics()
+		return true, nil
+	}
+	return false, nil
 }

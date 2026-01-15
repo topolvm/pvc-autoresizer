@@ -134,7 +134,7 @@ func subMain() error {
 
 	pvcAutoresizer := runners.NewPVCAutoresizer(metricsClient, mgr.GetClient(),
 		ctrl.Log.WithName("pvc-autoresizer"),
-		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
+		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"), config.metricsResetSizeThreshold)
 	if err := mgr.Add(pvcAutoresizer); err != nil {
 		setupLog.Error(err, "unable to add autoresier to manager")
 		return err
