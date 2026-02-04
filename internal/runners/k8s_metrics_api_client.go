@@ -8,6 +8,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/common/model"
 	"github.com/topolvm/pvc-autoresizer/internal/metrics"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,7 +93,7 @@ func getPVCUsageFromK8sMetricsAPI(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats from kubelet on node %s: %w", nodeName, err)
 	}
-	parser := expfmt.TextParser{}
+	parser := expfmt.NewTextParser(model.UTF8Validation)
 	metricFamilies, err := parser.TextToMetricFamilies(bytes.NewReader(respBody))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body from kubelet on node %s: %w", nodeName, err)
