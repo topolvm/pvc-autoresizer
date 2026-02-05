@@ -8,7 +8,103 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func TestParseCRTargetAnnotations_ValidClass(t *testing.T) {
+	resourceClasses := map[string]ResourceClass{
+		"rabbitmq": {
+			Name:       "rabbitmq",
+			APIGroup:   "rabbitmq.com",
+			APIVersion: "v1beta1",
+			Kind:       "RabbitmqCluster",
+			Path:       "/spec/persistence/storage",
+		},
+		"cnpg-data": {
+			Name:       "cnpg-data",
+			APIGroup:   "postgresql.cnpg.io",
+			APIVersion: "v1",
+			Kind:       "Cluster",
+			Path:       "/spec/storage/size",
+		},
+	}
+
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pvc",
+			Namespace: "default",
+			Annotations: map[string]string{
+				pvcautoresizer.TargetResourceClassAnnotation: "rabbitmq",
+				pvcautoresizer.TargetResourceNameAnnotation:  "my-rabbitmq",
+			},
+		},
+	}
+
+	config, err := parseCRTargetAnnotations(pvc, resourceClasses)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if config == nil {
+		t.Fatal("expected config, got nil")
+	}
+
+	if config.APIVersion != "rabbitmq.com/v1beta1" {
+		t.Errorf("expected APIVersion 'rabbitmq.com/v1beta1', got %q", config.APIVersion)
+	}
+	if config.Kind != "RabbitmqCluster" {
+		t.Errorf("expected Kind 'RabbitmqCluster', got %q", config.Kind)
+	}
+	if config.Name != "my-rabbitmq" {
+		t.Errorf("expected Name 'my-rabbitmq', got %q", config.Name)
+	}
+	if config.Namespace != "default" {
+		t.Errorf("expected Namespace 'default', got %q", config.Namespace)
+	}
+	if config.JSONPath != "/spec/persistence/storage" {
+		t.Errorf("expected JSONPath '/spec/persistence/storage', got %q", config.JSONPath)
+	}
+}
+
+func TestParseCRTargetAnnotations_WithExplicitNamespace(t *testing.T) {
+	resourceClasses := map[string]ResourceClass{
+		"rabbitmq": {
+			Name:       "rabbitmq",
+			APIGroup:   "rabbitmq.com",
+			APIVersion: "v1beta1",
+			Kind:       "RabbitmqCluster",
+			Path:       "/spec/persistence/storage",
+		},
+	}
+
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pvc",
+			Namespace: "default",
+			Annotations: map[string]string{
+				pvcautoresizer.TargetResourceClassAnnotation: "rabbitmq",
+				pvcautoresizer.TargetResourceNameAnnotation:  "my-rabbitmq",
+			},
+		},
+	}
+
+	config, err := parseCRTargetAnnotations(pvc, resourceClasses)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// CR namespace must match PVC namespace (cross-namespace not supported)
+	if config.Namespace != "default" {
+		t.Errorf("expected Namespace 'default' (same as PVC), got %q", config.Namespace)
+	}
+}
+
 func TestParseCRTargetAnnotations_NoAnnotations(t *testing.T) {
+	resourceClasses := map[string]ResourceClass{
+		"rabbitmq": {
+			Name:       "rabbitmq",
+			APIGroup:   "rabbitmq.com",
+			APIVersion: "v1beta1",
+			Kind:       "RabbitmqCluster",
+			Path:       "/spec/persistence/storage",
+		},
+	}
+
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pvc",
@@ -16,7 +112,7 @@ func TestParseCRTargetAnnotations_NoAnnotations(t *testing.T) {
 		},
 	}
 
-	config, err := parseCRTargetAnnotations(pvc)
+	config, err := parseCRTargetAnnotations(pvc, resourceClasses)
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
@@ -25,46 +121,158 @@ func TestParseCRTargetAnnotations_NoAnnotations(t *testing.T) {
 	}
 }
 
-func TestParseCRTargetAnnotations_Valid(t *testing.T) {
+func TestParseCRTargetAnnotations_UnknownClass(t *testing.T) {
+	resourceClasses := map[string]ResourceClass{
+		"rabbitmq": {
+			Name:       "rabbitmq",
+			APIGroup:   "rabbitmq.com",
+			APIVersion: "v1beta1",
+			Kind:       "RabbitmqCluster",
+			Path:       "/spec/persistence/storage",
+		},
+	}
+
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pvc",
+			Namespace: "default",
+			Annotations: map[string]string{
+				pvcautoresizer.TargetResourceClassAnnotation: "unknown-class",
+				pvcautoresizer.TargetResourceNameAnnotation:  "my-resource",
+			},
+		},
+	}
+
+	_, err := parseCRTargetAnnotations(pvc, resourceClasses)
+	if err == nil {
+		t.Fatal("expected error for unknown class, got nil")
+	}
+	if !containsSubstring(err.Error(), "unknown resource class") {
+		t.Errorf("expected error to mention 'unknown resource class', got: %v", err)
+	}
+}
+
+func TestParseCRTargetAnnotations_MissingName(t *testing.T) {
+	resourceClasses := map[string]ResourceClass{
+		"rabbitmq": {
+			Name:       "rabbitmq",
+			APIGroup:   "rabbitmq.com",
+			APIVersion: "v1beta1",
+			Kind:       "RabbitmqCluster",
+			Path:       "/spec/persistence/storage",
+		},
+	}
+
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pvc",
+			Namespace: "default",
+			Annotations: map[string]string{
+				pvcautoresizer.TargetResourceClassAnnotation: "rabbitmq",
+				// Missing TargetResourceNameAnnotation
+			},
+		},
+	}
+
+	_, err := parseCRTargetAnnotations(pvc, resourceClasses)
+	if err == nil {
+		t.Fatal("expected error for missing name, got nil")
+	}
+	if !containsSubstring(err.Error(), "target-resource-name") {
+		t.Errorf("expected error to mention 'target-resource-name', got: %v", err)
+	}
+}
+
+func TestParseCRTargetAnnotations_EmptyResourceClasses(t *testing.T) {
+	resourceClasses := map[string]ResourceClass{}
+
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pvc",
+			Namespace: "default",
+			Annotations: map[string]string{
+				pvcautoresizer.TargetResourceClassAnnotation: "rabbitmq",
+				pvcautoresizer.TargetResourceNameAnnotation:  "my-rabbitmq",
+			},
+		},
+	}
+
+	_, err := parseCRTargetAnnotations(pvc, resourceClasses)
+	if err == nil {
+		t.Fatal("expected error when resource classes are empty, got nil")
+	}
+}
+
+func TestParseCRTargetAnnotations_NilResourceClasses(t *testing.T) {
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pvc",
+			Namespace: "default",
+			Annotations: map[string]string{
+				pvcautoresizer.TargetResourceClassAnnotation: "rabbitmq",
+				pvcautoresizer.TargetResourceNameAnnotation:  "my-rabbitmq",
+			},
+		},
+	}
+
+	_, err := parseCRTargetAnnotations(pvc, nil)
+	if err == nil {
+		t.Fatal("expected error when resource classes are nil, got nil")
+	}
+}
+
+func TestParseCRTargetAnnotations_DifferentClasses(t *testing.T) {
+	resourceClasses := map[string]ResourceClass{
+		"rabbitmq": {
+			Name:       "rabbitmq",
+			APIGroup:   "rabbitmq.com",
+			APIVersion: "v1beta1",
+			Kind:       "RabbitmqCluster",
+			Path:       "/spec/persistence/storage",
+		},
+		"cnpg-data": {
+			Name:       "cnpg-data",
+			APIGroup:   "postgresql.cnpg.io",
+			APIVersion: "v1",
+			Kind:       "Cluster",
+			Path:       "/spec/storage/size",
+		},
+		"cnpg-wal": {
+			Name:       "cnpg-wal",
+			APIGroup:   "postgresql.cnpg.io",
+			APIVersion: "v1",
+			Kind:       "Cluster",
+			Path:       "/spec/walStorage/size",
+		},
+	}
+
 	tests := []struct {
-		name              string
-		annotations       map[string]string
-		expectedNamespace string
-		expectedPath      string
+		name         string
+		className    string
+		resourceName string
+		expectedPath string
+		expectedKind string
 	}{
 		{
-			name: "all required annotations with namespace",
-			annotations: map[string]string{
-				pvcautoresizer.TargetResourceAPIVersionAnnotation: "rabbitmq.com/v1beta1",
-				pvcautoresizer.TargetResourceKindAnnotation:       "RabbitmqCluster",
-				pvcautoresizer.TargetResourceNameAnnotation:       "my-rabbitmq",
-				pvcautoresizer.TargetResourceNamespaceAnnotation:  "rabbitmq-system",
-				pvcautoresizer.TargetResourceJSONPathAnnotation:   ".spec.persistence.storage",
-			},
-			expectedNamespace: "rabbitmq-system",
-			expectedPath:      "/spec/persistence/storage",
+			name:         "rabbitmq class",
+			className:    "rabbitmq",
+			resourceName: "my-rabbitmq",
+			expectedPath: "/spec/persistence/storage",
+			expectedKind: "RabbitmqCluster",
 		},
 		{
-			name: "namespace defaults to PVC namespace",
-			annotations: map[string]string{
-				pvcautoresizer.TargetResourceAPIVersionAnnotation: "postgresql.cnpg.io/v1",
-				pvcautoresizer.TargetResourceKindAnnotation:       "Cluster",
-				pvcautoresizer.TargetResourceNameAnnotation:       "my-cluster",
-				pvcautoresizer.TargetResourceJSONPathAnnotation:   ".spec.storage.size",
-			},
-			expectedNamespace: "default",
-			expectedPath:      "/spec/storage/size",
+			name:         "cnpg-data class",
+			className:    "cnpg-data",
+			resourceName: "my-postgres",
+			expectedPath: "/spec/storage/size",
+			expectedKind: "Cluster",
 		},
 		{
-			name: "JSON path already in pointer format",
-			annotations: map[string]string{
-				pvcautoresizer.TargetResourceAPIVersionAnnotation: "dragonflydb.io/v1alpha1",
-				pvcautoresizer.TargetResourceKindAnnotation:       "Dragonfly",
-				pvcautoresizer.TargetResourceNameAnnotation:       "my-dragonfly",
-				pvcautoresizer.TargetResourceJSONPathAnnotation:   "/spec/resources/requests/storage",
-			},
-			expectedNamespace: "default",
-			expectedPath:      "/spec/resources/requests/storage",
+			name:         "cnpg-wal class",
+			className:    "cnpg-wal",
+			resourceName: "my-postgres",
+			expectedPath: "/spec/walStorage/size",
+			expectedKind: "Cluster",
 		},
 	}
 
@@ -72,115 +280,27 @@ func TestParseCRTargetAnnotations_Valid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pvc := &corev1.PersistentVolumeClaim{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:        "test-pvc",
-					Namespace:   "default",
-					Annotations: tt.annotations,
+					Name:      "test-pvc",
+					Namespace: "default",
+					Annotations: map[string]string{
+						pvcautoresizer.TargetResourceClassAnnotation: tt.className,
+						pvcautoresizer.TargetResourceNameAnnotation:  tt.resourceName,
+					},
 				},
 			}
 
-			config, err := parseCRTargetAnnotations(pvc)
+			config, err := parseCRTargetAnnotations(pvc, resourceClasses)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
-			}
-			if config == nil {
-				t.Fatal("expected config, got nil")
-			}
-
-			if config.APIVersion != tt.annotations[pvcautoresizer.TargetResourceAPIVersionAnnotation] {
-				t.Errorf("expected APIVersion %q, got %q",
-					tt.annotations[pvcautoresizer.TargetResourceAPIVersionAnnotation], config.APIVersion)
-			}
-			if config.Kind != tt.annotations[pvcautoresizer.TargetResourceKindAnnotation] {
-				t.Errorf("expected Kind %q, got %q",
-					tt.annotations[pvcautoresizer.TargetResourceKindAnnotation], config.Kind)
-			}
-			if config.Name != tt.annotations[pvcautoresizer.TargetResourceNameAnnotation] {
-				t.Errorf("expected Name %q, got %q",
-					tt.annotations[pvcautoresizer.TargetResourceNameAnnotation], config.Name)
-			}
-			if config.Namespace != tt.expectedNamespace {
-				t.Errorf("expected Namespace %q, got %q", tt.expectedNamespace, config.Namespace)
 			}
 			if config.JSONPath != tt.expectedPath {
 				t.Errorf("expected JSONPath %q, got %q", tt.expectedPath, config.JSONPath)
 			}
-		})
-	}
-}
-
-func TestParseCRTargetAnnotations_MissingRequired(t *testing.T) {
-	tests := []struct {
-		name        string
-		annotations map[string]string
-		wantErr     bool
-	}{
-		{
-			name: "missing api-version",
-			annotations: map[string]string{
-				pvcautoresizer.TargetResourceKindAnnotation:     "RabbitmqCluster",
-				pvcautoresizer.TargetResourceNameAnnotation:     "my-rabbitmq",
-				pvcautoresizer.TargetResourceJSONPathAnnotation: ".spec.persistence.storage",
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing kind",
-			annotations: map[string]string{
-				pvcautoresizer.TargetResourceAPIVersionAnnotation: "rabbitmq.com/v1beta1",
-				pvcautoresizer.TargetResourceNameAnnotation:       "my-rabbitmq",
-				pvcautoresizer.TargetResourceJSONPathAnnotation:   ".spec.persistence.storage",
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing name",
-			annotations: map[string]string{
-				pvcautoresizer.TargetResourceAPIVersionAnnotation: "rabbitmq.com/v1beta1",
-				pvcautoresizer.TargetResourceKindAnnotation:       "RabbitmqCluster",
-				pvcautoresizer.TargetResourceJSONPathAnnotation:   ".spec.persistence.storage",
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing json-path",
-			annotations: map[string]string{
-				pvcautoresizer.TargetResourceAPIVersionAnnotation: "rabbitmq.com/v1beta1",
-				pvcautoresizer.TargetResourceKindAnnotation:       "RabbitmqCluster",
-				pvcautoresizer.TargetResourceNameAnnotation:       "my-rabbitmq",
-			},
-			wantErr: true,
-		},
-		{
-			name: "only one annotation present",
-			annotations: map[string]string{
-				pvcautoresizer.TargetResourceKindAnnotation: "RabbitmqCluster",
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pvc := &corev1.PersistentVolumeClaim{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "test-pvc",
-					Namespace:   "default",
-					Annotations: tt.annotations,
-				},
+			if config.Kind != tt.expectedKind {
+				t.Errorf("expected Kind %q, got %q", tt.expectedKind, config.Kind)
 			}
-
-			config, err := parseCRTargetAnnotations(pvc)
-			if tt.wantErr {
-				if err == nil {
-					t.Error("expected error, got nil")
-				}
-				if config != nil {
-					t.Errorf("expected nil config on error, got %+v", config)
-				}
-			} else {
-				if err != nil {
-					t.Errorf("expected no error, got %v", err)
-				}
+			if config.Name != tt.resourceName {
+				t.Errorf("expected Name %q, got %q", tt.resourceName, config.Name)
 			}
 		})
 	}
@@ -333,5 +453,387 @@ func TestParseAPIVersion(t *testing.T) {
 				t.Errorf("expected version %q, got %q", tt.wantVersion, version)
 			}
 		})
+	}
+}
+
+// Helper function
+func containsSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+// Tests for path parsing with filter support
+
+func TestParsePath_SimpleSegments(t *testing.T) {
+	segments, err := parsePath("/spec/storage/size")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(segments) != 3 {
+		t.Fatalf("expected 3 segments, got %d", len(segments))
+	}
+
+	expected := []pathSegment{
+		{Field: "spec", FilterKey: "", FilterVal: ""},
+		{Field: "storage", FilterKey: "", FilterVal: ""},
+		{Field: "size", FilterKey: "", FilterVal: ""},
+	}
+
+	for i, seg := range segments {
+		if seg.Field != expected[i].Field {
+			t.Errorf("segment %d: expected Field %q, got %q", i, expected[i].Field, seg.Field)
+		}
+		if seg.FilterKey != expected[i].FilterKey {
+			t.Errorf("segment %d: expected FilterKey %q, got %q", i, expected[i].FilterKey, seg.FilterKey)
+		}
+		if seg.FilterVal != expected[i].FilterVal {
+			t.Errorf("segment %d: expected FilterVal %q, got %q", i, expected[i].FilterVal, seg.FilterVal)
+		}
+	}
+}
+
+func TestParsePath_WithFilter(t *testing.T) {
+	segments, err := parsePath("/spec/tablespaces[name=tbs1]/storage/size")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(segments) != 4 {
+		t.Fatalf("expected 4 segments, got %d", len(segments))
+	}
+
+	// Check the segment with the filter
+	if segments[1].Field != "tablespaces" {
+		t.Errorf("expected Field 'tablespaces', got %q", segments[1].Field)
+	}
+	if segments[1].FilterKey != "name" {
+		t.Errorf("expected FilterKey 'name', got %q", segments[1].FilterKey)
+	}
+	if segments[1].FilterVal != "tbs1" {
+		t.Errorf("expected FilterVal 'tbs1', got %q", segments[1].FilterVal)
+	}
+}
+
+func TestParsePath_WithPlaceholder(t *testing.T) {
+	segments, err := parsePath("/spec/tablespaces[name=?]/storage/size")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(segments) != 4 {
+		t.Fatalf("expected 4 segments, got %d", len(segments))
+	}
+
+	// Check the segment with the placeholder
+	if segments[1].Field != "tablespaces" {
+		t.Errorf("expected Field 'tablespaces', got %q", segments[1].Field)
+	}
+	if segments[1].FilterKey != "name" {
+		t.Errorf("expected FilterKey 'name', got %q", segments[1].FilterKey)
+	}
+	if segments[1].FilterVal != "?" {
+		t.Errorf("expected FilterVal '?', got %q", segments[1].FilterVal)
+	}
+}
+
+func TestParsePath_InvalidFilterSyntax(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+	}{
+		{name: "missing closing bracket", path: "/spec/tablespaces[name=tbs1/storage"},
+		{name: "missing equals", path: "/spec/tablespaces[name]/storage"},
+		{name: "empty filter key", path: "/spec/tablespaces[=value]/storage"},
+		{name: "empty brackets", path: "/spec/tablespaces[]/storage"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := parsePath(tt.path)
+			if err == nil {
+				t.Errorf("expected error for path %q, got nil", tt.path)
+			}
+		})
+	}
+}
+
+func TestParsePath_MultipleFilters(t *testing.T) {
+	_, err := parsePath("/spec/tablespaces[name=tbs1]/volumes[id=vol1]/size")
+	if err == nil {
+		t.Error("expected error for multiple filters, got nil")
+	}
+	if !containsSubstring(err.Error(), "multiple filters") {
+		t.Errorf("expected error to mention 'multiple filters', got: %v", err)
+	}
+}
+
+func TestParsePath_EmptyPath(t *testing.T) {
+	_, err := parsePath("")
+	if err == nil {
+		t.Error("expected error for empty path, got nil")
+	}
+}
+
+func TestParsePath_RootOnly(t *testing.T) {
+	_, err := parsePath("/")
+	if err == nil {
+		t.Error("expected error for root-only path, got nil")
+	}
+}
+
+// Tests for placeholder resolution
+
+func TestResolvePlaceholder_Success(t *testing.T) {
+	segments := []pathSegment{
+		{Field: "spec", FilterKey: "", FilterVal: ""},
+		{Field: "tablespaces", FilterKey: "name", FilterVal: "?"},
+		{Field: "storage", FilterKey: "", FilterVal: ""},
+		{Field: "size", FilterKey: "", FilterVal: ""},
+	}
+
+	resolved, err := resolvePlaceholder(segments, "tbs1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if resolved[1].FilterVal != "tbs1" {
+		t.Errorf("expected FilterVal 'tbs1', got %q", resolved[1].FilterVal)
+	}
+	// Original should be unchanged
+	if segments[1].FilterVal != "?" {
+		t.Errorf("original was modified: expected '?', got %q", segments[1].FilterVal)
+	}
+}
+
+func TestResolvePlaceholder_MissingAnnotation(t *testing.T) {
+	segments := []pathSegment{
+		{Field: "spec", FilterKey: "", FilterVal: ""},
+		{Field: "tablespaces", FilterKey: "name", FilterVal: "?"},
+		{Field: "storage", FilterKey: "", FilterVal: ""},
+	}
+
+	_, err := resolvePlaceholder(segments, "")
+	if err == nil {
+		t.Fatal("expected error for missing filter value, got nil")
+	}
+	if !containsSubstring(err.Error(), "target-filter-value") {
+		t.Errorf("expected error to mention 'target-filter-value', got: %v", err)
+	}
+}
+
+func TestResolvePlaceholder_NoPlaceholder(t *testing.T) {
+	segments := []pathSegment{
+		{Field: "spec", FilterKey: "", FilterVal: ""},
+		{Field: "storage", FilterKey: "", FilterVal: ""},
+		{Field: "size", FilterKey: "", FilterVal: ""},
+	}
+
+	// Should succeed even without annotation when there's no placeholder
+	resolved, err := resolvePlaceholder(segments, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Segments should be unchanged
+	if len(resolved) != len(segments) {
+		t.Errorf("expected %d segments, got %d", len(segments), len(resolved))
+	}
+}
+
+func TestResolvePlaceholder_HardcodedFilter(t *testing.T) {
+	segments := []pathSegment{
+		{Field: "spec", FilterKey: "", FilterVal: ""},
+		{Field: "tablespaces", FilterKey: "name", FilterVal: "tbs1"},
+		{Field: "storage", FilterKey: "", FilterVal: ""},
+	}
+
+	// Should succeed and leave hardcoded value unchanged
+	resolved, err := resolvePlaceholder(segments, "ignored-value")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if resolved[1].FilterVal != "tbs1" {
+		t.Errorf("expected FilterVal 'tbs1' (unchanged), got %q", resolved[1].FilterVal)
+	}
+}
+
+// Tests for array navigation (setNestedFieldWithFilter)
+
+func TestSetNestedFieldWithFilter_SimpleArray(t *testing.T) {
+	obj := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"tablespaces": []interface{}{
+				map[string]interface{}{
+					"name": "tbs1",
+					"storage": map[string]interface{}{
+						"size": "10Gi",
+					},
+				},
+				map[string]interface{}{
+					"name": "tbs2",
+					"storage": map[string]interface{}{
+						"size": "20Gi",
+					},
+				},
+			},
+		},
+	}
+
+	segments := []pathSegment{
+		{Field: "spec"},
+		{Field: "tablespaces", FilterKey: "name", FilterVal: "tbs1"},
+		{Field: "storage"},
+		{Field: "size"},
+	}
+
+	err := setNestedFieldWithFilter(obj, segments, "50Gi")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify the value was set
+	spec := obj["spec"].(map[string]interface{})
+	tablespaces := spec["tablespaces"].([]interface{})
+	tbs1 := tablespaces[0].(map[string]interface{})
+	storage := tbs1["storage"].(map[string]interface{})
+	if storage["size"] != "50Gi" {
+		t.Errorf("expected size '50Gi', got %q", storage["size"])
+	}
+
+	// Verify tbs2 was not modified
+	tbs2 := tablespaces[1].(map[string]interface{})
+	storage2 := tbs2["storage"].(map[string]interface{})
+	if storage2["size"] != "20Gi" {
+		t.Errorf("tbs2 was modified: expected size '20Gi', got %q", storage2["size"])
+	}
+}
+
+func TestSetNestedFieldWithFilter_NoMatch(t *testing.T) {
+	obj := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"tablespaces": []interface{}{
+				map[string]interface{}{
+					"name": "tbs1",
+					"storage": map[string]interface{}{
+						"size": "10Gi",
+					},
+				},
+			},
+		},
+	}
+
+	segments := []pathSegment{
+		{Field: "spec"},
+		{Field: "tablespaces", FilterKey: "name", FilterVal: "nonexistent"},
+		{Field: "storage"},
+		{Field: "size"},
+	}
+
+	err := setNestedFieldWithFilter(obj, segments, "50Gi")
+	// Should return nil (no error) but also not modify anything
+	if err != nil {
+		t.Fatalf("expected nil error for no match, got: %v", err)
+	}
+}
+
+func TestSetNestedFieldWithFilter_MultipleMatches(t *testing.T) {
+	obj := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"tablespaces": []interface{}{
+				map[string]interface{}{
+					"name":    "tbs1",
+					"storage": map[string]interface{}{"size": "10Gi"},
+				},
+				map[string]interface{}{
+					"name":    "tbs1", // Duplicate!
+					"storage": map[string]interface{}{"size": "20Gi"},
+				},
+			},
+		},
+	}
+
+	segments := []pathSegment{
+		{Field: "spec"},
+		{Field: "tablespaces", FilterKey: "name", FilterVal: "tbs1"},
+		{Field: "storage"},
+		{Field: "size"},
+	}
+
+	err := setNestedFieldWithFilter(obj, segments, "50Gi")
+	if err == nil {
+		t.Fatal("expected error for multiple matches, got nil")
+	}
+	if !containsSubstring(err.Error(), "multiple") {
+		t.Errorf("expected error to mention 'multiple', got: %v", err)
+	}
+}
+
+func TestSetNestedFieldWithFilter_NotAnArray(t *testing.T) {
+	obj := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"tablespaces": "not-an-array",
+		},
+	}
+
+	segments := []pathSegment{
+		{Field: "spec"},
+		{Field: "tablespaces", FilterKey: "name", FilterVal: "tbs1"},
+		{Field: "storage"},
+	}
+
+	err := setNestedFieldWithFilter(obj, segments, "50Gi")
+	if err == nil {
+		t.Fatal("expected error for non-array field, got nil")
+	}
+	if !containsSubstring(err.Error(), "not an array") {
+		t.Errorf("expected error to mention 'not an array', got: %v", err)
+	}
+}
+
+func TestSetNestedFieldWithFilter_FieldMissing(t *testing.T) {
+	obj := map[string]interface{}{
+		"spec": map[string]interface{}{},
+	}
+
+	segments := []pathSegment{
+		{Field: "spec"},
+		{Field: "tablespaces", FilterKey: "name", FilterVal: "tbs1"},
+		{Field: "storage"},
+	}
+
+	// Missing field should return nil (skip gracefully)
+	err := setNestedFieldWithFilter(obj, segments, "50Gi")
+	if err != nil {
+		t.Fatalf("expected nil error for missing field, got: %v", err)
+	}
+}
+
+func TestSetNestedFieldWithFilter_SimplePath(t *testing.T) {
+	obj := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"storage": map[string]interface{}{
+				"size": "10Gi",
+			},
+		},
+	}
+
+	segments := []pathSegment{
+		{Field: "spec"},
+		{Field: "storage"},
+		{Field: "size"},
+	}
+
+	err := setNestedFieldWithFilter(obj, segments, "50Gi")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	spec := obj["spec"].(map[string]interface{})
+	storage := spec["storage"].(map[string]interface{})
+	if storage["size"] != "50Gi" {
+		t.Errorf("expected size '50Gi', got %q", storage["size"])
 	}
 }

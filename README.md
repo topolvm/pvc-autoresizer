@@ -173,10 +173,8 @@ metadata:
     resize.topolvm.io/increase: "10Gi"
 
     # Operator-aware resizing annotations
-    resize.topolvm.io/target-resource-api-version: "rabbitmq.com/v1beta1"
-    resize.topolvm.io/target-resource-kind: "RabbitmqCluster"
+    resize.topolvm.io/target-resource-class: "rabbitmq"
     resize.topolvm.io/target-resource-name: "my-rabbitmq"
-    resize.topolvm.io/target-resource-json-path: ".spec.persistence.storage"
 spec:
   accessModes: ["ReadWriteOnce"]
   volumeMode: Filesystem

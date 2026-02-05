@@ -1,0 +1,18 @@
+{{- if and .Values.operatorAwareResizing.enabled .Values.operatorAwareResizing.resourceClasses }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "pvc-autoresizer.fullname" . }}-resource-classes
+  labels:
+    {{- include "pvc-autoresizer.labels" . | nindent 4 }}
+data:
+  resource-classes.yaml: |
+    resourceClasses:
+    {{- range .Values.operatorAwareResizing.resourceClasses }}
+      - name: {{ .name | quote }}
+        apiGroup: {{ .apiGroup | quote }}
+        apiVersion: {{ .apiVersion | quote }}
+        kind: {{ .kind | quote }}
+        path: {{ .path | quote }}
+    {{- end }}
+{{- end }}

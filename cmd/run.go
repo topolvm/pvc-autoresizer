@@ -132,9 +132,21 @@ func subMain() error {
 		return err
 	}
 
+	// Load resource classes for operator-aware resizing if configured
+	var resourceClasses map[string]runners.ResourceClass
+	if config.resourceClassesPath != "" {
+		var err error
+		resourceClasses, err = runners.LoadResourceClasses(config.resourceClassesPath)
+		if err != nil {
+			setupLog.Error(err, "unable to load resource classes configuration")
+			return err
+		}
+		setupLog.Info("loaded resource classes", "count", len(resourceClasses))
+	}
+
 	pvcAutoresizer := runners.NewPVCAutoresizer(metricsClient, mgr.GetClient(),
 		ctrl.Log.WithName("pvc-autoresizer"),
-		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"))
+		config.watchInterval, mgr.GetEventRecorderFor("pvc-autoresizer"), resourceClasses)
 	if err := mgr.Add(pvcAutoresizer); err != nil {
 		setupLog.Error(err, "unable to add autoresier to manager")
 		return err

@@ -21,20 +21,18 @@ const PreviousCapacityBytesAnnotation = "resize.topolvm.io/pre_capacity_bytes"
 // InitialResizeGroupByAnnotation is the key of the initial-resize group by.
 const InitialResizeGroupByAnnotation = "resize.topolvm.io/initial-resize-group-by"
 
-// TargetResourceAPIVersionAnnotation is the API version of the target Custom Resource to patch.
-const TargetResourceAPIVersionAnnotation = "resize.topolvm.io/target-resource-api-version"
-
-// TargetResourceKindAnnotation is the Kind of the target Custom Resource to patch.
-const TargetResourceKindAnnotation = "resize.topolvm.io/target-resource-kind"
+// TargetResourceClassAnnotation is the name of the admin-defined resource class for operator-aware resizing.
+// When set, the controller looks up the resource class from the admin configuration and patches the
+// corresponding CR field instead of the PVC directly.
+const TargetResourceClassAnnotation = "resize.topolvm.io/target-resource-class"
 
 // TargetResourceNameAnnotation is the name of the target Custom Resource to patch.
+// Required when using TargetResourceClassAnnotation. The CR must be in the same namespace as the PVC.
 const TargetResourceNameAnnotation = "resize.topolvm.io/target-resource-name"
 
-// TargetResourceNamespaceAnnotation is the namespace of the target Custom Resource (defaults to PVC namespace).
-const TargetResourceNamespaceAnnotation = "resize.topolvm.io/target-resource-namespace"
-
-// TargetResourceJSONPathAnnotation is the JSON path to the storage field in the target Custom Resource.
-const TargetResourceJSONPathAnnotation = "resize.topolvm.io/target-resource-json-path"
+// TargetFilterValueAnnotation specifies the value for array element selection in paths with [key=?] syntax.
+// Required when the resource class path contains a placeholder filter like [name=?].
+const TargetFilterValueAnnotation = "resize.topolvm.io/target-filter-value"
 
 // DefaultThreshold is the default value of ResizeThresholdAnnotation.
 const DefaultThreshold = "10%"

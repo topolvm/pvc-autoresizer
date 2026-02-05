@@ -26,10 +26,10 @@ Kyverno ClusterPolicy that automatically adds pvc-autoresizer annotations to Clo
 
 **Features:**
 - Automatically detects PVC type (data, WAL, or tablespace) using `cnpg.io/pvcRole` label
-- Applies correct JSON path for each volume type:
-  - `PG_DATA` → `.spec.storage.size`
-  - `PG_WAL` → `.spec.walStorage.size`
-  - `PG_TABLESPACE` → `.spec.tablespaces[?(@.name=='...')].storage.size`
+- Applies correct resource class for each volume type:
+  - `PG_DATA` → `cnpg-data`
+  - `PG_WAL` → `cnpg-wal`
+  - `PG_TABLESPACE` → `cnpg-tablespace` (with `target-filter-value` set to tablespace name)
 - Extracts cluster name from `cnpg.io/cluster` label
 - Includes production-tuned variant with namespace selector
 
@@ -166,7 +166,8 @@ kubectl wait --for=condition=ready pod -l cnpg.io/cluster=test-pg-tablespace -n 
 kubectl get pvc -n database -l cnpg.io/pvcRole=PG_TABLESPACE -o yaml | grep -A 10 "resize.topolvm.io"
 
 # Expected output should show:
-# resize.topolvm.io/target-resource-json-path: .spec.tablespaces[?(@.name=='mydata')].storage.size
+# resize.topolvm.io/target-resource-class: cnpg-tablespace
+# resize.topolvm.io/target-filter-value: mydata
 
 # 6. Fill tablespace to trigger resize
 kubectl exec -n database test-pg-tablespace-1 -- \
@@ -231,19 +232,11 @@ spec:
 
 The Kyverno policy will automatically add annotations to the tablespace PVC with:
 ```
-resize.topolvm.io/target-resource-json-path: .spec.tablespaces[?(@.name=='mydata')].storage.size
+resize.topolvm.io/target-resource-class: cnpg-tablespace
+resize.topolvm.io/target-filter-value: mydata
 ```
 
-Each tablespace gets its own PVC with a unique JSONPath targeting the specific tablespace in the CR.
-
-### Cross-Namespace Resources
-
-If your CNPG Cluster is in a different namespace than the PVCs (uncommon but possible with custom operators), add:
-
-```bash
-kubectl annotate pvc ... \
-  resize.topolvm.io/target-resource-namespace="other-namespace"
-```
+Each tablespace gets its own PVC with the `cnpg-tablespace` class and the tablespace name as the filter value.
 
 ## Troubleshooting
 

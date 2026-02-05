@@ -60,8 +60,8 @@ rules:
 {{- end }}
 {{- if .Values.operatorAwareResizing.enabled }}
 # Operator-aware resizing RBAC (auto-generated from values.yaml)
-# Configure allowed CR types in values.operatorAwareResizing.allowedResources
-{{- range .Values.operatorAwareResizing.allowedResources }}
+# Configure allowed CR types in values.operatorAwareResizing.resourceClasses
+{{- range .Values.operatorAwareResizing.resourceClasses }}
 - apiGroups:
   - {{ .apiGroup | quote }}
   resources:

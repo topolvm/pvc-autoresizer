@@ -21,10 +21,13 @@ spec:
         {{- with .Values.controller.podLabels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- if .Values.controller.podAnnotations}}
       annotations:
-        {{- toYaml .Values.controller.podAnnotations | nindent 8 }}
-      {{- end }}
+        {{- if and .Values.operatorAwareResizing.enabled .Values.operatorAwareResizing.resourceClasses }}
+        checksum/resource-classes: {{ include (print $.Template.BasePath "/controller/configmap.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.controller.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ template "pvc-autoresizer.fullname" . }}-controller
       {{- with .Values.controller.terminationGracePeriodSeconds }}
@@ -48,7 +51,10 @@ spec:
           {{- end }}
           {{- if not .Values.webhook.pvcMutatingWebhook.enabled }}
             - --pvc-mutating-webhook-enabled=false
-          {{- end}}
+          {{- end }}
+          {{- if and .Values.operatorAwareResizing.enabled .Values.operatorAwareResizing.resourceClasses }}
+            - --resource-classes-config=/etc/pvc-autoresizer/resource-classes.yaml
+          {{- end }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           {{- with .Values.image.pullPolicy }}
           imagePullPolicy: {{ . }}
@@ -74,10 +80,17 @@ spec:
             httpGet:
               path: /healthz
               port: health
-          {{- if .Values.webhook.pvcMutatingWebhook.enabled }}
+          {{- if or .Values.webhook.pvcMutatingWebhook.enabled (and .Values.operatorAwareResizing.enabled .Values.operatorAwareResizing.resourceClasses) }}
           volumeMounts:
+            {{- if .Values.webhook.pvcMutatingWebhook.enabled }}
             - name: certs
               mountPath: /certs
+            {{- end }}
+            {{- if and .Values.operatorAwareResizing.enabled .Values.operatorAwareResizing.resourceClasses }}
+            - name: resource-classes
+              mountPath: /etc/pvc-autoresizer
+              readOnly: true
+            {{- end }}
           {{- end }}
           securityContext:
             {{- toYaml .Values.controller.securityContext | nindent 12 }}
@@ -89,12 +102,19 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
-      {{- if .Values.webhook.pvcMutatingWebhook.enabled }}
+      {{- if or .Values.webhook.pvcMutatingWebhook.enabled (and .Values.operatorAwareResizing.enabled .Values.operatorAwareResizing.resourceClasses) }}
       volumes:
+        {{- if .Values.webhook.pvcMutatingWebhook.enabled }}
         - name: certs
           secret:
             defaultMode: 420
             secretName: {{ template "pvc-autoresizer.fullname" . }}-controller
+        {{- end }}
+        {{- if and .Values.operatorAwareResizing.enabled .Values.operatorAwareResizing.resourceClasses }}
+        - name: resource-classes
+          configMap:
+            name: {{ template "pvc-autoresizer.fullname" . }}-resource-classes
+        {{- end }}
       {{- end }}
       securityContext:
         {{- toYaml .Values.controller.podSecurityContext | nindent 8 }}

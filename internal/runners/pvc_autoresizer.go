@@ -29,25 +29,29 @@ const resizeEnableIndexKey = ".metadata.annotations[resize.topolvm.io/enabled]"
 const storageClassNameIndexKey = ".spec.storageClassName"
 const logLevelWarn = 3
 
-// NewPVCAutoresizer returns a new pvcAutoresizer struct
+// NewPVCAutoresizer returns a new pvcAutoresizer struct.
+// resourceClasses is the map of admin-defined resource classes for operator-aware resizing.
+// Pass nil or empty map to disable operator-aware resizing with resource classes.
 func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, interval time.Duration,
-	recorder record.EventRecorder) manager.Runnable {
+	recorder record.EventRecorder, resourceClasses map[string]ResourceClass) manager.Runnable {
 
 	return &pvcAutoresizer{
-		metricsClient: mc,
-		client:        c,
-		log:           log,
-		interval:      interval,
-		recorder:      recorder,
+		metricsClient:   mc,
+		client:          c,
+		log:             log,
+		interval:        interval,
+		recorder:        recorder,
+		resourceClasses: resourceClasses,
 	}
 }
 
 type pvcAutoresizer struct {
-	client        client.Client
-	metricsClient MetricsClient
-	interval      time.Duration
-	log           logr.Logger
-	recorder      record.EventRecorder
+	client          client.Client
+	metricsClient   MetricsClient
+	interval        time.Duration
+	log             logr.Logger
+	recorder        record.EventRecorder
+	resourceClasses map[string]ResourceClass
 }
 
 // Start implements manager.Runnable
@@ -236,7 +240,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		}
 
 		// Check for CR target annotations for operator-aware resizing
-		crTarget, err := parseCRTargetAnnotations(pvc)
+		crTarget, err := parseCRTargetAnnotations(pvc, w.resourceClasses)
 		if err != nil {
 			// Invalid CR target annotations
 			log.V(logLevelWarn).Info("invalid CR target annotations", "error", err.Error())

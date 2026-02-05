@@ -166,17 +166,46 @@ operatorAwareResizing:
   # When false, CR patching is completely disabled for security
   enabled: false
 
-  # operatorAwareResizing.allowedResources -- List of allowed CR types for auto-resizing
-  # RBAC rules are automatically generated from this list
-  # Each entry must have apiGroup, kind, and resource (plural name for RBAC)
-  allowedResources: []
+  # operatorAwareResizing.resourceClasses -- List of admin-defined resource classes for operator-aware resizing
+  # Each class defines a CR type and the pre-approved JSON path that can be patched.
+  # PVC annotations reference these classes by name instead of specifying paths directly.
+  # RBAC rules are automatically generated from this list.
+  #
+  # Required fields:
+  #   name: Unique identifier for this class (DNS label compatible)
+  #   apiGroup: API group of the target CR
+  #   apiVersion: API version of the target CR
+  #   kind: Kind of the target CR
+  #   resource: Plural resource name (for RBAC generation)
+  #   path: JSON pointer to the storage field (must start with /spec/)
+  #
+  # Path syntax supports optional array filters:
+  #   - Simple: "/spec/storage/size"
+  #   - Filter with placeholder: "/spec/tablespaces[name=?]/storage/size"
+  #     (? is replaced by target-filter-value annotation on PVC)
+  resourceClasses: []
   # Examples:
-  # - apiGroup: "rabbitmq.com"
+  # - name: "rabbitmq"
+  #   apiGroup: "rabbitmq.com"
+  #   apiVersion: "v1beta1"
   #   kind: "RabbitmqCluster"
   #   resource: "rabbitmqclusters"
-  # - apiGroup: "postgresql.cnpg.io"
+  #   path: "/spec/persistence/storage"
+  # - name: "cnpg-data"
+  #   apiGroup: "postgresql.cnpg.io"
+  #   apiVersion: "v1"
   #   kind: "Cluster"
   #   resource: "clusters"
-  # - apiGroup: "dragonflydb.io"
-  #   kind: "Dragonfly"
-  #   resource: "dragonflies"
+  #   path: "/spec/storage/size"
+  # - name: "cnpg-wal"
+  #   apiGroup: "postgresql.cnpg.io"
+  #   apiVersion: "v1"
+  #   kind: "Cluster"
+  #   resource: "clusters"
+  #   path: "/spec/walStorage/size"
+  # - name: "cnpg-tablespace"
+  #   apiGroup: "postgresql.cnpg.io"
+  #   apiVersion: "v1"
+  #   kind: "Cluster"
+  #   resource: "clusters"
+  #   path: "/spec/tablespaces[name=?]/storage/size"  # ? replaced by target-filter-value annotation

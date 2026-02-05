@@ -82,14 +82,14 @@ var _ = BeforeSuite(func() {
 
 	pvcAutoresizer := NewPVCAutoresizer(&promClient, mgr.GetClient(),
 		logf.Log.WithName("pvc-autoresizer"),
-		1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer"))
+		1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer"), nil)
 	err = mgr.Add(pvcAutoresizer)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Add pvcAutoresizer with FakeClientWrapper for metrics tests
 	pvcAutoresizer2 := NewPVCAutoresizer(&promClient, NewFakeClientWrapper(mgr.GetClient()),
 		logf.Log.WithName("pvc-autoresizer2"),
-		1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer2"))
+		1*time.Second, mgr.GetEventRecorderFor("pvc-autoresizer2"), nil)
 	err = mgr.Add(pvcAutoresizer2)
 	Expect(err).ToNot(HaveOccurred())
 
