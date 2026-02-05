@@ -80,12 +80,12 @@ Before using operator-aware resizing, you must:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ 1. Metrics indicate low disk space on PVC                   │
+│ 1. Metrics indicate low disk space on PVC                    │
 └──────────────────────────────┬───────────────────────────────┘
                                │
                                ▼
 ┌──────────────────────────────────────────────────────────────┐
-│ 2. pvc-autoresizer checks for CR target annotations         │
+│ 2. pvc-autoresizer checks for CR target annotations          │
 └──────────────────────────────┬───────────────────────────────┘
                                │
                 ┌──────────────┴──────────────┐
@@ -99,17 +99,17 @@ Before using operator-aware resizing, you must:
               │
               ▼
 ┌──────────────────────────────────────────────────────────────┐
-│ 3. Operator detects CR change and reconciles                │
+│ 3. Operator detects CR change and reconciles                 │
 └──────────────────────────────────────────────────────────────┘
               │
               ▼
 ┌──────────────────────────────────────────────────────────────┐
-│ 4. Operator updates PVC spec.resources.requests.storage     │
+│ 4. Operator updates PVC spec.resources.requests.storage      │
 └──────────────────────────────────────────────────────────────┘
               │
               ▼
 ┌──────────────────────────────────────────────────────────────┐
-│ 5. Kubernetes resizes the underlying volume                 │
+│ 5. Kubernetes resizes the underlying volume                  │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -782,11 +782,50 @@ There may be a delay between when pvc-autoresizer patches the CR and when the op
 
 ### Multiple PVCs Targeting Same CR Field
 
-If multiple PVCs target the same CR field:
-- Each PVC will independently calculate its resize
-- Last write wins
-- The operator will reconcile based on the CR's final value
-- This scenario is generally not recommended
+If multiple PVCs target the same CR field (common for database replicas):
+ r- Each PVC independently calculates its resize based on its own metrics
+- If multiple PVCs hit the threshold simultaneously with the same capacity, they calculate the same new size (idempotent)
+- The operator reconciles based on the CR's final value and applies it to all replicas
+- **Two complementary protection mechanisms prevent race conditions:**
+
+#### Protection 1: Pre-Capacity Tracking
+
+For PVCs that have triggered a resize, `pvc-autoresizer` tracks the previous capacity in the `resize.topolvm.io/pre_capacity_bytes` annotation. If the current capacity matches this value, the PVC is skipped until expansion completes.
+
+**Protects against:** Double-resizing the same PVC before expansion finishes
+
+#### Protection 2: Mid-Expansion Detection
+
+PVCs where `status.capacity < spec.resources.requests.storage` are automatically skipped. This indicates the CSI driver is currently expanding the volume.
+
+**Protects against:**
+- Calculating new sizes based on stale capacity values
+- Race conditions when operators update specs but CSI hasn't finished expanding
+- Issues on first resize (when no `pre_capacity_bytes` annotation exists yet)
+
+**Example - PostgreSQL with 3 replicas:**
+```
+# Scenario: Operator updated all specs to 100Gi, CSI expanding sequentially
+
+my-postgres-1:
+  spec.requests.storage: 100Gi
+  status.capacity: 100Gi  ← Fully expanded
+  available: 8Gi (92% full) → Triggers resize to 110Gi ✅
+
+my-postgres-2:
+  spec.requests.storage: 100Gi
+  status.capacity: 95Gi  ← Mid-expansion detected
+  available: 12Gi → Skipped (mid-expansion) ✅
+
+my-postgres-3:
+  spec.requests.storage: 100Gi
+  status.capacity: 90Gi  ← Mid-expansion detected
+  available: 15Gi → Skipped (mid-expansion) ✅
+
+Result: CR patched to 110Gi, all replicas resized by operator
+```
+
+This is the expected and correct behavior for database clusters where storage should be uniform across all instances.
 
 ### No Validation of CR Schema
 

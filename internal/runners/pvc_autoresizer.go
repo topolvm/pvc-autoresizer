@@ -186,6 +186,15 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 		return nil
 	}
 
+	// Skip PVCs that are mid-expansion to avoid calculating from stale capacity values
+	requestedSize, exists := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
+	if exists && cap.Cmp(requestedSize) < 0 {
+		log.Info("skip resizing because PVC expansion is in progress",
+			"requestedSize", requestedSize.String(),
+			"actualCapacity", cap.String())
+		return nil
+	}
+
 	increase, err := convertSizeInBytes(pvc.Annotations[pvcautoresizer.ResizeIncreaseAnnotation], cap.Value(), pvcautoresizer.DefaultIncrease)
 	if err != nil {
 		log.V(logLevelWarn).Info("failed to convert increase annotation", "error", err.Error())
