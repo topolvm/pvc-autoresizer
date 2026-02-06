@@ -16,14 +16,16 @@ jobs:
     runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.33.4", "1.32.8", "1.31.12"]
+        kubernetes_versions: ["1.34.3", "1.33.7", "1.32.11"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version-file: "go.mod"
+          # TODO: revert to go-version-file: go.mod once setup-go resolves the 1.24.0 selection issue.
+          go-version: "1.24.x"
+          check-latest: true
       - run: make -C test/e2e setup
       - run: make -C test/e2e init-app-with-cert-manager
       - run: make -C test/e2e test
@@ -33,14 +35,16 @@ jobs:
     runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.33.4", "1.32.8", "1.31.12"]
+        kubernetes_versions: ["1.34.3", "1.33.7", "1.32.11"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version-file: "go.mod"
+          # TODO: revert to go-version-file: go.mod once setup-go resolves the 1.24.0 selection issue.
+          go-version: "1.24.x"
+          check-latest: true
       - run: make -C test/e2e setup
       - run: make -C test/e2e init-app-without-cert-manager
       - run: make -C test/e2e test
@@ -50,14 +54,16 @@ jobs:
     runs-on: "ubuntu-22.04"
     strategy:
       matrix:
-        kubernetes_versions: ["1.33.4", "1.32.8", "1.31.12"]
+        kubernetes_versions: ["1.34.3", "1.33.7", "1.32.11"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version-file: "go.mod"
+          # TODO: revert to go-version-file: go.mod once setup-go resolves the 1.24.0 selection issue.
+          go-version: "1.24.x"
+          check-latest: true
       - run: make -C test/e2e setup
       - run: make -C test/e2e init-app-with-metrics-api
       - run: make -C test/e2e test
