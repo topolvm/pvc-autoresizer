@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/common/model"
 	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -144,6 +145,6 @@ func getMetricsFamily() (map[string]*dto.MetricFamily, error) {
 		}
 	}()
 
-	var parser expfmt.TextParser
+	parser := expfmt.NewTextParser(model.UTF8Validation)
 	return parser.TextToMetricFamilies(resp.Body)
 }
