@@ -22,6 +22,9 @@ controller:
     # Used as "--prometheus-url" option
     prometheusURL: http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090
 
+    # controller.args.bearerToken -- Specify bearer token, useful for accessing OpenShift Monitoring Prometheus.
+    bearerToken: ""
+
     # controller.args.namespaces -- Specify namespaces to control the pvcs of. Empty for all namespaces.
     # Used as "--namespaces" option
     namespaces: []
