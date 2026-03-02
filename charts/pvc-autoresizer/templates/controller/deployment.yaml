@@ -26,7 +26,7 @@ spec:
         {{- toYaml .Values.controller.podAnnotations | nindent 8 }}
       {{- end }}
     spec:
-      serviceAccountName: {{ template "pvc-autoresizer.fullname" . }}-controller
+      serviceAccountName: {{ template "pvc-autoresizer.serviceAccountName" . }}
       {{- with .Values.controller.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ . }}
       {{- end }}
