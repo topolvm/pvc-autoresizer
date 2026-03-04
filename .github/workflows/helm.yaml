@@ -18,7 +18,9 @@ jobs:
       - name: "Setup Go"
         uses: actions/setup-go@v6
         with:
-          go-version-file: "go.mod"
+          # TODO: revert to go-version-file: go.mod once setup-go resolves the 1.24.0 selection issue.
+          go-version: "1.25.x"
+          check-latest: true
 
       - name: "Setup Tools"
         run: |
