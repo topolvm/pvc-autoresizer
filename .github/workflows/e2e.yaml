@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           # TODO: revert to go-version-file: go.mod once setup-go resolves the 1.24.0 selection issue.
-          go-version: "1.24.x"
+          go-version: "1.25.x"
           check-latest: true
       - run: make -C test/e2e setup
       - run: make -C test/e2e init-app-with-cert-manager
@@ -43,7 +43,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           # TODO: revert to go-version-file: go.mod once setup-go resolves the 1.24.0 selection issue.
-          go-version: "1.24.x"
+          go-version: "1.25.x"
           check-latest: true
       - run: make -C test/e2e setup
       - run: make -C test/e2e init-app-without-cert-manager
@@ -62,7 +62,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           # TODO: revert to go-version-file: go.mod once setup-go resolves the 1.24.0 selection issue.
-          go-version: "1.24.x"
+          go-version: "1.25.x"
           check-latest: true
       - run: make -C test/e2e setup
       - run: make -C test/e2e init-app-with-metrics-api
