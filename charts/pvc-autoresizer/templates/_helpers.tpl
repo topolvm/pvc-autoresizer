@@ -54,11 +54,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "pvc-autoresizer.serviceAccountName" -}}
-{{- $serviceAccountName := default "default" .Values.serviceAccount.name -}}
 {{- if .Values.serviceAccount.enabled }}
-{{- $serviceAccountName = printf "%s-controller" (default (include "pvc-autoresizer.fullname" .) .Values.serviceAccount.name) }}
+{{- default (printf "%s-controller" (include "pvc-autoresizer.fullname" .)) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
 {{- end }}
-{{- $serviceAccountName -}}
 {{- end }}
 
 {{/*
