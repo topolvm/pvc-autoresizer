@@ -10,7 +10,7 @@ roleRef:
   name: {{ template "pvc-autoresizer.fullname" . }}-controller-storageclasses
 subjects:
 - kind: ServiceAccount
-  name: {{ template "pvc-autoresizer.fullname" . }}-controller
+  name: {{ template "pvc-autoresizer.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 
 {{- if not .Values.controller.args.namespaces }}
@@ -27,6 +27,6 @@ roleRef:
   name: {{ template "pvc-autoresizer.fullname" . }}-controller
 subjects:
 - kind: ServiceAccount
-  name: {{ template "pvc-autoresizer.fullname" . }}-controller
+  name: {{ template "pvc-autoresizer.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 {{- end }}

@@ -64,6 +64,7 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | podMonitor.scrapeTimeout | string | `""` | The timeout after which the scrape is ended |
 | serviceAccount.automountServiceAccountToken | bool | `true` | Controls the automatic mounting of ServiceAccount API credentials. |
 | serviceAccount.enabled | bool | `true` | Creates a ServiceAccount for the controller deployment. |
+| serviceAccount.name | string | `""` | The name for the newly created or existing service account. |
 | webhook.caBundle | string | `nil` | Specify the certificate to be used for AdmissionWebhook. |
 | webhook.certificate.dnsDomain | string | `"cluster.local"` | Cluster DNS domain (required for requesting TLS certificates). |
 | webhook.certificate.generate | bool | `false` | Creates a self-signed certificate for 10 years. Once the validity period has expired, simply delete the controller secret and execute helm upgrade. |

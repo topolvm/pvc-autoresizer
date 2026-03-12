@@ -161,3 +161,5 @@ serviceAccount:
   enabled: true
   # serviceAccount.automountServiceAccountToken -- Controls the automatic mounting of ServiceAccount API credentials.
   automountServiceAccountToken: true
+  # serviceAccount.name -- The name for the newly created or existing service account.
+  name: ""
