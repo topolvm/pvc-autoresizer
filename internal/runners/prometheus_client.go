@@ -2,9 +2,13 @@ package runners
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/api"
 	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -13,18 +17,49 @@ import (
 )
 
 // NewPrometheusClient returns a new prometheusClient
-func NewPrometheusClient(url string) (MetricsClient, error) {
-	client, err := api.NewClient(api.Config{
-		Address: url,
-	})
+func NewPrometheusClient(url string, bearerToken string, log logr.Logger) (MetricsClient, error) {
+	log.Info("creating new prometheus client", "url", url)
+
+	// Create base transport with TLS config if needed
+	var baseTransport http.RoundTripper = http.DefaultTransport
+	if strings.HasPrefix(url, "https") {
+		log.Info("using https, creating transport with tls config")
+		baseTransport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+
+	// Wrap transport with bearer token if provided
+	var rt http.RoundTripper = baseTransport
+	if bearerToken != "" {
+		rt = roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			req.Header.Set("Authorization", "Bearer "+bearerToken)
+			return baseTransport.RoundTrip(req)
+		})
+	}
+
+	config := api.Config{
+		Address:      url,
+		RoundTripper: rt,
+	}
+
+	client, err := api.NewClient(config)
 	if err != nil {
+		log.Error(err, "failed to create prometheus client")
 		return nil, err
 	}
 	v1api := prometheusv1.NewAPI(client)
 
+	log.Info("created prometheus client successfully")
 	return &prometheusClient{
 		prometheusAPI: v1api,
 	}, nil
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
 }
 
 type prometheusClient struct {

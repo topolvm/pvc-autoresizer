@@ -36,6 +36,7 @@ spec:
             - /pvc-autoresizer
           args:
             - --prometheus-url={{ .Values.controller.args.prometheusURL }}
+            - --bearer-token={{ .Values.controller.args.bearerToken }}
             - --interval={{ .Values.controller.args.interval }}
           {{- if .Values.controller.args.useK8sMetricsApi }}
             - --use-k8s-metrics-api={{ .Values.controller.args.useK8sMetricsApi }}
@@ -48,7 +49,7 @@ spec:
           {{- end }}
           {{- if not .Values.webhook.pvcMutatingWebhook.enabled }}
             - --pvc-mutating-webhook-enabled=false
-          {{- end}}
+          {{- end }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           {{- with .Values.image.pullPolicy }}
           imagePullPolicy: {{ . }}
