@@ -29,6 +29,6 @@ roleRef:
   name: {{ template "pvc-autoresizer.fullname" $ }}-controller
 subjects:
 - kind: ServiceAccount
-  name: {{ template "pvc-autoresizer.serviceAccountName" . }}
+  name: {{ template "pvc-autoresizer.serviceAccountName" $ }}
   namespace: {{ $.Release.Namespace }}
 {{- end }}
