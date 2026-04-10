@@ -9,6 +9,10 @@ image:
   # image.pullPolicy -- pvc-autoresizer image pullPolicy.
   pullPolicy:  # Always
 
+  # image.pullSecrets -- List of image pull secret names to use for pulling the pvc-autoresizer image (applied to the pod spec).
+  pullSecrets: []
+  # - name: my-registry-secret
+
 controller:
   # controller.replicas -- Specify the number of replicas of the controller Pod.
   replicas: 2
@@ -163,3 +167,6 @@ serviceAccount:
   automountServiceAccountToken: true
   # serviceAccount.name -- The name for the newly created or existing service account.
   name: ""
+  # serviceAccount.imagePullSecrets -- List of image pull secret names to attach to the ServiceAccount (applied to all pods using the SA).
+  imagePullSecrets: []
+  # - name: my-registry-secret
