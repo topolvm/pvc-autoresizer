@@ -53,9 +53,10 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | image.pullPolicy | string | `nil` | pvc-autoresizer image pullPolicy. |
 | image.repository | string | `"ghcr.io/topolvm/pvc-autoresizer"` | pvc-autoresizer image repository to use. |
 | image.tag | string | `{{ .Chart.AppVersion }}` | pvc-autoresizer image tag to use. |
-| podMonitor | object | `{"additionalLabels":{},"enabled":false,"interval":"","metricRelabelings":[],"namespace":"","relabelings":[],"scheme":"http","scrapeTimeout":""}` | deploy a PodMonitor. This is not tested in CI so make sure to test it yourself. |
+| podMonitor | object | `{"additionalLabels":{},"enabled":false,"honorLabels":false,"interval":"","metricRelabelings":[],"namespace":"","relabelings":[],"scheme":"http","scrapeTimeout":""}` | deploy a PodMonitor. This is not tested in CI so make sure to test it yourself. |
 | podMonitor.additionalLabels | object | `{}` | Additional labels that can be used so PodMonitor will be discovered by Prometheus. |
 | podMonitor.enabled | bool | `false` | If true, creates a Prometheus Operator PodMonitor. |
+| podMonitor.honorLabels | bool | `false` | If true, preserves the metric's labels when they collide with the target's labels. |
 | podMonitor.interval | string | `""` | Interval that Prometheus scrapes metrics. |
 | podMonitor.metricRelabelings | list | `[]` | MetricRelabelConfigs to apply to samples before ingestion. |
 | podMonitor.namespace | string | `""` | Namespace which Prometheus is running in. |
