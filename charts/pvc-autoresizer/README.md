@@ -51,6 +51,7 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | controller.terminationGracePeriodSeconds | string | `nil` | Specify terminationGracePeriodSeconds. |
 | controller.tolerations | object | `{}` | Ensure pods are not scheduled on inappropriate nodes. |
 | image.pullPolicy | string | `nil` | pvc-autoresizer image pullPolicy. |
+| image.pullSecrets | list | `[]` | List of image pull secret names to use for pulling the pvc-autoresizer image (applied to the pod spec). |
 | image.repository | string | `"ghcr.io/topolvm/pvc-autoresizer"` | pvc-autoresizer image repository to use. |
 | image.tag | string | `{{ .Chart.AppVersion }}` | pvc-autoresizer image tag to use. |
 | podMonitor | object | `{"additionalLabels":{},"enabled":false,"interval":"","metricRelabelings":[],"namespace":"","relabelings":[],"scheme":"http","scrapeTimeout":""}` | deploy a PodMonitor. This is not tested in CI so make sure to test it yourself. |
@@ -64,6 +65,7 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | podMonitor.scrapeTimeout | string | `""` | The timeout after which the scrape is ended |
 | serviceAccount.automountServiceAccountToken | bool | `true` | Controls the automatic mounting of ServiceAccount API credentials. |
 | serviceAccount.enabled | bool | `true` | Creates a ServiceAccount for the controller deployment. |
+| serviceAccount.imagePullSecrets | list | `[]` | List of image pull secret names to attach to the ServiceAccount (applied to all pods using the SA). |
 | serviceAccount.name | string | `""` | The name for the newly created or existing service account. |
 | webhook.caBundle | string | `nil` | Specify the certificate to be used for AdmissionWebhook. |
 | webhook.certificate.dnsDomain | string | `"cluster.local"` | Cluster DNS domain (required for requesting TLS certificates). |

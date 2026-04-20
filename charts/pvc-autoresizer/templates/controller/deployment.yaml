@@ -27,6 +27,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ template "pvc-autoresizer.serviceAccountName" . }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.controller.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ . }}
       {{- end }}
