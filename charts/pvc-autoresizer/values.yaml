@@ -113,6 +113,8 @@ podMonitor:
   enabled: false
   # podMonitor.scheme -- Scheme to use for scraping.
   scheme: http
+  # podMonitor.honorLabels -- If true, preserves the metric's labels when they collide with the target's labels.
+  honorLabels: false
   # podMonitor.interval -- Interval that Prometheus scrapes metrics.
   interval: ""
   # podMonitor.scrapeTimeout -- The timeout after which the scrape is ended

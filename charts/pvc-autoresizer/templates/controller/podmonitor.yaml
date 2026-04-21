@@ -25,6 +25,9 @@ spec:
       {{- if .Values.podMonitor.scheme }}
       scheme: {{ .Values.podMonitor.scheme }}
       {{- end }}
+      {{- with .Values.podMonitor.honorLabels }}
+      honorLabels: {{ . }}
+      {{- end }}
       {{- with .Values.podMonitor.interval }}
       interval: {{ . }}
       {{- end }}
