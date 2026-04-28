@@ -18,6 +18,7 @@ RUN CGO_ENABLED=0 GOARCH=${TARGETARCH} go build -ldflags="-w -s" -a -o pvc-autor
 # Stage2: setup runtime container
 FROM scratch
 WORKDIR /
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /workspace/pvc-autoresizer .
 EXPOSE 8080
 USER 10000:10000
