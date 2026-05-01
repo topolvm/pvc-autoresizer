@@ -15,7 +15,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -31,7 +31,7 @@ const logLevelWarn = 3
 
 // NewPVCAutoresizer returns a new pvcAutoresizer struct
 func NewPVCAutoresizer(mc MetricsClient, c client.Client, log logr.Logger, interval time.Duration,
-	recorder record.EventRecorder, metricsResetSizeThreshold uint64) manager.Runnable {
+	recorder events.EventRecorder, metricsResetSizeThreshold uint64) manager.Runnable {
 
 	return &pvcAutoresizer{
 		metricsClient:             mc,
@@ -48,7 +48,7 @@ type pvcAutoresizer struct {
 	metricsClient             MetricsClient
 	interval                  time.Duration
 	log                       logr.Logger
-	recorder                  record.EventRecorder
+	recorder                  events.EventRecorder
 	metricsResetSizeThreshold uint64
 }
 
@@ -250,7 +250,7 @@ func (w *pvcAutoresizer) resize(ctx context.Context, pvc *corev1.PersistentVolum
 			"inodesThreshold", inodesThreshold,
 			"inodesAvailable", vs.AvailableInodeSize,
 		)
-		w.recorder.Eventf(pvc, corev1.EventTypeNormal, "Resized", "PVC volume is resized to %s", newReq.String())
+		w.recorder.Eventf(pvc, nil, corev1.EventTypeNormal, "Resized", "Resized", "PVC volume is resized to %s", newReq.String())
 		metrics.ResizerSuccessResizeTotal.Increment(pvc.Name, pvc.Namespace)
 	}
 
