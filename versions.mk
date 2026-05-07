@@ -1,18 +1,18 @@
 # https://github.com/helm/chart-testing/releases
 CHART_TESTING_VERSION := 3.14.0
 # https://github.com/kubernetes-sigs/controller-tools/releases
-CONTROLLER_TOOLS_VERSION := 0.19.0
+CONTROLLER_TOOLS_VERSION := 0.20.1
 # https://github.com/golangci/golangci-lint/releases
-GOLANGCI_LINT_VERSION := v2.8.0
+GOLANGCI_LINT_VERSION := v2.11.4
 # https://github.com/norwoodj/helm-docs/releases
 HELM_DOCS_VERSION := 1.14.2
 # https://github.com/helm/helm/releases
-HELM_VERSION := 4.1.0
+HELM_VERSION := 4.1.4
 # https://github.com/prometheus-operator/kube-prometheus/releases
-KUBE_PROMETHEUS_VERSION := 0.16.0
+KUBE_PROMETHEUS_VERSION := 0.17.0
 # It is set by CI using the environment variable, use conditional assignment.
-KUBERNETES_VERSION ?= 1.34.3
-TOPOLVM_VERSION := v0.39.0
+KUBERNETES_VERSION ?= 1.35.4
+TOPOLVM_VERSION := v0.41.0 
 
 # Tools versions which are defined in go.mod
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
