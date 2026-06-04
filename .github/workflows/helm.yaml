@@ -5,6 +5,9 @@ on:
     paths:
       - "charts/**"
 
+permissions:
+  contents: read
+
 jobs:
   lint-test:
     runs-on: "ubuntu-22.04"
