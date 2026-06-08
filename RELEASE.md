@@ -45,9 +45,11 @@ Bump version
     VERSION=1.2.3
     ```
 
-2. Go to [the rule setting page](https://github.com/topolvm/pvc-autoresizer/settings/rules/2151118) and change the value of "Enforcement status" to `Active`.
+2. Go to [prevent changes to the main branch][] and change the value of "Enforcement status" to `Active`.
 
-3. Add a new tag and push it as follows:
+3. Go to the rule [block tag creation][] and change the value of "Enforcement status" to `Disabled`.
+
+4. Add a new tag and push it as follows:
 
     ```console
     git switch main
@@ -56,7 +58,7 @@ Bump version
     git push origin v$VERSION
     ```
 
-4. Once a new tag is pushed, [GitHub Actions][] automatically
+5. Once a new tag is pushed, [GitHub Actions][] automatically
    creates a draft release note for the tagged version,
    builds a tar archive for the new release,
    and attaches it to the release note.
@@ -64,7 +66,7 @@ Bump version
    Visit https://github.com/topolvm/pvc-autoresizer/releases to check
    the result. 
 
-5. Edit the auto-generated release note
+6. Edit the auto-generated release note
    and remove PRs which contain changes only to the helm chart.
    Then, publish it.
 
@@ -76,7 +78,7 @@ This will prevent the pvc-autoresizer version from going up just by modifying th
 
 You must change the version of Chart.yaml when making changes to the Helm Chart. CI fails with lint error when creating a Pull Request without changing the version of Chart.yaml.
 
-1. If necessary, go to [the rule setting page](https://github.com/topolvm/pvc-autoresizer/settings/rules/2151118) and change the value of "Enforcement status" to `Active`.
+1. If necessary, go to [prevent changes to the main branch][] and change the value of "Enforcement status" to `Active`.
    - If you are here after releasing the app, you should already have this setting changed.
 
 2. Determine a new version number by [checking the differences](https://github.com/topolvm/pvc-autoresizer/compare/pvc-autoresizer-chart-vX.Y.Z...main) since the last release. Then, manually run the workflow to create a PR to update the Helm Chart.
@@ -84,9 +86,11 @@ You must change the version of Chart.yaml when making changes to the Helm Chart.
    https://github.com/topolvm/pvc-autoresizer/actions/workflows/create-chart-update-pr.yaml
 
 3. Review and merge the auto-created PR.
-   - Before merging, go to [the rule setting page](https://github.com/topolvm/pvc-autoresizer/settings/rules/2151118) and change the value of "Enforcement status" to `Disabled`. 
+   - Before merging, go to [prevent changes to the main branch][] and change the value of "Enforcement status" to `Disabled`.
 
 4. Manually run the GitHub Actions workflow for the release.
+
+   Before running the workflow, go to the rule [block tag creation][] and change the value of "Enforcement status" to `Disabled`.
 
    https://github.com/topolvm/pvc-autoresizer/actions/workflows/helm-release.yaml
 
@@ -97,6 +101,9 @@ You must change the version of Chart.yaml when making changes to the Helm Chart.
    2. Clear the textbox, and click "Generate release notes" button.
    3. Remove PRs which do not contain changes to the helm chart.
 
+6. Go to the rule [block tag creation][] and change the value of "Enforcement status" to `Active`.
+
 [semver]: https://semver.org/spec/v2.0.0.html
-[example]: https://github.com/cybozu-go/etcdpasswd/commit/77d95384ac6c97e7f48281eaf23cb94f68867f79
 [GitHub Actions]: https://github.com/topolvm/pvc-autoresizer/actions
+[prevent changes to the main branch]: https://github.com/topolvm/pvc-autoresizer/settings/rules/2151118
+[block tag creation]: https://github.com/topolvm/pvc-autoresizer/settings/rules/1621504
