@@ -1,6 +1,6 @@
 module github.com/topolvm/pvc-autoresizer
 
-go 1.25.0
+go 1.25.7
 
 require (
 	github.com/go-logr/logr v1.4.3
