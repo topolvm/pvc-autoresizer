@@ -24,8 +24,8 @@ jobs:
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version-file: "go.mod"
       - run: make -C test/e2e setup
@@ -41,8 +41,8 @@ jobs:
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version-file: "go.mod"
       - run: make -C test/e2e setup
@@ -58,8 +58,8 @@ jobs:
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version-file: "go.mod"
       - run: make -C test/e2e setup
