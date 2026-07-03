@@ -52,8 +52,8 @@ helm upgrade --create-namespace --namespace pvc-autoresizer -i pvc-autoresizer -
 | controller.tolerations | object | `{}` | Ensure pods are not scheduled on inappropriate nodes. |
 | image.pullPolicy | string | `nil` | pvc-autoresizer image pullPolicy. |
 | image.pullSecrets | list | `[]` | List of image pull secret names to use for pulling the pvc-autoresizer image (applied to the pod spec). |
+| image.reference | string | `"0.21.0@sha256:51343caa8edd3a6416a48b3d5694146d1bf8226c95f954a9d269620bb10afdf7"` | pvc-autoresizer image reference (a tag and/or a digest, e.g. "0.21.0@sha256:...") to use. |
 | image.repository | string | `"ghcr.io/topolvm/pvc-autoresizer"` | pvc-autoresizer image repository to use. |
-| image.tag | string | `{{ .Chart.AppVersion }}` | pvc-autoresizer image tag to use. |
 | podMonitor | object | `{"additionalLabels":{},"enabled":false,"honorLabels":false,"interval":"","metricRelabelings":[],"namespace":"","relabelings":[],"scheme":"http","scrapeTimeout":""}` | deploy a PodMonitor. This is not tested in CI so make sure to test it yourself. |
 | podMonitor.additionalLabels | object | `{}` | Additional labels that can be used so PodMonitor will be discovered by Prometheus. |
 | podMonitor.enabled | bool | `false` | If true, creates a Prometheus Operator PodMonitor. |

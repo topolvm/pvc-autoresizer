@@ -53,7 +53,7 @@ spec:
           {{- if not .Values.webhook.pvcMutatingWebhook.enabled }}
             - --pvc-mutating-webhook-enabled=false
           {{- end}}
-          image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.reference }}"
           {{- with .Values.image.pullPolicy }}
           imagePullPolicy: {{ . }}
           {{- end }}

@@ -35,12 +35,31 @@ jobs:
             git switch main
             git pull
             git switch -c bump-chart-${{ inputs.chart-version }}
+      - name: "Resolve image digest"
+        id: image
+        run: |
+          digest=$(gh api --paginate "/orgs/topolvm/packages/container/pvc-autoresizer/versions" \
+            --jq "[.[] | select(.metadata.container.tags[]? == \"${{ inputs.app-version }}\") | .name] | first")
+          if [ -z "$digest" ] || [ "$digest" = "null" ]; then
+            echo "::error::Could not find a digest for tag ${{ inputs.app-version }} in ghcr.io/topolvm/pvc-autoresizer" >&2
+            exit 1
+          fi
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: "Update files"
         run: |
           sed -r -i "s/^version: [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/version: ${{ inputs.chart-version }}/g" charts/pvc-autoresizer/Chart.yaml
           sed -r -i "s/appVersion: [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/appVersion: ${{ inputs.app-version }}/g" charts/pvc-autoresizer/Chart.yaml
           sed -r -i "s/ghcr.io\/topolvm\/pvc-autoresizer:[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/ghcr.io\/topolvm\/pvc-autoresizer:${{ inputs.app-version }}/g" charts/pvc-autoresizer/Chart.yaml
-          sed -r -i "s/tag:  # [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/tag:  # ${{ inputs.app-version }}/g" charts/pvc-autoresizer/values.yaml
+          sed -r -i "s|^(  reference:).*|\1 ${{ inputs.app-version }}@${{ steps.image.outputs.digest }}|" charts/pvc-autoresizer/values.yaml
+      - uses: actions/setup-go@v6.4.0
+        with:
+          go-version-file: "go.mod"
+      - name: "Regenerate helm-docs"
+        run: |
+          make setup
+          make generate-helm-docs
       - name: Issue an access token
         uses: actions/create-github-app-token@v3
         id: app-token
