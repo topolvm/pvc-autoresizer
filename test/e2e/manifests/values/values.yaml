@@ -1,6 +1,6 @@
 image:
   repository: pvc-autoresizer
-  tag: devel
+  reference: devel
   pullPolicy: Never
 
 controller:

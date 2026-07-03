@@ -2,9 +2,8 @@ image:
   # image.repository -- pvc-autoresizer image repository to use.
   repository: ghcr.io/topolvm/pvc-autoresizer
 
-  # image.tag -- pvc-autoresizer image tag to use.
-  # @default -- `{{ .Chart.AppVersion }}`
-  tag:  # 0.21.0
+  # image.reference -- pvc-autoresizer image reference (a tag and/or a digest, e.g. "0.21.0@sha256:...") to use.
+  reference: 0.21.0@sha256:51343caa8edd3a6416a48b3d5694146d1bf8226c95f954a9d269620bb10afdf7
 
   # image.pullPolicy -- pvc-autoresizer image pullPolicy.
   pullPolicy:  # Always
