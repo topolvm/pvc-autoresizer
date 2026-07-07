@@ -14,6 +14,7 @@ GOLANGCI_LINT = $(BINDIR)/golangci-lint
 KUBECTL := $(BINDIR)/kubectl
 KUSTOMIZE := $(BINDIR)/kustomize
 ACTIONLINT = $(BINDIR)/actionlint
+GHALINT = $(BINDIR)/ghalint
 
 IMAGE_TAG ?= latest
 IMAGE_PREFIX ?= ghcr.io/topolvm/
@@ -94,6 +95,10 @@ lint-fix: ## Run golangci-lint linter and perform fixes
 run-actionlint: actionlint ## Run actionlint.
 	$(ACTIONLINT)
 
+.PHONY: run-ghalint
+run-ghalint: ghalint ## Run ghalint.
+	$(GHALINT) run && $(GHALINT) run-action
+
 ##@ Build
 
 $(BINDIR):
@@ -163,3 +168,8 @@ setup: $(BINDIR) # Setup tools
 actionlint: $(BINDIR) # Setup actionlint
 	test -s $(ACTIONLINT) && $(ACTIONLINT) --version | grep -q $(subst v,,$(ACTIONLINT_VERSION)) || \
 	GOBIN=$(BINDIR) go install github.com/rhysd/actionlint/cmd/actionlint@$(ACTIONLINT_VERSION)
+
+.PHONY: ghalint
+ghalint: $(BINDIR) # Setup ghalint
+	test -s $(GHALINT) && $(GHALINT) version | grep -q $(subst v,,$(GHALINT_VERSION)) || \
+	GOBIN=$(BINDIR) go install github.com/suzuki-shunsuke/ghalint/cmd/ghalint@$(GHALINT_VERSION)

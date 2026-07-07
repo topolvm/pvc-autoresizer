@@ -6,6 +6,8 @@ CONTROLLER_TOOLS_VERSION := 0.20.1
 GOLANGCI_LINT_VERSION := v2.11.4
 # https://github.com/rhysd/actionlint/releases
 ACTIONLINT_VERSION := v1.7.12
+# https://github.com/suzuki-shunsuke/ghalint/releases
+GHALINT_VERSION := v1.5.6
 # https://github.com/norwoodj/helm-docs/releases
 HELM_DOCS_VERSION := 1.14.2
 # https://github.com/helm/helm/releases
