@@ -4,6 +4,8 @@ CHART_TESTING_VERSION := 3.14.0
 CONTROLLER_TOOLS_VERSION := 0.20.1
 # https://github.com/golangci/golangci-lint/releases
 GOLANGCI_LINT_VERSION := v2.11.4
+# https://github.com/rhysd/actionlint/releases
+ACTIONLINT_VERSION := v1.7.12
 # https://github.com/norwoodj/helm-docs/releases
 HELM_DOCS_VERSION := 1.14.2
 # https://github.com/helm/helm/releases

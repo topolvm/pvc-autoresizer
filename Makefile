@@ -13,6 +13,7 @@ ENVTEST_ASSETS_DIR := $(shell pwd)/testbin
 GOLANGCI_LINT = $(BINDIR)/golangci-lint
 KUBECTL := $(BINDIR)/kubectl
 KUSTOMIZE := $(BINDIR)/kustomize
+ACTIONLINT = $(BINDIR)/actionlint
 
 IMAGE_TAG ?= latest
 IMAGE_PREFIX ?= ghcr.io/topolvm/
@@ -89,6 +90,10 @@ lint: ## Run golangci-lint linter & yamllint
 lint-fix: ## Run golangci-lint linter and perform fixes
 	$(GOLANGCI_LINT) run --fix
 
+.PHONY: run-actionlint
+run-actionlint: actionlint ## Run actionlint.
+	$(ACTIONLINT)
+
 ##@ Build
 
 $(BINDIR):
@@ -153,3 +158,8 @@ setup: $(BINDIR) # Setup tools
 	curl -sSfL https://get.helm.sh/helm-v$(HELM_VERSION)-linux-amd64.tar.gz \
 	  | tar xvz -C $(BINDIR) --strip-components 1 linux-amd64/helm
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell dirname $(GOLANGCI_LINT)) $(GOLANGCI_LINT_VERSION)
+
+.PHONY: actionlint
+actionlint: $(BINDIR) # Setup actionlint
+	test -s $(ACTIONLINT) && $(ACTIONLINT) --version | grep -q $(subst v,,$(ACTIONLINT_VERSION)) || \
+	GOBIN=$(BINDIR) go install github.com/rhysd/actionlint/cmd/actionlint@$(ACTIONLINT_VERSION)
