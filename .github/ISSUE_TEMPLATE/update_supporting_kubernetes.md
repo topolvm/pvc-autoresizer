@@ -25,6 +25,8 @@ Must update Kubernetes with each new version of Kubernetes.
   - https://github.com/kubernetes-sigs/controller-tools/releases
 - [ ] topolvm
   - https://github.com/topolvm/topolvm/blob/main/CHANGELOG.md
+- [ ] kubebuilder
+  - https://github.com/kubernetes-sigs/kubebuilder/releases
 
 ### Release notes check
 
