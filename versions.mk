@@ -1,3 +1,7 @@
+# https://github.com/zizmorcore/zizmor/releases
+ZIZMOR_VERSION := v1.26.1
+# SHA256 checksum of the zizmor release tarball for verification
+ZIZMOR_SHA256 := 8556289a64e7aaf2400cd516f61a471aa91c5902cc56ad96a82fd12f90c2ef73
 # https://github.com/helm/chart-testing/releases
 CHART_TESTING_VERSION := 3.14.0
 # https://github.com/kubernetes-sigs/controller-tools/releases

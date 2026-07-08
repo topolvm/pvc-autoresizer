@@ -15,6 +15,7 @@ KUBECTL := $(BINDIR)/kubectl
 KUSTOMIZE := $(BINDIR)/kustomize
 ACTIONLINT = $(BINDIR)/actionlint
 GHALINT = $(BINDIR)/ghalint
+ZIZMOR = $(BINDIR)/zizmor
 
 IMAGE_TAG ?= latest
 IMAGE_PREFIX ?= ghcr.io/topolvm/
@@ -99,6 +100,10 @@ run-actionlint: actionlint ## Run actionlint.
 run-ghalint: ghalint ## Run ghalint.
 	$(GHALINT) run && $(GHALINT) run-action
 
+.PHONY: run-zizmor
+run-zizmor: zizmor ## Run zizmor.
+	$(ZIZMOR) .
+
 ##@ Build
 
 $(BINDIR):
@@ -173,3 +178,13 @@ actionlint: $(BINDIR) # Setup actionlint
 ghalint: $(BINDIR) # Setup ghalint
 	test -s $(GHALINT) && $(GHALINT) version | grep -q $(subst v,,$(GHALINT_VERSION)) || \
 	GOBIN=$(BINDIR) go install github.com/suzuki-shunsuke/ghalint/cmd/ghalint@$(GHALINT_VERSION)
+
+.PHONY: zizmor
+zizmor: $(BINDIR) # Setup zizmor
+	test -s $(ZIZMOR) && $(ZIZMOR) --version | grep -q $(subst v,,$(ZIZMOR_VERSION)) || \
+	{ tmp=$$(mktemp) && \
+	  curl -sSLf https://github.com/zizmorcore/zizmor/releases/download/$(ZIZMOR_VERSION)/zizmor-x86_64-unknown-linux-gnu.tar.gz \
+	    -o $$tmp && \
+	  echo "$(ZIZMOR_SHA256)  $$tmp" | sha256sum -c && \
+	  tar xzf $$tmp -C $(BINDIR) && \
+	  rm -f $$tmp; }
