@@ -58,8 +58,8 @@ manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefin
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=controller webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate-helm-docs
-generate-helm-docs:
-	./bin/helm-docs -c charts/pvc-autoresizer/
+generate-helm-docs: $(BINDIR)
+	$(BINDIR)/helm-docs -c charts/pvc-autoresizer/
 
 .PHONY: generate
 generate: manifests generate-helm-docs
@@ -91,8 +91,11 @@ lint-fix: ## Run golangci-lint linter and perform fixes
 
 ##@ Build
 
+$(BINDIR):
+	mkdir -p $(BINDIR)
+
 .PHONY: build
-build: ## Build manager binary.
+build: $(BINDIR) ## Build manager binary.
 	go build -o $(BINDIR)/manager ./cmd/*
 
 .PHONY: run
@@ -142,8 +145,7 @@ ct-install: ## Install and test a chart.
 		ct install --config ct.yaml
 
 .PHONY: setup
-setup: # Setup tools
-	mkdir -p bin
+setup: $(BINDIR) # Setup tools
 	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CONTROLLER_TOOLS_VERSION)
 	curl -o $(KUBECTL) -sSfL https://dl.k8s.io/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(KUBECTL)
