@@ -25,7 +25,9 @@ jobs:
           if echo "$VERSION" | grep -q "-"; then PRERELEASE=true; else PRERELEASE=false; fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
-      - run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
       - name: "Set up QEMU"
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
       - name: "Set up Docker Buildx"
@@ -35,22 +37,29 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
+          cache: false
           go-version-file: "go.mod"
       - run: make setup
-      - run: make multi-platform-image IMAGE_TAG=${{ steps.check_version.outputs.version }} PUSH=true
+      - env:
+          VERSION: ${{ steps.check_version.outputs.version }}
+        run: make multi-platform-image IMAGE_TAG="$VERSION" PUSH=true
       - name: "Push branch tag"
         if: ${{ steps.check_version.outputs.prerelease == 'false' }}
+        env:
+          VERSION: ${{ steps.check_version.outputs.version }}
         run: |
-          BRANCH=$(echo ${{ steps.check_version.outputs.version }} | cut -d "." -f 1-2)
-          make tag IMAGE_TAG="$BRANCH" ORIGINAL_IMAGE_TAG=${{ steps.check_version.outputs.version }}
+          BRANCH=$(echo "$VERSION" | cut -d "." -f 1-2)
+          make tag IMAGE_TAG="$BRANCH" ORIGINAL_IMAGE_TAG="$VERSION"
       - name: "Get previous tag"
         id: get_previous_tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # see https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#list-matching-references
           RESP=$(gh api \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/git/matching-refs/tags/v)
+            "/repos/${{ github.repository }}/git/matching-refs/tags/v")
           PREV_TAG=$(echo "${RESP}" | jq -r '.[].ref' | awk -F "/" '{print $3}' | \
             grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | sort -V -r | tail -n +2 | head -n 1)
           if [ -z "${PREV_TAG}" ]; then
@@ -58,22 +67,22 @@ jobs:
             exit 1
           fi
           echo "previous_tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Create Release"
         id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREVIOUS_TAG: ${{ steps.get_previous_tag.outputs.previous_tag }}
+          PRERELEASE: ${{ steps.check_version.outputs.prerelease }}
         run: |
           # see https://docs.github.com/en/rest/releases/releases?apiVersion=2022-11-28#create-a-release
           gh api \
             -H "Accept: application/vnd.github+json" \
             --method POST \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/releases \
+            "/repos/${{ github.repository }}/releases" \
             -f name="Release ${GITHUB_REF_NAME}" \
             -f tag_name="${GITHUB_REF_NAME}" \
-            -f previous_tag_name="${{ steps.get_previous_tag.outputs.previous_tag }}" \
+            -f previous_tag_name="$PREVIOUS_TAG" \
             -F draft=true \
-            -F prerelease=${{ steps.check_version.outputs.prerelease }} \
+            -F prerelease="$PRERELEASE" \
             -F generate_release_notes=true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
