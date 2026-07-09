@@ -1,9 +1,17 @@
+# https://github.com/zizmorcore/zizmor/releases
+ZIZMOR_VERSION := v1.26.1
+# SHA256 checksum of the zizmor release tarball for verification
+ZIZMOR_SHA256 := 8556289a64e7aaf2400cd516f61a471aa91c5902cc56ad96a82fd12f90c2ef73
 # https://github.com/helm/chart-testing/releases
 CHART_TESTING_VERSION := 3.14.0
 # https://github.com/kubernetes-sigs/controller-tools/releases
 CONTROLLER_TOOLS_VERSION := 0.20.1
 # https://github.com/golangci/golangci-lint/releases
 GOLANGCI_LINT_VERSION := v2.11.4
+# https://github.com/rhysd/actionlint/releases
+ACTIONLINT_VERSION := v1.7.12
+# https://github.com/suzuki-shunsuke/ghalint/releases
+GHALINT_VERSION := v1.5.6
 # https://github.com/norwoodj/helm-docs/releases
 HELM_DOCS_VERSION := 1.14.2
 # https://github.com/helm/helm/releases

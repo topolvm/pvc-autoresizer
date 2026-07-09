@@ -18,14 +18,19 @@ jobs:
   e2e-k8s:
     name: "e2e-k8s"
     runs-on: "ubuntu-22.04"
+    permissions:
+      contents: read
+    timeout-minutes: 60
     strategy:
       matrix:
         kubernetes_versions: ["1.35.4", "1.34.3", "1.33.7"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: "go.mod"
       - run: make -C test/e2e setup
@@ -35,14 +40,19 @@ jobs:
   e2e-k8s-without-cert-manager:
     name: "e2e-k8s-without-cert-manager"
     runs-on: "ubuntu-22.04"
+    permissions:
+      contents: read
+    timeout-minutes: 60
     strategy:
       matrix:
         kubernetes_versions: ["1.35.4", "1.34.3", "1.33.7"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: "go.mod"
       - run: make -C test/e2e setup
@@ -52,14 +62,19 @@ jobs:
   e2e-k8s-with-metrics-api:
     name: "e2e-k8s-with-metrics-api"
     runs-on: "ubuntu-22.04"
+    permissions:
+      contents: read
+    timeout-minutes: 60
     strategy:
       matrix:
         kubernetes_versions: ["1.35.4", "1.34.3", "1.33.7"]
     env:
       KUBERNETES_VERSION: ${{ matrix.kubernetes_versions }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: "go.mod"
       - run: make -C test/e2e setup

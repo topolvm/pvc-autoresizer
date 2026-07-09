@@ -13,6 +13,9 @@ ENVTEST_ASSETS_DIR := $(shell pwd)/testbin
 GOLANGCI_LINT = $(BINDIR)/golangci-lint
 KUBECTL := $(BINDIR)/kubectl
 KUSTOMIZE := $(BINDIR)/kustomize
+ACTIONLINT = $(BINDIR)/actionlint
+GHALINT = $(BINDIR)/ghalint
+ZIZMOR = $(BINDIR)/zizmor
 
 IMAGE_TAG ?= latest
 IMAGE_PREFIX ?= ghcr.io/topolvm/
@@ -58,8 +61,8 @@ manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefin
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=controller webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate-helm-docs
-generate-helm-docs:
-	./bin/helm-docs -c charts/pvc-autoresizer/
+generate-helm-docs: $(BINDIR)
+	$(BINDIR)/helm-docs -c charts/pvc-autoresizer/
 
 .PHONY: generate
 generate: manifests generate-helm-docs
@@ -89,10 +92,25 @@ lint: ## Run golangci-lint linter & yamllint
 lint-fix: ## Run golangci-lint linter and perform fixes
 	$(GOLANGCI_LINT) run --fix
 
+.PHONY: run-actionlint
+run-actionlint: actionlint ## Run actionlint.
+	$(ACTIONLINT)
+
+.PHONY: run-ghalint
+run-ghalint: ghalint ## Run ghalint.
+	$(GHALINT) run && $(GHALINT) run-action
+
+.PHONY: run-zizmor
+run-zizmor: zizmor ## Run zizmor.
+	$(ZIZMOR) .
+
 ##@ Build
 
+$(BINDIR):
+	mkdir -p $(BINDIR)
+
 .PHONY: build
-build: ## Build manager binary.
+build: $(BINDIR) ## Build manager binary.
 	go build -o $(BINDIR)/manager ./cmd/*
 
 .PHONY: run
@@ -142,8 +160,7 @@ ct-install: ## Install and test a chart.
 		ct install --config ct.yaml
 
 .PHONY: setup
-setup: # Setup tools
-	mkdir -p bin
+setup: $(BINDIR) # Setup tools
 	GOBIN=$(BINDIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CONTROLLER_TOOLS_VERSION)
 	curl -o $(KUBECTL) -sSfL https://dl.k8s.io/release/v$(KUBERNETES_VERSION)/bin/linux/amd64/kubectl
 	chmod a+x $(KUBECTL)
@@ -151,3 +168,23 @@ setup: # Setup tools
 	curl -sSfL https://get.helm.sh/helm-v$(HELM_VERSION)-linux-amd64.tar.gz \
 	  | tar xvz -C $(BINDIR) --strip-components 1 linux-amd64/helm
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell dirname $(GOLANGCI_LINT)) $(GOLANGCI_LINT_VERSION)
+
+.PHONY: actionlint
+actionlint: $(BINDIR) # Setup actionlint
+	test -s $(ACTIONLINT) && $(ACTIONLINT) --version | grep -q $(subst v,,$(ACTIONLINT_VERSION)) || \
+	GOBIN=$(BINDIR) go install github.com/rhysd/actionlint/cmd/actionlint@$(ACTIONLINT_VERSION)
+
+.PHONY: ghalint
+ghalint: $(BINDIR) # Setup ghalint
+	test -s $(GHALINT) && $(GHALINT) version | grep -q $(subst v,,$(GHALINT_VERSION)) || \
+	GOBIN=$(BINDIR) go install github.com/suzuki-shunsuke/ghalint/cmd/ghalint@$(GHALINT_VERSION)
+
+.PHONY: zizmor
+zizmor: $(BINDIR) # Setup zizmor
+	test -s $(ZIZMOR) && $(ZIZMOR) --version | grep -q $(subst v,,$(ZIZMOR_VERSION)) || \
+	{ tmp=$$(mktemp) && \
+	  curl -sSLf https://github.com/zizmorcore/zizmor/releases/download/$(ZIZMOR_VERSION)/zizmor-x86_64-unknown-linux-gnu.tar.gz \
+	    -o $$tmp && \
+	  echo "$(ZIZMOR_SHA256)  $$tmp" | sha256sum -c && \
+	  tar xzf $$tmp -C $(BINDIR) && \
+	  rm -f $$tmp; }
