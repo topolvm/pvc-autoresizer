@@ -5,17 +5,22 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
 	"github.com/topolvm/pvc-autoresizer/internal/metrics"
-	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
+
+// nodeMetricsRequestTimeout bounds a single node's kubelet-proxy request. Without it, a
+// node that accepts the connection but never responds would block wg.Wait() forever,
+// since removing errgroup's shared-cancellation also removed its only timeout behavior.
+const nodeMetricsRequestTimeout = 10 * time.Second
 
 // NewK8sMetricsApiClient returns a new k8sMetricsApiClient client
 func NewK8sMetricsApiClient() (MetricsClient, error) {
@@ -50,29 +55,30 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 	pvcUsage := make(map[types.NamespacedName]*VolumeStats)
 	var mu sync.Mutex // serialize writes to pvcUsage
 
-	// use an errgroup to query kubelet for PVC usage on each node
-	eg, ctx := errgroup.WithContext(ctx)
+	// Query kubelet for PVC usage on each node independently. A node that fails to
+	// respond (e.g. mid-scale-down) only loses its own PVC data; it must not abort
+	// metrics collection for the rest of the cluster.
+	var wg sync.WaitGroup
 	for _, node := range nodes.Items {
 		nodeName := node.Name
-		eg.Go(func() error {
-			nodePVCUsage, err := getPVCUsageFromK8sMetricsAPI(ctx, clientset, nodeName)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			nodeCtx, cancel := context.WithTimeout(ctx, nodeMetricsRequestTimeout)
+			defer cancel()
+			nodePVCUsage, err := getPVCUsageFromK8sMetricsAPI(nodeCtx, clientset, nodeName)
 			if err != nil {
-				return err
+				metrics.MetricsClientFailTotal.Increment()
+				return
 			}
 			mu.Lock()
 			defer mu.Unlock()
 			for k, v := range nodePVCUsage {
 				pvcUsage[k] = v
 			}
-			return nil
-		})
+		}()
 	}
-
-	// wait for all queries to complete and handle any errors
-	if err := eg.Wait(); err != nil {
-		metrics.MetricsClientFailTotal.Increment()
-		return nil, err
-	}
+	wg.Wait()
 
 	return pvcUsage, nil
 }
