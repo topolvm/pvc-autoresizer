@@ -3,6 +3,8 @@ package runners
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -14,8 +16,27 @@ import (
 
 // NewPrometheusClient returns a new prometheusClient
 func NewPrometheusClient(url string) (MetricsClient, error) {
+	// api.DefaultRoundTripper leaves IdleConnTimeout unset (0), so a keep-alive
+	// connection to a Service ClusterIP is held open indefinitely. kube-proxy routes
+	// per connection and never breaks an established one; it only load-balances new
+	// connections onto the current endpoints. So when a Service is repointed while its
+	// old backend pods stay up (a selector/endpoint change — not a pod deletion, which
+	// would reset the connection and force a re-dial), a reused connection keeps hitting
+	// the old backend and the client silently reads stale data. Disable keep-alives so
+	// every query re-dials and is routed to a current endpoint; the query volume is only
+	// a few requests per reconcile interval, so re-dialing per request is cheap.
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout: 10 * time.Second,
+		DisableKeepAlives:   true,
+	}
 	client, err := api.NewClient(api.Config{
-		Address: url,
+		Address:      url,
+		RoundTripper: transport,
 	})
 	if err != nil {
 		return nil, err
