@@ -3,6 +3,7 @@ package runners
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -14,8 +15,14 @@ import (
 
 // NewPrometheusClient returns a new prometheusClient
 func NewPrometheusClient(url string) (MetricsClient, error) {
+	// kube-proxy pins each keep-alive connection to one backend, so after the Prometheus
+	// Service is repointed a reused connection keeps reading the stale backend; disable
+	// keep-alives to re-dial per query. Clone the default transport to keep its other fields.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DisableKeepAlives = true
 	client, err := api.NewClient(api.Config{
-		Address: url,
+		Address:      url,
+		RoundTripper: transport,
 	})
 	if err != nil {
 		return nil, err
