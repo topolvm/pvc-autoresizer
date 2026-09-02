@@ -3,7 +3,7 @@ image:
   repository: ghcr.io/topolvm/pvc-autoresizer
 
   # image.reference -- pvc-autoresizer image reference (a tag and/or a digest, e.g. "0.21.0@sha256:...") to use.
-  reference: 0.21.0@sha256:51343caa8edd3a6416a48b3d5694146d1bf8226c95f954a9d269620bb10afdf7
+  reference: 0.21.1@sha256:078d3527f38b140e03c033c11f4764c306f803f1f39cab2a7463a9a65fb860eb
 
   # image.pullPolicy -- pvc-autoresizer image pullPolicy.
   pullPolicy:  # Always
