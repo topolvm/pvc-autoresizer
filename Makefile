@@ -19,6 +19,7 @@ ZIZMOR = $(BINDIR)/zizmor
 
 IMAGE_TAG ?= latest
 IMAGE_PREFIX ?= ghcr.io/topolvm/
+GOPROXY ?= $(shell go env GOPROXY)
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -109,6 +110,11 @@ run-zizmor: zizmor ## Run zizmor.
 $(BINDIR):
 	mkdir -p $(BINDIR)
 
+DOCKER_BUILD_ARGS := --build-arg 'GOPROXY=$(GOPROXY)'
+ifneq ($(wildcard $(HOME)/.netrc),)
+DOCKER_BUILD_ARGS += --secret 'id=netrc,src=$(HOME)/.netrc'
+endif
+
 .PHONY: build
 build: $(BINDIR) ## Build manager binary.
 	go build -o $(BINDIR)/manager ./cmd/*
@@ -119,11 +125,11 @@ run: manifests generate ## Run a controller from your host.
 
 .PHONY: image
 image: ## Build docker image.
-	docker build -t $(IMAGE_PREFIX)pvc-autoresizer:devel .
+	docker build $(DOCKER_BUILD_ARGS) -t $(IMAGE_PREFIX)pvc-autoresizer:devel .
 
 .PHONY: multi-platform-image
 multi-platform-image: ## Build multi-platform docker image.
-	docker buildx build --no-cache $(BUILDX_PUSH_OPTIONS) \
+	docker buildx build $(DOCKER_BUILD_ARGS) --no-cache $(BUILDX_PUSH_OPTIONS) \
 		--platform linux/amd64,linux/arm64 \
 		-t $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG) \
 		.
