@@ -20,6 +20,7 @@ var config struct {
 	namespaces                []string
 	watchInterval             time.Duration
 	prometheusURL             string
+	prometheusLabelSelector   string
 	useK8sMetricsApi          bool
 	skipAnnotation            bool
 	development               bool
@@ -57,6 +58,10 @@ func init() {
 		"Namespaces to resize PersistentVolumeClaims within. Empty for all namespaces.")
 	fs.DurationVar(&config.watchInterval, "interval", 1*time.Minute, "Interval to monitor pvc capacity.")
 	fs.StringVar(&config.prometheusURL, "prometheus-url", "", "Prometheus URL to query volume stats.")
+	fs.StringVar(&config.prometheusLabelSelector, "prometheus-label-selector", "",
+		"Optional comma-separated PromQL label matchers (e.g. cluster=\"prod\") appended to the volume stats "+
+			"queries. Use when the Prometheus endpoint aggregates metrics from multiple clusters, to restrict "+
+			"results to the cluster this controller manages.")
 	fs.BoolVar(&config.useK8sMetricsApi, "use-k8s-metrics-api", false, "Use Kubernetes metrics API instead of Prometheus")
 	fs.BoolVar(&config.skipAnnotation, "no-annotation-check", false, "Skip annotation check for StorageClass")
 	fs.BoolVar(&config.development, "development", false, "Use development logger config")

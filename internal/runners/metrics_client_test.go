@@ -40,7 +40,7 @@ var _ = Describe("test prometheusClient", func() {
 		ts := httptest.NewServer(http.HandlerFunc(http.NotFound))
 		defer ts.Close()
 
-		c, err := NewPrometheusClient(ts.URL)
+		c, err := NewPrometheusClient(ts.URL, "")
 		Expect(err).ToNot(HaveOccurred())
 		_, err = c.GetMetrics(context.TODO())
 		Expect(err).To(HaveOccurred())
