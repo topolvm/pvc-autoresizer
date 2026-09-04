@@ -19,7 +19,7 @@ HELM_VERSION := 4.1.4
 # https://github.com/prometheus-operator/kube-prometheus/releases
 KUBE_PROMETHEUS_VERSION := 0.17.0
 # It is set by CI using the environment variable, use conditional assignment.
-KUBERNETES_VERSION ?= 1.35.4
+KUBERNETES_VERSION ?= 1.36.4
 TOPOLVM_VERSION := v0.41.0 
 
 # Tools versions which are defined in go.mod
