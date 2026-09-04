@@ -1,6 +1,7 @@
 # Stage1: Build the pvc-autoresizer binary
 FROM --platform=$BUILDPLATFORM golang:1.25 AS builder
 
+ARG GOPROXY
 ARG TARGETARCH
 
 WORKDIR /workspace
@@ -13,7 +14,8 @@ COPY cmd/ cmd/
 COPY internal/ internal/
 
 # Build
-RUN CGO_ENABLED=0 GOARCH=${TARGETARCH} go build -ldflags="-w -s" -a -o pvc-autoresizer cmd/*.go
+RUN --mount=type=secret,id=netrc,target=/root/.netrc,required=false \
+    CGO_ENABLED=0 GOARCH=${TARGETARCH} go build -ldflags="-w -s" -a -o pvc-autoresizer cmd/*.go
 
 # Stage2: setup runtime container
 FROM scratch

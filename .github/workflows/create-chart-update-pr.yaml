@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   create-chart-update-pr:
@@ -64,9 +65,10 @@ jobs:
           sed -r -i "s/appVersion: [[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/appVersion: $APP_VERSION/g" charts/pvc-autoresizer/Chart.yaml
           sed -r -i "s/ghcr.io\/topolvm\/pvc-autoresizer:[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/ghcr.io\/topolvm\/pvc-autoresizer:$APP_VERSION/g" charts/pvc-autoresizer/Chart.yaml
           sed -r -i "s|^(  reference:).*|\1 $APP_VERSION@$IMAGE_DIGEST|" charts/pvc-autoresizer/values.yaml
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: ./.github/actions/setup-go
         with:
           go-version-file: "go.mod"
+          takumi-guard-bot-id: ${{ vars.TAKUMI_GUARD_BOT_ID }}
       - name: "Regenerate helm-docs"
         run: |
           make setup
