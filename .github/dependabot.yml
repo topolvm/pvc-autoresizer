@@ -12,3 +12,20 @@ updates:
           - "*"
     cooldown:
       default-days: 14
+  - package-ecosystem: "gomod"
+    directory: "/"
+    rebase-strategy: "disabled"
+    schedule:
+      interval: "monthly"
+    groups:
+      gomod-dependencies-update:
+        patterns:
+          - "*"
+    cooldown:
+      default-days: 14
+    ignore:
+      - dependency-name: "github.com/prometheus/*"
+      - dependency-name: "k8s.io/api"
+      - dependency-name: "k8s.io/apimachinery"
+      - dependency-name: "k8s.io/client-go"
+      - dependency-name: "sigs.k8s.io/controller-runtime"
