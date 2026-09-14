@@ -72,7 +72,8 @@ To change their versions, edit `versions.mk`.
 
 #### Depending modules
 
-Please tidy up the dependencies.
+Read [Kubernetes go.mod](https://github.com/kubernetes/kubernetes/blob/master/go.mod) (Make sure the branch matches to the version of Kubernetes you're using) and update the `prometheus/*` modules.
+Then, please tidy up the dependencies.
 
 ```bash
 $ go mod tidy
