@@ -25,6 +25,11 @@ controller:
     # Used as "--prometheus-url" option
     prometheusURL: http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090
 
+    # controller.args.prometheusLabelSelector -- Comma-separated PromQL label matchers appended to the
+    # volume stats queries, to restrict results when the Prometheus endpoint aggregates multiple clusters.
+    # Used as "--prometheus-label-selector" option
+    prometheusLabelSelector: ""
+
     # controller.args.namespaces -- Specify namespaces to control the pvcs of. Empty for all namespaces.
     # Used as "--namespaces" option
     namespaces: []

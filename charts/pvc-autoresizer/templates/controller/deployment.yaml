@@ -40,6 +40,9 @@ spec:
             - /pvc-autoresizer
           args:
             - --prometheus-url={{ .Values.controller.args.prometheusURL }}
+          {{- if .Values.controller.args.prometheusLabelSelector }}
+            - --prometheus-label-selector={{ .Values.controller.args.prometheusLabelSelector }}
+          {{- end }}
             - --interval={{ .Values.controller.args.interval }}
           {{- if .Values.controller.args.useK8sMetricsApi }}
             - --use-k8s-metrics-api={{ .Values.controller.args.useK8sMetricsApi }}

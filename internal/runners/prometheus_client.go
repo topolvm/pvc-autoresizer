@@ -12,8 +12,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// NewPrometheusClient returns a new prometheusClient
-func NewPrometheusClient(url string) (MetricsClient, error) {
+// NewPrometheusClient returns a new prometheusClient.
+// labelSelector is an optional comma-separated list of PromQL label matchers
+// (e.g. `cluster="prod",env!="dev"`) appended to every volume stats query.
+// This is useful when the Prometheus-compatible endpoint aggregates metrics
+// from multiple clusters: without a selector, same-named PVCs from another
+// cluster would be indistinguishable because results are keyed by namespace
+// and PVC name only.
+func NewPrometheusClient(url string, labelSelector string) (MetricsClient, error) {
 	client, err := api.NewClient(api.Config{
 		Address: url,
 	})
@@ -24,33 +30,35 @@ func NewPrometheusClient(url string) (MetricsClient, error) {
 
 	return &prometheusClient{
 		prometheusAPI: v1api,
+		labelSelector: labelSelector,
 	}, nil
 }
 
 type prometheusClient struct {
 	prometheusAPI prometheusv1.API
+	labelSelector string
 }
 
 // GetMetrics implements MetricsClient.GetMetrics
 func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
 	volumeStatsMap := make(map[types.NamespacedName]*VolumeStats)
 
-	availableBytes, err := c.getMetricValues(ctx, volumeAvailableQuery)
+	availableBytes, err := c.getMetricValues(ctx, c.buildQuery(volumeAvailableQuery))
 	if err != nil {
 		return nil, err
 	}
 
-	capacityBytes, err := c.getMetricValues(ctx, volumeCapacityQuery)
+	capacityBytes, err := c.getMetricValues(ctx, c.buildQuery(volumeCapacityQuery))
 	if err != nil {
 		return nil, err
 	}
 
-	availableInodeSize, err := c.getMetricValues(ctx, inodesAvailableQuery)
+	availableInodeSize, err := c.getMetricValues(ctx, c.buildQuery(inodesAvailableQuery))
 	if err != nil {
 		return nil, err
 	}
 
-	capacityInodeSize, err := c.getMetricValues(ctx, inodesCapacityQuery)
+	capacityInodeSize, err := c.getMetricValues(ctx, c.buildQuery(inodesCapacityQuery))
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +84,15 @@ func (c *prometheusClient) GetMetrics(ctx context.Context) (map[types.Namespaced
 	}
 
 	return volumeStatsMap, nil
+}
+
+// buildQuery returns the PromQL query for a metric name, applying the
+// configured label selector if one is set.
+func (c *prometheusClient) buildQuery(metricName string) string {
+	if c.labelSelector == "" {
+		return metricName
+	}
+	return fmt.Sprintf("%s{%s}", metricName, c.labelSelector)
 }
 
 func (c *prometheusClient) getMetricValues(ctx context.Context, query string) (map[types.NamespacedName]int64, error) {

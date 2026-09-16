@@ -116,7 +116,7 @@ func subMain() error {
 	if config.useK8sMetricsApi {
 		metricsClient, err = runners.NewK8sMetricsApiClient()
 	} else if config.prometheusURL != "" {
-		metricsClient, err = runners.NewPrometheusClient(config.prometheusURL)
+		metricsClient, err = runners.NewPrometheusClient(config.prometheusURL, config.prometheusLabelSelector)
 	} else {
 		setupLog.Error(err, "enable use-k8s-metrics-api or provide prometheus-url")
 		return err
