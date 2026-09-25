@@ -224,6 +224,7 @@ the PVC is resized up to this limit.
 #### `pvcautoresizer_metrics_client_fail_total`
 
 `pvcautoresizer_metrics_client_fail_total` is a counter that indicates how many API requests to metrics server(e.g. prometheus) are failed.
+With `--use-k8s-metrics-api`, this increments once per node whose kubelet metrics could not be retrieved, not once per collection cycle; other nodes' PVCs are still resized in that cycle.
 
 #### `pvcautoresizer_loop_seconds_total`
 
