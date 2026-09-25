@@ -114,7 +114,7 @@ func subMain() error {
 
 	var metricsClient runners.MetricsClient
 	if config.useK8sMetricsApi {
-		metricsClient, err = runners.NewK8sMetricsApiClient()
+		metricsClient, err = runners.NewK8sMetricsApiClient(ctrl.Log.WithName("pvc-autoresizer.metrics"))
 	} else if config.prometheusURL != "" {
 		metricsClient, err = runners.NewPrometheusClient(config.prometheusURL)
 	} else {

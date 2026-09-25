@@ -5,75 +5,107 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/go-logr/logr"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
 	"github.com/topolvm/pvc-autoresizer/internal/metrics"
-	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
+// nodeMetricsRequestTimeout bounds a single node's kubelet-proxy request, so that one
+// node accepting a connection but never responding cannot block metrics collection for
+// the whole cluster.
+const nodeMetricsRequestTimeout = 10 * time.Second
+
 // NewK8sMetricsApiClient returns a new k8sMetricsApiClient client
-func NewK8sMetricsApiClient() (MetricsClient, error) {
-	return &k8sMetricsApiClient{}, nil
-}
-
-type k8sMetricsApiClient struct {
-}
-
-func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
-	// create a Kubernetes client using in-cluster configuration
+func NewK8sMetricsApiClient(log logr.Logger) (MetricsClient, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		metrics.MetricsClientFailTotal.Increment()
 		return nil, err
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		metrics.MetricsClientFailTotal.Increment()
 		return nil, err
 	}
 
-	// get a list of nodes and IP addresses
-	nodes, err := clientset.CoreV1().Nodes().List(ctx, v1.ListOptions{})
+	return &k8sMetricsApiClient{log: log, clientset: clientset}, nil
+}
+
+type k8sMetricsApiClient struct {
+	log       logr.Logger
+	clientset *kubernetes.Clientset
+}
+
+func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
+	// get a list of nodes
+	nodes, err := c.clientset.CoreV1().Nodes().List(ctx, v1.ListOptions{})
 	if err != nil {
 		metrics.MetricsClientFailTotal.Increment()
 		return nil, err
 	}
 
-	// create a map to hold PVC usage data
-	pvcUsage := make(map[types.NamespacedName]*VolumeStats)
-	var mu sync.Mutex // serialize writes to pvcUsage
+	nodeNames := make([]string, len(nodes.Items))
+	for i, node := range nodes.Items {
+		nodeNames[i] = node.Name
+	}
 
-	// use an errgroup to query kubelet for PVC usage on each node
-	eg, ctx := errgroup.WithContext(ctx)
-	for _, node := range nodes.Items {
-		nodeName := node.Name
-		eg.Go(func() error {
-			nodePVCUsage, err := getPVCUsageFromK8sMetricsAPI(ctx, clientset, nodeName)
+	return gatherFromNodes(ctx, c.log, nodeNames, func(ctx context.Context, nodeName string) (map[types.NamespacedName]*VolumeStats, error) {
+		return getPVCUsageFromK8sMetricsAPI(ctx, c.clientset, nodeName)
+	})
+}
+
+// gatherFromNodes queries each node independently via fetch and merges the successful
+// results. A node that fails to respond (e.g. mid-scale-down) only loses its own PVC
+// data; it must not abort metrics collection for the rest of the cluster. It returns an
+// error only if every node failed, so a total outage is still reported to the caller
+// instead of looking like a cluster with no PVCs to resize.
+func gatherFromNodes(
+	ctx context.Context,
+	log logr.Logger,
+	nodeNames []string,
+	fetch func(ctx context.Context, nodeName string) (map[types.NamespacedName]*VolumeStats, error),
+) (map[types.NamespacedName]*VolumeStats, error) {
+	pvcUsage := make(map[types.NamespacedName]*VolumeStats)
+	successCount := 0
+	var mu sync.Mutex // serializes writes to pvcUsage and successCount
+
+	var wg sync.WaitGroup
+	for _, nodeName := range nodeNames {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			nodeCtx, cancel := context.WithTimeout(ctx, nodeMetricsRequestTimeout)
+			defer cancel()
+			nodePVCUsage, err := fetch(nodeCtx, nodeName)
 			if err != nil {
-				return err
+				if ctx.Err() != nil {
+					// The caller is shutting down; this is not a node failure.
+					return
+				}
+				log.Error(err, "failed to get volume stats from node, skipping", "node", nodeName)
+				metrics.MetricsClientFailTotal.Increment()
+				return
 			}
 			mu.Lock()
 			defer mu.Unlock()
+			successCount++
 			for k, v := range nodePVCUsage {
 				pvcUsage[k] = v
 			}
-			return nil
-		})
+		}()
 	}
+	wg.Wait()
 
-	// wait for all queries to complete and handle any errors
-	if err := eg.Wait(); err != nil {
-		metrics.MetricsClientFailTotal.Increment()
-		return nil, err
+	if len(nodeNames) > 0 && successCount == 0 {
+		return nil, fmt.Errorf("failed to get volume stats from all %d nodes", len(nodeNames))
 	}
-
 	return pvcUsage, nil
 }
 
