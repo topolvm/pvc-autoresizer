@@ -5,24 +5,28 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/go-logr/logr"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
 	"github.com/topolvm/pvc-autoresizer/internal/metrics"
-	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
+const nodeMetricsRequestTimeout = 10 * time.Second
+
 // NewK8sMetricsApiClient returns a new k8sMetricsApiClient client
-func NewK8sMetricsApiClient() (MetricsClient, error) {
-	return &k8sMetricsApiClient{}, nil
+func NewK8sMetricsApiClient(log logr.Logger) (MetricsClient, error) {
+	return &k8sMetricsApiClient{log: log}, nil
 }
 
 type k8sMetricsApiClient struct {
+	log logr.Logger
 }
 
 func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
@@ -46,34 +50,63 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 		return nil, err
 	}
 
-	// create a map to hold PVC usage data
-	pvcUsage := make(map[types.NamespacedName]*VolumeStats)
-	var mu sync.Mutex // serialize writes to pvcUsage
+	nodeNames := make([]string, len(nodes.Items))
+	for i, node := range nodes.Items {
+		nodeNames[i] = node.Name
+	}
 
-	// use an errgroup to query kubelet for PVC usage on each node
-	eg, ctx := errgroup.WithContext(ctx)
-	for _, node := range nodes.Items {
-		nodeName := node.Name
-		eg.Go(func() error {
-			nodePVCUsage, err := getPVCUsageFromK8sMetricsAPI(ctx, clientset, nodeName)
+	return gatherFromNodes(ctx, c.log, nodeNames, func(ctx context.Context, nodeName string) (map[types.NamespacedName]*VolumeStats, error) {
+		return getPVCUsageFromK8sMetricsAPI(ctx, clientset, nodeName)
+	})
+}
+
+// gatherFromNodes queries each node independently and merges the successful results.
+// It returns an error only when every node fails.
+func gatherFromNodes(
+	ctx context.Context,
+	log logr.Logger,
+	nodeNames []string,
+	fetch func(ctx context.Context, nodeName string) (map[types.NamespacedName]*VolumeStats, error),
+) (map[types.NamespacedName]*VolumeStats, error) {
+	pvcUsage := make(map[types.NamespacedName]*VolumeStats)
+	failedCount := 0
+	var mu sync.Mutex // serialize writes to pvcUsage and failedCount
+
+	var wg sync.WaitGroup
+	for _, nodeName := range nodeNames {
+		wg.Go(func() {
+			nodeCtx, cancel := context.WithTimeout(ctx, nodeMetricsRequestTimeout)
+			defer cancel()
+			nodePVCUsage, err := fetch(nodeCtx, nodeName)
 			if err != nil {
-				return err
+				if ctx.Err() != nil {
+					// caller is shutting down, not a node failure
+					return
+				}
+				log.Error(err, "failed to get volume stats from node, skipping", "node", nodeName)
+				mu.Lock()
+				failedCount++
+				mu.Unlock()
+				return
 			}
 			mu.Lock()
 			defer mu.Unlock()
 			for k, v := range nodePVCUsage {
 				pvcUsage[k] = v
 			}
-			return nil
 		})
 	}
+	wg.Wait()
 
-	// wait for all queries to complete and handle any errors
-	if err := eg.Wait(); err != nil {
-		metrics.MetricsClientFailTotal.Increment()
+	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-
+	if failedCount > 0 {
+		metrics.MetricsClientFailTotal.Increment()
+	}
+	if len(nodeNames) > 0 && failedCount == len(nodeNames) {
+		return nil, fmt.Errorf("failed to get volume stats from all %d nodes", len(nodeNames))
+	}
 	return pvcUsage, nil
 }
 
