@@ -2,3 +2,7 @@ rules:
   artipacked:
     ignore:
       - create-chart-update-pr.yaml
+  # actionlint does not support the `$/` self-repository syntax yet.
+  # Remove this once https://github.com/rhysd/actionlint/issues/711 is resolved.
+  self-repository:
+    disable: true
