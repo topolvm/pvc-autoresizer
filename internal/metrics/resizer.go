@@ -17,6 +17,12 @@ const (
 	ResizerLimitReachedTotalKey  = "limit_reached_total"
 )
 
+// Label names of the resizer metrics.
+const (
+	pvcLabel       = "persistentvolumeclaim"
+	namespaceLabel = "namespace"
+)
+
 func init() {
 	registerResizerMetrics()
 }
@@ -26,13 +32,13 @@ type resizerSuccessResizeTotalAdapter struct {
 }
 
 func (a *resizerSuccessResizeTotalAdapter) Increment(pvcname string, pvcns string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Inc()
+	a.metric.With(prometheus.Labels{pvcLabel: pvcname, namespaceLabel: pvcns}).Inc()
 }
 
 // SpecifyLabels helps output metrics before the first resize event.
 // This method specifies the metric labels and add 0 to the metric value.
 func (a *resizerSuccessResizeTotalAdapter) SpecifyLabels(pvcname string, pvcns string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Add(0)
+	a.metric.With(prometheus.Labels{pvcLabel: pvcname, namespaceLabel: pvcns}).Add(0)
 }
 
 type resizerFailedResizeTotalAdapter struct {
@@ -40,13 +46,13 @@ type resizerFailedResizeTotalAdapter struct {
 }
 
 func (a *resizerFailedResizeTotalAdapter) Increment(pvcname string, pvcns string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Inc()
+	a.metric.With(prometheus.Labels{pvcLabel: pvcname, namespaceLabel: pvcns}).Inc()
 }
 
 // SpecifyLabels helps output metrics before the first fail event of resize.
 // This method specifies the metric labels and add 0 to the metric value.
 func (a *resizerFailedResizeTotalAdapter) SpecifyLabels(pvcname string, pvcns string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Add(0)
+	a.metric.With(prometheus.Labels{pvcLabel: pvcname, namespaceLabel: pvcns}).Add(0)
 }
 
 type resizerLoopSecondsTotalAdapter struct {
@@ -62,13 +68,13 @@ type resizerLimitReachedTotalAdapter struct {
 }
 
 func (a *resizerLimitReachedTotalAdapter) Increment(pvcname string, pvcns string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Inc()
+	a.metric.With(prometheus.Labels{pvcLabel: pvcname, namespaceLabel: pvcns}).Inc()
 }
 
 // SpecifyLabels helps output metrics before the first limit reached event of resize.
 // This method specifies the metric labels and add 0 to the metric value.
 func (a *resizerLimitReachedTotalAdapter) SpecifyLabels(pvcname string, pvcns string) {
-	a.metric.With(prometheus.Labels{"persistentvolumeclaim": pvcname, "namespace": pvcns}).Add(0)
+	a.metric.With(prometheus.Labels{pvcLabel: pvcname, namespaceLabel: pvcns}).Add(0)
 }
 
 var (
@@ -76,13 +82,13 @@ var (
 		Namespace: MetricsNamespace,
 		Name:      ResizerSuccessResizeTotalKey,
 		Help:      "counter that indicates how many volume expansion processing resized succeed.",
-	}, []string{"persistentvolumeclaim", "namespace"})
+	}, []string{pvcLabel, namespaceLabel})
 
 	resizerFailedResizeTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
 		Name:      ResizerFailedResizeTotalKey,
 		Help:      "counter that indicates how many volume expansion processing resizes fail.",
-	}, []string{"persistentvolumeclaim", "namespace"})
+	}, []string{pvcLabel, namespaceLabel})
 
 	resizerLoopSecondsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: MetricsNamespace,
@@ -94,7 +100,7 @@ var (
 		Namespace: MetricsNamespace,
 		Name:      ResizerLimitReachedTotalKey,
 		Help:      "counter that indicates how many storage limits were reached.",
-	}, []string{"persistentvolumeclaim", "namespace"})
+	}, []string{pvcLabel, namespaceLabel})
 
 	ResizerSuccessResizeTotal *resizerSuccessResizeTotalAdapter = &resizerSuccessResizeTotalAdapter{
 		metric: *resizerSuccessResizeTotal,
