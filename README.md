@@ -48,6 +48,10 @@ In addition, configure scraping as follows:
 You must configure how `pvc-autoresizer` obtains volume usage metrics. Two supported methods are described below.
 
 - Prometheus (HTTP endpoint): set the `--prometheus-url` argument to point to your Prometheus server endpoint.
+  If the endpoint aggregates metrics from multiple clusters (e.g. a central Mimir or Thanos), also set the
+  `--prometheus-label-matchers` argument (e.g. `cluster="prod"`) so that the volume stats queries only return
+  series of the cluster this controller manages. Otherwise, a PVC with the same namespace and name in another
+  cluster can supply the stats of the local PVC.
 - Kubernetes Metrics API: enable use of the cluster Metrics API by setting the `--use-k8s-metrics-api=true` argument.
 
 `pvc-autoresizer` can be deployed to a Kubernetes cluster via `helm`.
