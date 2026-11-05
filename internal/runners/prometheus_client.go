@@ -50,9 +50,6 @@ func NewPrometheusClient(url string, labelMatchers string) (MetricsClient, error
 // them in canonical form, ready to be placed inside the braces of a vector
 // selector. An empty input returns an empty string.
 func parseLabelMatchers(labelMatchers string) (string, error) {
-	if strings.TrimSpace(labelMatchers) == "" {
-		return "", nil
-	}
 	matchers, err := parser.NewParser(parser.Options{}).ParseMetricSelector("{" + labelMatchers + "}")
 	if err != nil {
 		return "", fmt.Errorf("invalid prometheus label matchers %q: %w", labelMatchers, err)

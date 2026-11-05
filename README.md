@@ -51,7 +51,8 @@ You must configure how `pvc-autoresizer` obtains volume usage metrics. Two suppo
   If the endpoint aggregates metrics from multiple clusters (e.g. a central Mimir or Thanos), also set the
   `--prometheus-label-matchers` argument (e.g. `cluster="prod"`) so that the volume stats queries only return
   series of the cluster this controller manages. Otherwise, a PVC with the same namespace and name in another
-  cluster can supply the stats of the local PVC.
+  cluster can supply the stats of the local PVC. `--prometheus-label-matchers` has no effect when
+  `--use-k8s-metrics-api` is true.
 - Kubernetes Metrics API: enable use of the cluster Metrics API by setting the `--use-k8s-metrics-api=true` argument.
 
 `pvc-autoresizer` can be deployed to a Kubernetes cluster via `helm`.
