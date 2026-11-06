@@ -25,6 +25,11 @@ controller:
     # Used as "--prometheus-url" option
     prometheusURL: http://prometheus-prometheus-oper-prometheus.prometheus.svc:9090
 
+    # controller.args.prometheusLabelMatchers -- Comma-separated PromQL label matchers added to the volume stats queries
+    # (e.g. `cluster="prod"`). Use when the Prometheus endpoint aggregates metrics from multiple clusters.
+    # Used as "--prometheus-label-matchers" option
+    prometheusLabelMatchers: ""
+
     # controller.args.namespaces -- Specify namespaces to control the pvcs of. Empty for all namespaces.
     # Used as "--namespaces" option
     namespaces: []
